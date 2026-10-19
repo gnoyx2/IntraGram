@@ -1,0 +1,4 @@
+/* Localized Info.plist strings — 한국어. Mirrors the NS*UsageDescription keys
+   in ../Info.plist. */
+"NSLocalNetworkUsageDescription" = "IntraGram은 메시지와 파일을 주고받기 위해 같은 로컬 Wi-Fi의 다른 기기와만 통신합니다. 인터넷으로는 아무것도 보내지 않습니다.";
+"NSMicrophoneUsageDescription" = "IntraGram은 마이크 버튼을 누르고 있는 동안, 또는 버튼을 탭해 핸즈프리로 녹음을 켠 뒤 보내거나 취소할 때까지만 음성 메시지를 녹음합니다. 오디오는 상대에게 전송되고 메모리에만 보관되며, 디스크에 저장되지 않습니다.";

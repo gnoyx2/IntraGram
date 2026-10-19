@@ -1,0 +1,4 @@
+/* Localized Info.plist strings — English (development region). Mirrors the
+   NS*UsageDescription keys in ../Info.plist. */
+"NSLocalNetworkUsageDescription" = "IntraGram talks only to other devices on your local Wi-Fi to exchange messages and files. Nothing is sent to the internet.";
+"NSMicrophoneUsageDescription" = "IntraGram records a voice message only while you hold the mic button, or after you tap it for hands-free recording until you send or cancel. Audio is sent to the peer and kept in memory, never saved to disk.";

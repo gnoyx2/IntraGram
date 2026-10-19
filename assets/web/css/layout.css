@@ -1,0 +1,308 @@
+/* 웹 게스트 클라이언트 구조·배치 규칙. 색은 theme.css의 var(--...)만 씀.
+   글자 크기는 rem이라 브라우저 기본 글꼴 크기 설정(16px 기준)을 따름.
+   헤더·푸터 높이는 내용대로 잡고 가운데 메시지 목록만 스크롤함 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 작성자 display 규칙(flex 등)이 UA의 [hidden]을 이겨서 숨긴 요소가 보이는 걸 막음 */
+[hidden] { display: none !important; }
+/* 화면엔 안 보이고 스크린 리더만 읽음 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html, body { height: 100%; }
+body {
+  position: relative;
+  height: 100dvh;
+  background:
+    radial-gradient(1100px 520px at 50% -8%, var(--aura), transparent 70%),
+    radial-gradient(700px 420px at 100% 100%, var(--aura), transparent 70%),
+    var(--bg);
+  color: var(--on-surface);
+  font: 0.9375rem/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+header, footer {
+  background: var(--glass);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+header {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-md);
+  border-bottom: 1px solid var(--glass-edge);
+  padding: max(var(--sp-md), env(safe-area-inset-top)) max(var(--sp-lg), env(safe-area-inset-right))
+    var(--sp-md) max(var(--sp-lg), env(safe-area-inset-left));
+}
+header .brand { font-weight: 700; letter-spacing: -0.2px; }
+header .status { font-size: 0.75rem; color: var(--on-surface-variant); overflow-wrap: anywhere; }
+header .status.on { color: var(--online); }
+header .spacer { display: none; }
+/* 게스트 대화가 평문이라는 상시 고지. 헤더 바로 아래 한 줄, 스크롤과 무관하게 늘 보임 */
+.plain-notice {
+  flex-shrink: 0;
+  background: var(--surface-3);
+  color: var(--on-surface-variant);
+  border-bottom: 1px solid var(--glass-edge);
+  font-size: 0.75rem;
+  padding: var(--sp-xs) max(var(--sp-lg), env(safe-area-inset-right)) var(--sp-xs)
+    max(var(--sp-lg), env(safe-area-inset-left));
+}
+.field { display: flex; align-items: center; gap: var(--sp-xs); font-size: 0.75rem; color: var(--on-surface-variant); }
+.field select, #lang {
+  background: var(--surface-2);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--r-sm);
+  min-height: 44px;
+  padding: 0 var(--sp-sm);
+  font-size: 0.8125rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: var(--sp-xxs);
+}
+input::placeholder, textarea::placeholder {
+  color: var(--on-surface-variant);
+  opacity: 1;
+}
+
+#log-wrap { flex: 1; position: relative; display: flex; min-height: 0; }
+/* 드래그 앤 드롭: 파일이 올라와 있는 동안 액센트 링과 바깥 글로우가 숨 쉬듯 번짐 */
+body.drag-over #log-wrap::before {
+  content: "";
+  position: absolute;
+  inset: var(--sp-sm);
+  border: 2px solid var(--accent);
+  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  box-shadow: 0 0 0 6px var(--aura), 0 0 36px 6px var(--glow), inset 0 0 48px var(--aura);
+  pointer-events: none;
+  z-index: 5;
+}
+#log {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--on-surface-variant) 50%, transparent) transparent;
+  overscroll-behavior: contain;
+  padding: var(--sp-md) max(var(--sp-md), env(safe-area-inset-right), calc((100% - 960px) / 2))
+    var(--sp-md) max(var(--sp-md), env(safe-area-inset-left), calc((100% - 960px) / 2));
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+}
+.row { display: flex; }
+.row.mine { justify-content: flex-end; }
+@media (prefers-reduced-motion: no-preference) {
+  .row { animation: msg-in 220ms var(--ease-out); }
+  @keyframes msg-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  body.drag-over #log-wrap::before { animation: drop-glow 1.6s ease-in-out infinite; }
+  @keyframes drop-glow {
+    50% { box-shadow: 0 0 0 10px var(--aura), 0 0 56px 10px var(--glow), inset 0 0 64px var(--aura); }
+  }
+  .btn, .btn-icon, .jump, .bubble .reactions span {
+    transition: transform 140ms var(--ease-out), filter 140ms var(--ease-out), background-color 140ms;
+  }
+  .btn:active, .btn-icon:active, .jump:active { transform: scale(0.97); }
+}
+.bubble {
+  max-width: 78%;
+  padding: var(--sp-sm) var(--sp-md);
+  border-radius: var(--r-lg);
+  background: var(--bubble-theirs);
+  color: var(--on-bubble-theirs);
+  border: 0.5px solid var(--outline-variant);
+  box-shadow: 0 2px 12px var(--bubble-shadow);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  /* 두 번 눌러 좋아요가 모바일에서 확대로 먹히지 않게 */
+  touch-action: manipulation;
+}
+.row.mine .bubble {
+  background: linear-gradient(135deg, var(--bubble-mine-top), var(--bubble-mine));
+  color: var(--on-bubble-mine);
+  border-color: var(--bubble-mine-edge);
+  box-shadow: 0 2px 6px var(--bubble-shadow);
+  border-bottom-right-radius: var(--r-tail);
+}
+.row.theirs .bubble { border-bottom-left-radius: var(--r-tail); }
+.bubble .sender { font-size: 0.75rem; font-weight: 600; color: var(--sender); margin-bottom: var(--sp-xxs); }
+.bubble .quote {
+  font-size: 0.75rem;
+  color: inherit;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-left: 3px solid var(--accent-ink);
+  border-radius: var(--r-xs);
+  padding: var(--sp-xs) var(--sp-sm);
+  margin-bottom: var(--sp-xs);
+  white-space: pre-wrap;
+}
+.bubble a { color: inherit; text-decoration: underline; text-underline-offset: 2px; word-break: break-all; }
+.row.theirs .bubble a { color: var(--accent-ink); }
+/* 말풍선 글자색의 85%라 시각 줄이 양쪽 말풍선에서 7:1 이상 */
+.bubble .meta {
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, currentColor 85%, transparent);
+  margin-top: var(--sp-xs);
+  display: flex;
+  gap: var(--sp-xs);
+  align-items: center;
+  flex-wrap: wrap;
+  font-variant-numeric: tabular-nums;
+}
+.bubble .meta span:empty { display: none; }
+.bubble .meta .burn { color: var(--burn); font-weight: 600; }
+.bubble .meta .state.failed { color: var(--burn); font-weight: 600; }
+.bubble .reactions { display: flex; flex-wrap: wrap; gap: var(--sp-xs); margin-top: var(--sp-xs); }
+.bubble .reactions:empty { display: none; }
+.bubble .reactions span {
+  background: var(--surface-2);
+  border: 0.5px solid var(--outline-variant);
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  color: var(--on-surface);
+}
+.system, .date-sep {
+  align-self: center;
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+  background: var(--surface-3);
+  padding: var(--sp-xs) var(--sp-md);
+  border-radius: var(--r-pill);
+}
+.date-sep {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: var(--glass);
+  border: 0.5px solid var(--outline-variant);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  margin: var(--sp-xs) 0;
+}
+
+.jump {
+  position: absolute;
+  right: max(var(--sp-lg), env(safe-area-inset-right));
+  bottom: var(--sp-lg);
+  background: var(--action);
+  color: var(--on-accent);
+  border: 0;
+  border-radius: var(--r-pill);
+  min-height: 44px;
+  padding: var(--sp-sm) var(--sp-lg);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  box-shadow: 0 6px 20px var(--glow);
+  cursor: pointer;
+}
+.jump:hover, .btn:hover, .btn-icon:hover { filter: brightness(1.08); }
+.jump:active, .btn:active, .btn-icon:active { filter: brightness(0.92); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--sp-lg);
+  border: 0;
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: var(--surface-3);
+  color: var(--on-surface);
+}
+.btn:disabled { opacity: .4; cursor: default; }
+.btn-accent { background: var(--action); color: var(--on-accent); box-shadow: 0 2px 10px var(--glow); }
+.btn-ghost { background: transparent; color: var(--on-surface-variant); border: 1px solid var(--outline-variant); }
+.btn-icon { width: 44px; height: 44px; padding: 0; border-radius: var(--r-pill); font-size: 1.25rem; background: transparent; color: var(--on-surface-variant); }
+.btn-icon.accent { background: var(--accent); color: var(--on-accent); box-shadow: 0 2px 10px var(--glow); }
+.xfer { display: flex; align-items: center; gap: var(--sp-sm); }
+/* 받은 파일 제안: 라벨·썸네일은 블록이고 수락·거절 버튼만 한 줄에 놓임. 좁은 화면에서 줄이 바뀌어도 위아래가 안 붙음 */
+.xfer-incoming .btn { margin: var(--sp-sm) var(--sp-sm) 0 0; }
+/* 받은 파일 이름 앞 클립 아이콘은 첨부 버튼 SVG 복제본이라 크기만 줄임 */
+.xfer-name { display: flex; align-items: center; gap: var(--sp-xs); overflow-wrap: anywhere; }
+.xfer-name svg { flex: none; width: 16px; height: 16px; }
+.xfer-thumb { display: block; max-width: min(180px, 100%); max-height: 180px; border-radius: var(--r-sm); margin: var(--sp-sm) 0; }
+.xfer-audio { display: block; max-width: min(240px, 100%); margin-top: var(--sp-sm); }
+.xfer-label { flex: 1; min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.xfer-note { font-size: 0.75rem; color: var(--on-surface-variant); margin-top: var(--sp-xs); }
+
+footer {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--sp-sm);
+  align-items: flex-end;
+  border-top: 1px solid var(--glass-edge);
+  padding: var(--sp-sm) max(var(--sp-md), env(safe-area-inset-right)) max(var(--sp-sm), env(safe-area-inset-bottom))
+    max(var(--sp-md), env(safe-area-inset-left));
+}
+footer textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  background: var(--surface-2);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--r-xl);
+  padding: var(--sp-sm) var(--sp-md);
+  font-family: inherit;
+  font-size: max(16px, 1rem); /* 16px 이상이어야 iOS Safari가 포커스 때 화면을 확대하지 않음 */
+  line-height: 1.4;
+  max-height: 120px;
+}
+footer textarea:focus-visible { border-color: var(--accent); }
+
+/* 좁은 화면·큰 글씨에서도 상태와 컨트롤이 서로 밀려나지 않음 */
+@media (max-width: 480px) {
+  header { grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-sm); }
+  header .status { text-align: right; }
+  header > #lang { justify-self: end; }
+  .bubble { max-width: 90%; }
+  .xfer { flex-wrap: wrap; }
+  .xfer-label { flex-basis: 100%; }
+}
+
+/* 강제 색상(Windows 고대비 등): 배경이 시스템 색으로 바뀌어도 버튼 경계가 보이게 */
+@media (forced-colors: active) {
+  .btn, .btn-icon, .jump { border: 1px solid ButtonText; }
+}
+
+/* 가로 폰 + 큰 확대처럼 높이가 낮으면 헤더를 한 줄로 줄여 메시지 칸을 남김 (평문 고지는 그대로) */
+@media (max-height: 360px) {
+  header {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    padding-top: max(var(--sp-xs), env(safe-area-inset-top));
+    padding-bottom: var(--sp-xs);
+  }
+  header .brand { display: none; }
+  header .status { text-align: left; }
+  .field select, #lang { min-height: 36px; }
+}

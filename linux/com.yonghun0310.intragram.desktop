@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=IntraGram
+GenericName=Local Network Messenger
+GenericName[ko]=로컬 네트워크 메신저
+Comment=Peer-to-peer chat and file transfer on your local network
+Comment[ko]=같은 네트워크 안에서 기기끼리 대화하고 파일을 주고받아요
+Exec=intragram
+Icon=intragram
+Terminal=false
+Categories=Network;Chat;InstantMessaging;
+Keywords=chat;messenger;lan;p2p;offline;local;
+Keywords[ko]=채팅;메신저;로컬;파일;
+StartupNotify=true
+StartupWMClass=com.yonghun0310.intragram

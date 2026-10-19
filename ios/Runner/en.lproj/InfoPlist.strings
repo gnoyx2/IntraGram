@@ -1,0 +1,7 @@
+/* Localized Info.plist strings — English (development region). Mirrors the
+   NS*UsageDescription keys in ../Info.plist. */
+"NSLocalNetworkUsageDescription" = "IntraGram talks only to other devices on your local Wi-Fi to exchange messages and files. Nothing is sent to the internet.";
+"NSCameraUsageDescription" = "IntraGram uses the camera only to scan another device's connection or security code. No photos are taken or stored.";
+"NSMicrophoneUsageDescription" = "IntraGram records a voice message only while you hold the mic button, or after you tap it for hands-free recording until you send or cancel. Audio is sent to the peer and kept in memory, never saved to disk.";
+"NSPhotoLibraryUsageDescription" = "IntraGram uses the system photo picker, so it only receives the photos you choose to send. It never reads the rest of your library.";
+"NSPhotoLibraryAddUsageDescription" = "IntraGram saves an image to your photo library only when you choose Save Image in the share sheet. It never reads your library.";

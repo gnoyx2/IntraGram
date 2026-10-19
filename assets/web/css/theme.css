@@ -1,0 +1,86 @@
+/* 웹 게스트 클라이언트 색 토큰.
+   lib/theme/color_schemes.dart·app_theme.dart(AppPalette/ChatColors/ColorScheme,
+   AppRadius/AppSpacing)와 같은 값이라 웹 게스트도 네이티브 앱과 같은 제품으로 보임.
+   라이트 값은 :root, 다크 값은 prefers-color-scheme 아래. 페이지 안 테마 전환이 없어 OS 설정만 따름 */
+:root {
+  color-scheme: light dark;
+
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --surface-2: #eef2f6;
+  --surface-3: #e5ebf2;
+  --on-surface: #171c26;
+  --on-surface-variant: #3d495c;
+  --outline-variant: #d6dee8;
+  --accent: #2563eb;
+  --accent-ink: #1e40af;
+  --action: #1e40af;
+  --on-accent: #ffffff;
+  --bubble-mine-top: #f0f5ff;
+  --bubble-mine: #dce7fd;
+  --bubble-mine-edge: #c9d8f6;
+  --on-bubble-mine: #13233d;
+  --bubble-theirs: #ffffff;
+  --on-bubble-theirs: #171c26;
+  --online: #065f46;
+  --burn: #86290c;
+  --sender: #1e40af;
+  --bubble-shadow: rgba(15, 23, 42, 0.08);
+  --error: #991b1b;
+
+  /* 헤더·푸터의 반투명 유리와 드래그 앤 드롭 글로우 */
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(15, 23, 42, 0.08);
+  --glow: rgba(37, 99, 235, 0.35);
+  --aura: rgba(37, 99, 235, 0.07);
+
+  --r-tail: 6px;
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  --sp-xxs: 2px;
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-lg: 16px;
+  --sp-xl: 20px;
+  --sp-xxl: 24px;
+  --sp-huge: 32px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #080a0d;
+    --surface: #0d0f14;
+    --surface-2: #141820;
+    --surface-3: #1d222e;
+    --on-surface: #f1f5fc;
+    --on-surface-variant: #b6c2d2;
+    --outline-variant: #282e3d;
+    --accent: #60a5fa;
+    --accent-ink: #bfdbfe;
+    --action: #60a5fa;
+    --on-accent: #0a1633;
+    --bubble-mine-top: #213f6b;
+    --bubble-mine: #172c4b;
+    --bubble-mine-edge: transparent;
+    --on-bubble-mine: #f1f5fc;
+    --bubble-theirs: #141820;
+    --on-bubble-theirs: #f1f5fc;
+    --online: #6ee7b7;
+    --burn: #ffccb4;
+    --sender: #bfdbfe;
+    --bubble-shadow: transparent;
+    --error: #ffb4ab;
+
+    --glass: rgba(13, 15, 20, 0.68);
+    --glass-edge: rgba(255, 255, 255, 0.07);
+    --glow: rgba(96, 165, 250, 0.45);
+    --aura: rgba(96, 165, 250, 0.08);
+  }
+}

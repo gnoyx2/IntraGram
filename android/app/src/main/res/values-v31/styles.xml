@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12 이상도 OS 테마와 Flutter 첫 화면의 배경을 맞춤 -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/launch_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launch_mark</item>
+        <!-- 흰 바탕에서 밝은 마크가 보이게 남색 원판을 깜 (다크 모드는 values-night-v31에서 판 없음) -->
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/launch_mark_plate</item>
+    </style>
+</resources>

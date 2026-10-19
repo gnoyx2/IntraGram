@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="launch_bg">#FFFFFF</color>
+    <!-- 라이트 모드 실행 화면에서 마크 뒤에 까는 판 (아이콘 남색) -->
+    <color name="launch_mark_plate">#102038</color>
+</resources>

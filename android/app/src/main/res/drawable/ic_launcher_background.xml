@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 아이콘 마스터와 같은 대각선 3단 그라디언트 위에 중앙 글로우를 얹음 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="315"
+                android:centerColor="#102038"
+                android:endColor="#0C182A"
+                android:startColor="#080E1A" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:endColor="#0038BDF8"
+                android:gradientRadius="52%p"
+                android:startColor="#3838BDF8"
+                android:type="radial" />
+        </shape>
+    </item>
+</layer-list>
