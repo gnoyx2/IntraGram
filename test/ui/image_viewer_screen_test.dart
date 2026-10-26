@@ -99,7 +99,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    // 1x2 opaque white PNG fills the viewport without letterboxing.
+    // 1x2 불투명 흰 PNG라 여백 없이 화면을 꽉 채움
     await tester.runAsync(
       () => File(imagePath).writeAsBytes(
         base64Decode(
@@ -224,9 +224,8 @@ void main() {
       );
       final gesture1 = await tester.startGesture(center - const Offset(20, 0));
       final gesture2 = await tester.startGesture(center + const Offset(20, 0));
-      // 한 손가락이 세로로 크게 움직여도(닫기 스와이프처럼 보일 수 있는 양)
-      // 두 번째 포인터가 눌려 있는 동안엔 dismiss 드래그로 안 잡혀야 함 —
-      // Transform.translate가 화면을 안 따라가야 함(배경 튐 버그의 증상)
+      // 한 손가락이 닫기 스와이프처럼 보일 만큼 세로로 크게 움직여도 두 번째 포인터가 눌려 있는 동안엔 dismiss 드래그로 안 잡혀야 함.
+      // Transform.translate 오프셋이 안 움직여야 함 (배경 튐 버그의 증상)
       await gesture1.moveBy(const Offset(0, 150));
       await tester.pump();
       final translate = tester

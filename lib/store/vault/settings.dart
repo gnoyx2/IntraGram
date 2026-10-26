@@ -1,9 +1,7 @@
 part of '../vault.dart';
 
-// 제로 디스크 원칙의 유일한 사용자 옵트인 예외. 기본은 꺼짐. 켜면 사용자가 고른 만큼(메시지/파일
-// 전송 이력)이 앱 문서 디렉토리의 JSON 파일 하나(IntraGram/vault.json)에 담김
-// PIN 보호를 안 켜면 암호화 없이 OS 파일 권한에만 의존함 (LocalSend의 shared_preferences + 수신 파일과
-// 같은 노출 수준). 절대 안 담는 것: 세션 키, 소각된 메시지, 수락 안 됐거나 거절된 전송. 패닉 와이프가 이 파일을 지움
+// 제로 디스크의 유일한 옵트인 예외 (기본 꺼짐). 켜면 고른 만큼(메시지, 전송 기록)이 앱 비공개 폴더의 vault.json 하나에 담김.
+// PIN을 안 켜면 암호화 없이 OS 파일 권한만 믿음. 세션 키, 소각된 메시지, 안 끝난 전송은 절대 안 담고 패닉이 이 파일을 지움
 class VaultSettings {
   const VaultSettings({
     this.enabled = false,
@@ -30,8 +28,7 @@ class VaultSettings {
   final bool pinProtected;
   final int autoLockMinutes;
 
-  // Android 전용: 앱이 백그라운드로 가도 포그라운드 서비스로 피어 링크를
-  // 살려둠 (기본 꺼짐: 배터리 비용) 보관소가 꺼져 있어도 RAM에서 적용됨
+  // Android 전용: 백그라운드에서도 포그라운드 서비스로 링크를 살려 둠 (기본 꺼짐, 배터리)
   final bool stayConnectedInBackground;
 
   // 이번 세션에 대화한 적 없는 기기가 여는 연결(대화·방 초대)을 거절. 보관소가 꺼져 있어도 RAM에서 적용됨
@@ -40,9 +37,7 @@ class VaultSettings {
   // 'en' / 'ko' / null(OS 로케일). 보관소가 꺼져 있어도 RAM에서 적용됨
   final String? langOverride;
 
-  // 보관소가 켜져 있을 때 커스텀 기기 이름을 담음. vault 스냅샷의 일부라 decoy 세션은 자동으로 null을 보고
-  // 별도 격리 로직이 필요 없음. 보관소가 꺼져 있으면 IdentityStore(identity.json)가 독립 경로로 씀
-  // (network_providers.dart의 _savedAliasProvider 참고)
+  // 보관소가 켜졌을 때의 기기 이름. 스냅샷의 일부라 duress 세션은 자연히 null을 봄. 보관소가 꺼져 있으면 identity.json이 따로 담음
   final String? savedAlias;
 
   // 앱 글자 배율(OS 글자 크기에 곱함). macOS는 OS 값이 Flutter에 안 넘어와 이것만 먹음

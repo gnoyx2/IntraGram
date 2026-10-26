@@ -43,11 +43,8 @@ extension _VoiceRecorderBanner on _VoiceRecorderButtonState {
         final tint = Color.lerp(background, AppPalette.burnLight, progress)!;
         final level = ((_amplitude + 45) / 45).clamp(0.0, 1.0).toDouble();
 
-        // Align은 Follower 바깥에 둠: 안에 두면 Overlay의 tight 제약(화면
-        // 크기)이 child에 그대로 넘어가 followerAnchor(bottomCenter)가
-        // 화면 전체 박스의 바닥을 가리켜 배너가 화면 위로 사라짐
-        // (바깥 Align은 loosen된 제약을 줘서 말풍선 크기로
-        // 줄어듦)
+        // Align은 Follower 바깥에: 안에 두면 Overlay의 tight 제약(화면 크기)이 그대로 넘어가 배너가 화면 위로 사라짐
+        // (바깥 Align이 제약을 풀어 말풍선 크기로 줄임)
         return Align(
           child: CompositedTransformFollower(
             link: _bannerLink,
@@ -134,8 +131,7 @@ extension _VoiceRecorderBanner on _VoiceRecorderButtonState {
                         ],
                       ),
                     ),
-                    // 말풍선 꼬리. Container.margin은 음수를
-                    // 거부(assertion)해서 겹치는 만큼은 Transform으로 옮김
+                    // 말풍선 꼬리. margin은 음수가 안 돼서 겹치는 만큼은 Transform으로 옮김
                     Transform.translate(
                       offset: const Offset(0, -5),
                       child: Transform.rotate(

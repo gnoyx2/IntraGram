@@ -24,7 +24,7 @@ for size in $sizes; do
 done
 
 # 메뉴 항목이 PATH가 아니라 이 폴더의 실행 파일을 직접 부르게 Exec를 절대 경로로 바꿈
-# ponytail: 경로에 | 나 " 가 있으면 sed 치환이 깨짐, 그런 폴더는 옮겨서 실행
+# 경로에 | 나 " 가 있으면 sed 치환이 깨짐: 그런 폴더면 옮겨서 실행
 mkdir -p "$data/applications"
 sed "s|^Exec=.*|Exec=\"$here/intragram\"|" \
   "$here/share/applications/$app_id.desktop" > "$data/applications/$app_id.desktop"

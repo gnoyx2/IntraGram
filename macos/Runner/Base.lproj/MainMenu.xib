@@ -130,6 +130,11 @@
                                     <action selector="delete:" target="-1" id="0Mk-Ml-PaM"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Find…" keyEquivalent="f" id="find-messages">
+                                <connections>
+                                    <action selector="findMessages:" target="-1" id="find-action"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Select All" keyEquivalent="a" id="Ruw-6m-B2m">
                                 <connections>
                                     <action selector="selectAll:" target="-1" id="VNm-Mi-diN"/>
@@ -142,6 +147,22 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="View" id="HyV-fh-RgO">
                         <items>
+                            <menuItem title="Make Text Bigger" keyEquivalent="+" id="text-bigger">
+                                <connections>
+                                    <action selector="increaseTextSize:" target="-1" id="text-bigger-action"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Make Text Smaller" keyEquivalent="-" id="text-smaller">
+                                <connections>
+                                    <action selector="decreaseTextSize:" target="-1" id="text-smaller-action"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Actual Text Size" keyEquivalent="0" id="text-reset">
+                                <connections>
+                                    <action selector="resetTextSize:" target="-1" id="text-reset-action"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="text-separator"/>
                             <menuItem title="Enter Full Screen" keyEquivalent="f" id="4J7-dP-txa">
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                 <connections>

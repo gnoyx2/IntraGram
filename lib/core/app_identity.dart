@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:cryptography/cryptography.dart';
 import 'package:cryptography/dart.dart' show DartSha256;
@@ -13,20 +12,18 @@ final Random _idRng = Random.secure();
 String _hex(Iterable<int> bytes) =>
     bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 
-// SHA-256 앞 16바이트(hex 32자). 누구나 다시 계산할 수 있어서 hello의 peerId가
-// 실제 그 키의 것인지 검증됨 (mDNS로 광고하는 값도 동일)
+// 공개키 SHA-256 앞 16바이트 hex. 누구나 다시 계산할 수 있어서 hello의 peerId가 그 키 것인지 확인됨
 String peerIdOfKey(List<int> publicKey) =>
     _hex(const DartSha256().hashSync(publicKey).bytes.take(16));
 
-// 96비트면 한 세션 트래픽 안에서 충돌 확률은 무시 가능 (저장 안 함)
+// 96비트라 한 세션 안에선 충돌 걱정 없음
 String newId() {
   final bytes = List<int>.generate(12, (_) => _idRng.nextInt(256));
   return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 }
 
-// 세션마다 새로 만드는 신원. 아무것도 저장 안 해서 세션끼리 엮을 고정 식별자가 없음
-// 앱 피어 링크는 create/withKey로 만든 키 있는 신원만 가능 (peerId = 공개키 해시)
-// 키 없는 new/generate는 화면·테스트용. 패닉 소각은 rotateKey로 키와 peerId를 교체함
+// 실행마다 새로 만드는 신원 (저장 안 해서 세션끼리 엮을 고정값이 없음). 앱 피어 링크는 키 있는 신원(create/withKey)만 됨.
+// 키 없는 생성자·generate는 화면·테스트용
 final class AppIdentity {
   AppIdentity({
     required this._peerId,
@@ -35,7 +32,7 @@ final class AppIdentity {
   }) : _publicKey = null,
        _seed = null;
 
-  // peerId는 publicKey의 해시라 임의 값을 키에 붙일 수 없음. 시드는 자체 사본을 보관
+  // peerId는 공개키에서 뽑아서 아무 값이나 못 붙임. 시드는 우리 사본으로 쥠
   AppIdentity.withKey({
     required List<int> seed,
     required List<int> publicKey,
@@ -53,13 +50,12 @@ final class AppIdentity {
       alias: _randomAlias(Random.secure()),
       platform: await _askPlatform(),
     );
-    // withKey가 사본을 따로 쥐니 뽑은 사본은 0으로 덮음 (개인키 사본 잔존 방지)
+    // withKey가 따로 복사해 가니 이 사본은 0으로 덮음
     key.seed.fillRange(0, key.seed.length, 0);
     return identity;
   }
 
-  // 라이브러리 키쌍의 destroy는 참조만 버리고 바이트를 안 지움(cryptography 2.9)
-  // 지울 수 있는 건 이 사본뿐이라 호출부가 소유하고 지움
+  // cryptography 키쌍의 destroy는 참조만 버리고 바이트는 안 지움. 지울 수 있는 건 이 사본뿐이라 호출부가 쥐고 지움
   static Future<({Uint8List seed, Uint8List publicKey})> _newKey() async {
     final generated = await Ed25519().newKeyPair();
     final pair = await generated.extract();
@@ -76,11 +72,9 @@ final class AppIdentity {
   Uint8List? _publicKey;
   Uint8List? _seed;
 
-  // 키 있는 신원은 공개키 해시. mDNS 자기 탐지 필터와 대화 키에 쓰고,
-  // 패닉 소각(rotateKey)에서만 바뀜
+  // 패닉 소각(rotateKey) 때 바뀌니 캐시하지 말고 그때그때 읽을 것
   String get peerId => _peerId;
 
-  // hello에 실려 상대가 peerId를 검증하는 데 씀
   Uint8List? get publicKey => _publicKey;
 
   @visibleForTesting
@@ -101,10 +95,8 @@ final class AppIdentity {
     return Uint8List.fromList(signature.bytes);
   }
 
-  // 패닉 소각용. 같은 peerId면 소각 전후 세션을 엮을 수 있어서 키와 peerId를 새로 바꿈
-  // 새 키를 뽑는 동안엔 옛 키가 유효하고, 뽑은 뒤 한 번에 교체함 (중간 상태 없음)
-  // Dart 힙은 서명 중 라이브러리가 만든 임시 사본까지 지운다고 보장 못 해서
-  // 여기서 쥔 사본만 확실히 0으로 덮음
+  // 패닉 소각용: 같은 peerId면 소각 전후 세션이 엮여서 키를 통째로 바꿈. 새 키를 다 뽑은 뒤 한 번에 갈아끼우고
+  // 우리가 쥔 옛 시드만 확실히 0으로 덮음 (서명 중 라이브러리가 만든 사본까진 보장 못 함)
   Future<void> rotateKey() async {
     if (_seed == null) return;
     final fresh = await _newKey();
@@ -115,8 +107,7 @@ final class AppIdentity {
     old?.fillRange(0, old.length, 0);
   }
 
-  // 소비자(LinkRegistry, DiscoveryController 등)가 참조로 쥐고 있어서 rename 때 제자리 변경함
-  // 재구성 없이 다음 호출부터 새 이름을 씀 (불변 규칙의 의도된 예외)
+  // LinkRegistry·DiscoveryController가 이 객체를 계속 쥐고 있어서 이름만 제자리에서 바꿈 (불변 규칙의 일부러 둔 예외)
   String alias;
 
   final String platform;
@@ -183,7 +174,7 @@ final class AppIdentity {
 
   static String randomAlias() => _randomAlias(Random.secure());
 
-  // iPad는 UIDevice에 물음. 못 물으면 창 크기 짐작
+  // 펼친 iPhone도 큰 창일 수 있으므로 창 크기로 기기 종류를 추측하지 않음
   static Future<String> _askPlatform() async {
     final pad = await OsPrivacy.isPad();
     if (pad != null) return pad ? 'iPadOS' : 'iOS';
@@ -191,20 +182,11 @@ final class AppIdentity {
   }
 
   static String _detectPlatform() {
-    if (Platform.isIOS) return _isTabletSized() ? 'iPadOS' : 'iOS';
+    if (Platform.isIOS) return OsPrivacy.cachedIsPad == true ? 'iPadOS' : 'iOS';
     if (Platform.isAndroid) return 'Android';
     if (Platform.isMacOS) return 'macOS';
     if (Platform.isWindows) return 'Windows';
     if (Platform.isLinux) return 'Linux';
     return 'Unknown';
-  }
-
-  // dart:io엔 iPhone/iPad 구분이 없음. 기기 모델 조회 플러그인 대신
-  // 짧은 변이 600dp 이상이면 태블릿으로 보는 Material 표준 휴리스틱 사용
-  static bool _isTabletSized() {
-    final view = ui.PlatformDispatcher.instance.views.firstOrNull;
-    if (view == null) return false;
-    final shortestSide = view.physicalSize.shortestSide / view.devicePixelRatio;
-    return shortestSide >= 600;
   }
 }

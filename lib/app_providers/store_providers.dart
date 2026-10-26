@@ -41,7 +41,7 @@ final roomMessagesProvider =
       (ref, id) => ref.watch(inMemoryStoreProvider).watchRoom(id),
     );
 
-// 원본이 소각/삭제되면 null. UI는 "Message deleted"로 표시함
+// 원본이 소각·삭제되면 null (UI는 삭제된 메시지로 보여 줌)
 // 방 스트림은 갱신 신호로만 쓰고 조회는 스토어 인덱스로 O(1). 값이 같으면(==) 구독자에 안 알림
 final messageByIdProvider =
     Provider.family<
@@ -64,7 +64,7 @@ final transferProvider = Provider.family<FileTransfer?, String>((ref, id) {
   return list.firstWhereOrNull((t) => t.id == id);
 });
 
-// "전부 수락/거절" 버튼이 offered 상태인 형제 수를 세는 데 씀
+// '전부 수락·거절' 버튼이 offered 상태인 형제 수를 셀 때 씀
 final transfersInBatchProvider =
     Provider.family<
       List<FileTransfer>,

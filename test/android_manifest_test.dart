@@ -71,6 +71,42 @@ void main() {
     expect(manifest, isNot(contains('android.permission.NEARBY_WIFI_DEVICES')));
   });
 
+  test(
+    'Android 17 LAN permission and adaptive windows compile with SDK 36',
+    () {
+      final manifest = File(
+        'android/app/src/main/AndroidManifest.xml',
+      ).readAsStringSync();
+      final activity = File(
+        'android/app/src/main/kotlin/com/yonghun0310/intragram/MainActivity.kt',
+      ).readAsStringSync();
+      expect(manifest, contains('android.permission.ACCESS_LOCAL_NETWORK'));
+      expect(manifest, contains('android:resizeableActivity="true"'));
+      for (final change in [
+        'screenSize',
+        'smallestScreenSize',
+        'screenLayout',
+      ]) {
+        expect(manifest, contains(change));
+      }
+      expect(activity, contains('Build.VERSION.SDK_INT >= 37'));
+      expect(activity, contains('"android.permission.ACCESS_LOCAL_NETWORK"'));
+      expect(
+        activity,
+        isNot(contains('Manifest.permission.ACCESS_LOCAL_NETWORK')),
+      );
+      expect(activity, contains('requestPermissions('));
+      expect(
+        activity,
+        contains('checkSelfPermission(LOCAL_NETWORK_PERMISSION)'),
+      );
+      expect(
+        activity,
+        contains('WindowCompat.setDecorFitsSystemWindows(window, false)'),
+      );
+    },
+  );
+
   // 백그라운드 연결 알림: 문구는 리소스(한국어 포함), small icon은 흰 실루엣
   test('the connection notification is localized and uses the status icon', () {
     final service = File(

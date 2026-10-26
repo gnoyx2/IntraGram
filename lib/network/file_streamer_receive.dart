@@ -3,12 +3,8 @@ part of 'file_streamer.dart';
 Future<RandomAccessFile> _openPartial(File file) =>
     file.open(mode: FileMode.write);
 
-// FileStreamer.receive 본체. 협상한 크기를 정확히
-// 강제: 넘거나 못 채우면 쓰기를 중단하고 부분 파일을 지운 뒤 SecurityException
-// 절대 상한은 없고 받는 쪽 여유 디스크로만 제한 (LocalSend와 동일). decrypt가
-// 있으면 청킹/크기 강제보다 먼저 복호화 (declaredSize는 평문 기준)
-// await for 대신 StreamIterator: 정지된 스트림에서도 cancel()이
-// 대기 중인 moveNext()를 즉시 false로 끝내게 함
+// 협상한 크기를 딱 맞춤: 넘거나 모자라면 멈추고 .part를 지운 뒤 SecurityException. 절대 상한은 없고 여유 디스크가 한도 (LocalSend처럼).
+// await for 대신 StreamIterator: 멈춘 스트림에서도 cancel()이 기다리던 moveNext()를 바로 끝냄
 Future<int> _receive({
   required Stream<List<int>> body,
   required String transferId,
@@ -19,6 +15,7 @@ Future<int> _receive({
   OpenChunk? decrypt,
   CancelToken? cancelToken,
   String? sha256,
+  void Function(String sha256)? onDigest,
 }) async {
   if (declaredSize < 0) {
     throw SecurityException(
@@ -38,20 +35,15 @@ Future<int> _receive({
     await raf.close();
   }
 
-  // cancelToken 취소 시 불리는 iterator.cancel()의 Future(소스 구독 취소 완료)를
-  // 붙잡아 abort가 기다림. 안 그러면 moveNext()가 false로 끝나자마자 함수가 끝나서,
-  // 호출부(clear)가 "정리 완료"를 선언한 뒤에도 소스 구독 취소가 진행 중일 수 있음
+  // 취소 때 iterator.cancel()이 끝나길 abort가 기다림 (안 그러면 정리 완료라고 한 뒤에도 구독 취소가 도는 중일 수 있음)
   Future<void>? cancelling;
 
-  // abort가 던진 예외(원래 오류 또는 TransferCleanupException)가
-  // 아래 catch에 다시 잡혀 abort가 두 번 돌면
-  // 정리 실패가 이중으로 감싸여 보고됨
+  // abort가 던진 걸 아래 catch가 다시 잡아 abort가 두 번 돌면 정리 실패가 두 겹으로 싸임
   var aborted = false;
 
   Future<Never> abort(Object error) async {
     aborted = true;
-    // close 실패가 삭제 시도를 건너뛰게 하지 않음: 둘을 따로 시도하고 하나라도 실패하면
-    // 원래 오류와 함께 TransferCleanupException으로 전달
+    // close가 실패해도 삭제는 시도함. 하나라도 실패하면 원래 오류와 같이 TransferCleanupException
     final failures = <Object>[];
     try {
       await cancelling;
@@ -87,12 +79,14 @@ Future<int> _receive({
   final iterator = StreamIterator<List<int>>(
     fixedSizeChunks(source, kFileChunkBytes),
   );
-  // 방 직접 전송: 쓰는 대로 해시해서 끝에 offer의 SHA-256과 맞춤 (다시 읽지 않음)
-  final hash = sha256 == null ? null : const DartSha256().newHashSink();
+  // 방 직접 전송: 쓰는 대로 해시해서 끝에 offer의 SHA-256과 맞춤 (다시 읽지 않음). 영수증용이면 맞출 값 없이 재기만 함
+  final hash = sha256 == null && onDigest == null
+      ? null
+      : const DartSha256().newHashSink();
+  String? digest;
   final unregisterCancel = cancelToken?.onCancel(() {
     final cancel = iterator.cancel();
-    // abort가 기다리기 전에 에러로 끝나도 "미처리 async 에러"로
-    // 안 새게 함 (await cancelling은 여전히 그 에러를 던짐)
+    // abort가 기다리기 전에 오류로 끝나도 처리 안 된 오류로 안 샘 (await cancelling은 그래도 던짐)
     unawaited(cancel.then<void>((_) {}, onError: (Object _) {}));
     cancelling = cancel;
   });
@@ -112,9 +106,7 @@ Future<int> _receive({
           ),
         );
       }
-      // writeFrom은 실제 쓰기가 끝나야 완료되는 Future라 await for 안에서 기다리면 다음 청크가 자동으로 배압됨
-      // (느린 디스크가 스트림 구독을 pause시킴). IOSink.add()는
-      // 즉시 리턴해서 디스크가 못 따라가면 청크가 내부 버퍼에 무한정 쌓일 수 있었음
+      // writeFrom은 쓰기가 끝나야 끝나서 기다리는 동안 다음 청크가 밀림 (배압). IOSink.add는 바로 리턴해서 느린 디스크면 버퍼가 끝없이 쌓였음
       await raf.writeFrom(chunk);
       hash?.add(chunk);
       meter.add(chunk.length);
@@ -130,13 +122,15 @@ Future<int> _receive({
     }
     if (hash != null) {
       hash.close();
-      if (base64.encode(hash.hashSync().bytes) != sha256) {
+      digest = base64.encode(hash.hashSync().bytes);
+      if (sha256 != null && digest != sha256) {
         await abort(const ContentMismatchException());
       }
     }
     await raf.flush();
     await closeOnce();
     onProgress?.call(meter.total, 0);
+    if (digest != null) onDigest?.call(digest);
     return meter.total;
   } on Object catch (e) {
     if (aborted) rethrow;

@@ -11,8 +11,46 @@ import 'package:intragram/store/models.dart';
 import '_harness.dart';
 
 // iOS 가장 큰 글씨(본문 3.12배)에서 방 화면: 중계·오프라인·미검증 배너가 화면을 다 먹어 메시지 목록이
-// 0이 되고 입력창이 잘렸음. 배너 묶음은 화면의 30%까지만 차지하고 안에서 스크롤함
+// 0이 되고 입력창이 잘렸음. 배너 묶음은 입력창 위 남은 높이의 30%까지만 차지하고 안에서 스크롤함
 void main() {
+  // Android 17 플로팅 창(320×360)에 키보드가 올라오면 화면 높이 기준 상한으로는 입력창이 밀려 넘쳤음
+  testWidgets('a room in a floating window keeps the composer above the '
+      'keyboard', (tester) async {
+    tester.view.physicalSize = const Size(320, 360);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final h = Harness();
+    addTearDown(h.dispose);
+    h.store.upsertConversation(
+      conv('r1').copyWith(
+        isRoom: true,
+        hostAlias: 'ann-fox-12',
+        memberCount: 3,
+        online: false,
+        members: const {'m1': RoomMember(alias: 'blue-otter-38')},
+      ),
+    );
+    await tester.pumpWidget(
+      h.wrap(
+        const MediaQuery(
+          data: MediaQueryData(
+            size: Size(320, 360),
+            viewInsets: EdgeInsets.only(bottom: 160),
+            disableAnimations: true,
+          ),
+          child: ChatRoomScreen(conversationId: 'r1'),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull, reason: 'no overflow');
+    expect(
+      tester.getRect(find.byType(ChatInput)).bottom,
+      lessThanOrEqualTo(200),
+    );
+  });
+
   testWidgets('a room at 3.12x text leaves room for messages and the '
       'composer', (tester) async {
     tester.view.physicalSize = const Size(390, 844);

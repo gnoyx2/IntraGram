@@ -2,6 +2,8 @@ part of '../server_controller.dart';
 
 // 서버를 못 띄운 이유. 화면 문구와 다음 행동이 다름
 enum ServerProblem {
+  // Android 17+: 로컬 네트워크 런타임 권한이 꺼짐
+  localNetworkDenied,
   // 사설·링크 로컬 IPv4가 하나도 없음 (Wi-Fi 안 붙음)
   noNetwork,
   // 붙어 있지만 공인·CGNAT 주소만 받음 (캠퍼스·회사 Wi-Fi, 일부 핫스팟): 설계상 안 씀
@@ -32,16 +34,14 @@ class ServerState {
   // failed일 때 원문 (개발자용, 화면엔 번역 문구와 함께 보조로만)
   final String? error;
 
-  // 옵트인 (기본 false). true일 때만 portalToken이 발급되고 웹 게스트가 들어올 수 있음
+  // true일 때만 토큰이 있고 웹 게스트가 들어옴
   final bool portalEnabled;
 
-  // 옵트인으로 켤 때만 뽑는 256-bit RAM 전용 입장 토큰(base64url)
-  // 서버가 꺼지거나 포털을 끄면 즉시 사라지고 vault/로그에 안 감
+  // 켤 때만 뽑는 256비트 입장 토큰 (RAM). 서버나 포털을 끄면 바로 사라지고 보관소·로그엔 안 감
   final String? portalToken;
 
-  // 브라우저 게스트가 입력/스캔해서 들어오는 URL (서버가 꺼졌거나 포털이 꺼져 토큰이 없으면 null)
-  // 토큰은 URL fragment(#t=...)로 붙임: fragment는 서버로 안 가서 요청 로그/Referer에 안 남고
-  // 브라우저가 읽자마자 지움 (socket.js 참고)
+  // 브라우저 게스트가 치거나 찍어서 들어오는 주소 (토큰이 없으면 null). 토큰은 #t=로: fragment는 서버로 안 가서
+  // 로그·Referer에 안 남고 브라우저가 읽자마자 지움
   String? get portalUrl {
     if (!running || host == null || port == null) return null;
     final token = portalToken;

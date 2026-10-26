@@ -1,9 +1,7 @@
 part of 'outgoing_transfers.dart';
 
-// OutgoingTransfersDelivery.retryTransfer의 실제 구현체. 원래 mode를
-// 유지하고(pull이 push로 둔갑 안 함) 실패한 수신자마다 새 attempt(+pull이면 새 토큰)로 그 수신자에게만 다시 offer
-// 옛 attempt의 토큰/EOF/ACK/타이머는 startNewAttempt가 전부 버려서 늦게 오는 옛 ACK가
-// 새 시도를 완료시키지 못함. 평문 재시도 경로 없음: 암호화된 전송은 항상 새 attempt로 다시 봉인함
+// retryTransfer 구현. mode는 그대로고 실패한 수신자마다 새 attempt로 그 수신자에게만 다시 offer.
+// 옛 흔적은 startNewAttempt가 다 버려서 늦게 온 옛 ACK가 새 시도를 못 끝냄
 Future<void> _retryOutgoingTransfer(
   OutgoingTransfers self,
   String transferId,
@@ -38,17 +36,14 @@ Future<void> _retryOutgoingTransfer(
   }
 }
 
-// pull이면 지금 이 기기 서버 주소, push면 null. pull인데 서버가
-// 꺼져 있으면 null (받는 쪽이 당길 곳이 없어 호출부가 재시도를 못 함)
+// pull이면 지금 서버 주소 (꺼져 있으면 null이라 재시도 못 함), push면 null
 ({String host, int port})? _endpointFor(
   OutgoingTransfers self,
   OutgoingFileSource source,
 ) => source.mode == FileTransferMode.pull ? self._localEndpoint?.call() : null;
 
 extension _OutgoingTransfersRetry on OutgoingTransfers {
-  // recipient 한 명을 새 attempt로 되돌려 그 수신자에게만 다시
-  // offer. 수신자 링크가 없거나(오프라인) pull인데 서버가 꺼져 있으면
-  // 아무것도 안 하고 failed로 남김
+  // 수신자 한 명만 새 attempt로 다시 offer. 링크가 없거나 pull인데 서버가 꺼졌으면 failed로 둠
   Future<void> _retryRecipient(
     String transferId,
     OutgoingFileSource source,
@@ -76,8 +71,7 @@ extension _OutgoingTransfersRetry on OutgoingTransfers {
       recipient,
       endpoint: endpoint,
     );
-    // 새 attempt를 링크에 못 실었으면 offered로 기다리지 않고
-    // 다시 실패로 (그 사이 더 새 재시도가 시작됐으면 그 시도는 안 건드림)
+    // 못 실었으면 다시 실패로 (그사이 더 새 재시도가 시작됐으면 안 건드림)
     if (!sent && recipient.attemptId == attemptId) {
       recipient.fail();
       _syncTransfer(transferId);
@@ -96,7 +90,11 @@ Future<void> _handleLinkClosedOutgoing(
       .toList();
   for (final id in ids) {
     if (recipientKey == null) {
-      await self.discard(id);
+      try {
+        await self.discard(id);
+      } on TransferCleanupException {
+        // 링크 콜백이라 실패는 _releaseFailures에만 남기고(clear가 던짐) 나머지 전송·수신 정리를 계속함
+      }
       continue;
     }
     final recipient = self._outgoing[id]?._recipients[recipientKey];
@@ -109,13 +107,18 @@ Future<void> _handleLinkClosedOutgoing(
   }
 }
 
-// 세션 teardown: 각 항목을 discard와 똑같이(진행 중 작업 await 포함) 처리한 뒤에만 맵을 비움
+// 세션 정리: 하나씩 discard처럼 (도는 작업까지 기다림)
 Future<void> _clearOutgoing(OutgoingTransfers self) async {
-  self._closed = true; // 동기: 이 줄 이후 늦게 오는 제안은 stage되지 않음
+  self._closed = true; // 이 뒤로 늦게 온 제안은 안 올림
   for (final id in self._outgoing.keys.toList()) {
-    await self.discard(id);
+    try {
+      await self.discard(id);
+    } on TransferCleanupException {
+      // _releaseFailures에 모았으므로 다른 소스도 모두 정리한 뒤 보고함.
+    }
   }
   await Future.wait(self._pendingReleases.toList());
+  self._retiring.clear();
   if (self._releaseFailures.isNotEmpty) {
     final failures = List<Object>.of(self._releaseFailures);
     self._releaseFailures.clear();

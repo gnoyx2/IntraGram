@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
+import 'package:intragram/core/target_platform.dart';
 import 'package:intragram/core/wifi_info.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
@@ -12,7 +11,8 @@ Future<void> showWifiInfoDialog(BuildContext context) {
   final cupertino = isCupertinoDialog(context);
   return showDialog<void>(
     context: context,
-    builder: (dialogContext) => AlertDialog.adaptive(
+    builder: (dialogContext) => AppAlertDialog(
+      cupertino: cupertino,
       title: Text(s.t('wifiInfo.title')),
       content: FutureBuilder<WifiInfo?>(
         future: currentWifiInfo(),
@@ -31,9 +31,8 @@ Future<void> showWifiInfoDialog(BuildContext context) {
           }
           final info = snap.data;
           if (info == null) {
-            final mobile = Platform.isIOS || Platform.isAndroid;
             return Text(
-              mobile
+              isMobileTarget
                   ? s.t('wifiInfo.unavailableMobile')
                   : s.t('wifiInfo.unavailable'),
             );

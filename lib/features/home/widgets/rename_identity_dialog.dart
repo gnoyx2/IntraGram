@@ -20,7 +20,7 @@ class _RenameIdentityDialogState extends State<RenameIdentityDialog> {
     text: widget.currentAlias,
   );
 
-  // 이름을 일부러 설정하는 액션이라 다음에도 쓰는 쪽이 기본값
+  // 일부러 이름을 정하는 거라 다음에도 쓰는 쪽이 기본값
   bool _save = true;
 
   @override
@@ -78,7 +78,8 @@ class _RenameIdentityDialogState extends State<RenameIdentityDialog> {
       ],
     );
 
-    return AlertDialog.adaptive(
+    return AppAlertDialog(
+      cupertino: cupertino,
       title: Text(s.t('identity.renameTitle')),
       content: Column(
         mainAxisSize: MainAxisSize.min,

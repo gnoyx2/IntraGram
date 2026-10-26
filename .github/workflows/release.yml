@@ -1,21 +1,16 @@
 name: release
 
-# Push a version tag (e.g. v1.0.0) to build every platform and open a DRAFT
-# GitHub Release with the binaries attached. Each build job measures the
-# signing state of what it built and writes it to SIGNING-<platform>.txt, and
-# the release notes point there: read those files, not a hand-written claim.
+# 버전 태그(예: v1.0.0)를 올리면 모든 플랫폼을 빌드해서 바이너리를 붙인 초안 GitHub Release를 엶.
+# 빌드 잡마다 만든 결과물의 서명 상태를 직접 재서 SIGNING-<플랫폼>.txt에 적고 릴리즈 노트는 그 파일을 가리킴
+# (손으로 쓴 주장 말고 그 파일을 볼 것)
 #
-# Signing, by platform (see RELEASING.md for the full procedure):
-# - Android: signed with the release key only when the ANDROID_KEYSTORE_*
-#   secrets exist. Without them the APKs are debug-signed, are renamed
-#   *-debugsigned.apk, stay workflow-run artifacts (never attached to the
-#   release), and no .aab is built into the artifact set.
-# - iOS / macOS / Windows / Linux: no signing credentials are wired in.
-#   iOS is unsigned (--no-codesign), macOS is ad-hoc signed and not notarized,
-#   Windows is not Authenticode-signed, Linux has no OS-level signing.
+# 플랫폼별 서명 (전체 절차는 RELEASING.md)
+# - Android: ANDROID_KEYSTORE_* 시크릿이 있을 때만 릴리즈 키로 서명함. 없으면 APK가 debug 서명이라
+#   *-debugsigned.apk로 이름을 바꿔 워크플로 실행 산출물로만 남기고(릴리즈엔 안 붙임) .aab도 안 만듦
+# - iOS·macOS·Windows·Linux: 서명 자격 증명을 안 이어 둠. iOS는 서명 없음(--no-codesign), macOS는 ad-hoc 서명에
+#   공증 없음, Windows는 Authenticode 서명 없음, Linux는 OS 수준 서명이 없음
 #
-# This workflow has not been run yet (the repository had no remote). Run it
-# once with "Run workflow" (workflow_dispatch) before pushing the first tag.
+# 첫 태그를 올리기 전에 Run workflow(workflow_dispatch)로 한 번 돌려서 확인할 것
 
 on:
   push:
@@ -44,8 +39,7 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed .
       - run: python3 tool/check_loc.py
       - run: flutter analyze
-      # 'large' 태그(1GiB/4GiB 전송 회귀)는 느리고 디스크를 몇 GiB 씀 —
-      # 릴리즈 게이트에서도 기본 검사엔 안 낌(필요하면 수동으로 따로 돌림).
+      # 'large' 태그(1GiB·4GiB 전송 회귀)는 느리고 디스크를 몇 GiB 써서 릴리즈 게이트에서도 안 낌 (필요하면 따로 돌림)
       - run: flutter test --exclude-tags large
       - run: node tool/browser_guard_test.js
       - run: node tool/web_design_test.js
@@ -81,9 +75,8 @@ jobs:
           printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
             "$RUNNER_TEMP/release.jks" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" \
             > android/key.properties
-      # Without a key the Gradle build refuses release output unless told the
-      # debug-signed APKs are wanted; this job renames them *-debugsigned and
-      # never attaches them to the release.
+      # 키가 없으면 Gradle이 release 산출물을 거부해서 debug 서명 APK를 원한다고 알려 줌.
+      # 이 잡은 그걸 *-debugsigned로 바꿔 두고 릴리즈엔 절대 안 붙임
       - run: flutter build apk --release --split-per-abi
         env:
           ORG_GRADLE_PROJECT_allowDebugSigning: 'true'
@@ -184,7 +177,7 @@ jobs:
           cache: true
       - run: flutter pub get --enforce-lockfile
       - run: flutter build windows --release
-      # 설치 안 된 PC에서도 뜨도록 VC++ 런타임을 앱 폴더에 같이 넣음(앱 로컬 배포).
+      # VC++ 런타임이 없는 PC에서도 뜨게 앱 폴더에 같이 넣음 (앱 로컬 배포)
       - name: Package portable zip
         shell: pwsh
         run: |
@@ -277,8 +270,7 @@ jobs:
         run: |
           mkdir -p release
           find artifacts -type f -exec cp {} release/ \;
-          # A debug-signed APK shares its signature with every other debug-signed
-          # build, so it could be "updated" by someone else's APK. Never publish it.
+          # debug 서명 APK는 남의 debug 서명 빌드와 서명이 같아서 남의 APK가 업데이트인 척 덮을 수 있음: 절대 안 올림
           rm -f release/*-debugsigned.apk
           cp LICENSE THIRD_PARTY_NOTICES.md release/
           ls -lh release
@@ -296,8 +288,7 @@ jobs:
           files: release/*
           generate_release_notes: true
           draft: true
-          # Every release stays a pre-release until the maintainer sets the
-          # repository variable DEVICE_QA_PASSED=true after DEVICE_QA.md passes.
+          # DEVICE_QA.md를 통과하고 관리자가 저장소 변수 DEVICE_QA_PASSED=true를 두기 전까진 늘 pre-release
           prerelease: ${{ contains(github.ref_name, '-') || vars.DEVICE_QA_PASSED != 'true' }}
           body: |
             IntraGram ${{ github.ref_name }}, a LAN-only P2P messenger.

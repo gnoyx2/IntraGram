@@ -1,6 +1,6 @@
 part of 'local_server.dart';
 
-// 브라우저 게스트용 단일 HTML 웹 클라이언트 (server_routes.dart의 / 라우트가 부름)
+// 브라우저 게스트용 HTML 한 장
 extension LocalServerWebClient on LocalServer {
   Future<Response> _serveWebClient() async {
     if (_webClientCache == null) {
@@ -9,10 +9,7 @@ extension LocalServerWebClient on LocalServer {
         'assets/web/css/theme.css',
         'assets/web/css/layout.css',
       ]);
-      // 의존 순서대로 이어붙임 (plain 스크립트라 concat 순서 = 정의 순서): i18n
-      // -> socket -> peer_address -> audio_player ->
-      // chat_ui -> chat_ui_handlers -> file_transfer ->
-      // app.js(엔트리)
+      // plain 스크립트라 이어 붙이는 순서가 곧 정의 순서 (app.js가 마지막)
       final js = await _concatAssets([
         'assets/web/js/i18n.js',
         'assets/web/js/socket.js',
@@ -26,7 +23,7 @@ extension LocalServerWebClient on LocalServer {
       final html = shell
           .replaceFirst('/*__APP_CSS__*/', css)
           .replaceFirst('/*__APP_JS__*/', js);
-      // 실제 인라인 블록의 해시만 허용함
+      // CSP는 실제 인라인 블록의 해시만 허용함
       final directives = <String>[];
       for (final tag in ['script', 'style']) {
         final hashes = <String>[];
@@ -57,7 +54,7 @@ extension LocalServerWebClient on LocalServer {
     );
   }
 
-  // 웹 클라이언트 소스는 여러 파일로 쪼개져 있어도 서버가 한 번에 인라인해서 브라우저가 문서 하나만 받음 (추가 네트워크 요청 없음)
+  // 소스는 여러 파일이어도 한 문서로 인라인해서 브라우저는 요청 하나로 끝남
   static Future<String> _concatAssets(List<String> paths) async {
     final parts = await Future.wait(paths.map(rootBundle.loadString));
     return parts.join('\n');

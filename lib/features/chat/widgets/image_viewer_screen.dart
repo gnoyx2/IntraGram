@@ -1,9 +1,8 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
+import 'package:intragram/core/target_platform.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/motion.dart';
 import 'package:intragram/theme/tokens.dart';
@@ -36,8 +35,8 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   TapDownDetails? _doubleTapDetails;
   bool _chromeVisible = true;
 
-  // 눌려 있는 포인터 id들. Listener는 제스처 아레나를 안 거치고 raw 포인터를 다 받아서,
-  // 이걸로 안 거르면 핀치 중 한 손가락의 움직임을 "아래로 스와이프해서 닫기"로 착각해 배경이 튐
+  // 눌린 포인터 id. Listener는 제스처 아레나 없이 raw 포인터를 다 받아서, 안 거르면 핀치 중
+  // 한 손가락 움직임을 아래로 밀어 닫기로 착각해 배경이 튐
   final Set<int> _pointers = <int>{};
 
   bool get _isZoomed => _zoomController.value.getMaxScaleOnAxis() > 1.01;
@@ -123,7 +122,6 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final dpr = MediaQuery.devicePixelRatioOf(context);
-    final isMobile = Platform.isIOS || Platform.isAndroid;
     final fade = (_dragOffset.dy.abs() / _dismissFadeExtent).clamp(0.0, 1.0);
     return Scaffold(
       backgroundColor: Colors.black.withValues(alpha: 1 - fade * 0.7),
@@ -181,7 +179,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                   ),
                 ),
                 child: SafeArea(
-                  child: _ViewerTopBar(path: widget.path, canShare: isMobile),
+                  child: _ViewerTopBar(
+                    path: widget.path,
+                    canShare: isMobileTarget,
+                  ),
                 ),
               ),
             ),

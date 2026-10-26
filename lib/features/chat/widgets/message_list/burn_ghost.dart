@@ -1,7 +1,7 @@
 part of '../message_list.dart';
 
-// 크기/정렬만 들고 있어서 원본 텍스트/음성/전송 소스가 애니메이션 도중에도 위젯 트리에 안 남음
-// reduced-motion이면 motionDuration이 0을 줘서 즉시 사라짐
+// 크기만 받아서 애니메이션 도중에도 원본 텍스트·음성·전송 소스가 위젯 트리에 안 남음.
+// reduced motion이면 길이가 0이라 바로 사라짐
 class _BurnGhost extends StatelessWidget {
   const _BurnGhost({required this.size});
 

@@ -6,6 +6,12 @@ Use GitHub's private vulnerability reporting (the repository's Security tab,
 "Report a vulnerability"). Please do not open a public issue for a
 vulnerability, and do not include a working exploit against a third party.
 
+Secondary private contact: **not configured yet**. Before publishing, the
+maintainer must replace this notice with a monitored private address or URL,
+as required by `RELEASING.md` section 6, and test both reporting routes. If the
+GitHub private route is unavailable meanwhile, do not post exploit details in
+an issue; wait for a private route.
+
 ## Supported versions
 
 Only the latest release is supported. The wire protocol is versioned (`v7`
@@ -49,6 +55,63 @@ Do not rely on it where a failure would put someone in danger.
   most 32 browser guests, and an HTTP connection that never finishes its
   request is closed after 10 to 20 seconds.
 
+## Signed evidence, organization credentials and app room integrity
+
+- **Receipts.** Ed25519 delivery receipts bind the recipient, sender key,
+  current transfer attempt and measured content digest after receive commit.
+  Burn and cleanup receipts state policy triggers and app-managed cleanup
+  outcomes. Peers without receipts can still use the legacy ACK path; a missing
+  receipt is not a verified receipt. Rejected receipts never enter a batch.
+- **Salted Merkle evidence.** Each receipt has a random 16-byte leaf salt;
+  signed batch headers and inclusion paths support whole or selected JSON
+  disclosure. Message burn commitments use a separate secret salt that is
+  discarded. File digests remain comparable to known files. Evidence is RAM
+  only (512 receipts, 64 batches, 64 witness observations), excluded from vault
+  snapshots and decoy mode. Panic freezes new evidence and clears evidence,
+  organization credentials and room ledgers synchronously before the first
+  shutdown await, then clears them again after resource drain. In-flight work
+  is generation-checked. Quitting and relocking also clear the state.
+- **Witnesses.** Manual export/verify/sign/import on another device anchors
+  one batch root to a separately confirmed witness peer ID; self-witnesses are
+  refused. A repeated requester/batch number with a different observed root
+  reports a conflict. This is no consensus protocol, global append-only ledger,
+  trusted timestamp or proof of physical deletion. A signer can lie about a
+  cleanup; an unobserved or forgotten fork is not detected.
+- **Organization credentials.** Issuer signatures, subject key, allowed policy,
+  validity dates, trust snapshot and that snapshot's revocation list are checked.
+  Holder proof binds both peer IDs, session and roles; credential frames follow
+  encrypted link establishment and never enter discovery. Credential status
+  does not alter SAS verification. The bundled demo issuer has a public seed:
+  anyone can issue its credentials, so its badge proves no actual affiliation.
+  Offline checks cannot learn revocations newer than the chosen snapshot.
+- **App rooms.** Author signatures bind counters, previous-event hashes and
+  payload commitments with a fresh 32-byte salt. Observed ledgers keep opaque
+  hashes and previous hashes, not payload commitments, salts or signatures;
+  burning/deleting also retires the author's retry envelope. Signed duplicate
+  counters never reinsert a body or restart TTL, even after detailed observations
+  leave the 256-item window. Compressed replay ranges live until room removal;
+  at 256 disjoint ranges new disjoint intervals are rejected; adjacent counters
+  and fills within existing gaps remain accepted. Checkpoint comparisons use
+  the latest 256 observations and detect disagreements only when both views
+  are observed. The host can still read, withhold and reorder traffic; no
+  distributed consensus or group E2EE is added. Legacy unsigned peers can chat
+  until signed capability is observed. Author payload/signature domains are v2
+  with a required 32-byte payload salt; prior prerelease signed-v1 envelopes
+  without it are rejected. Browser portal rooms are separate and
+  have none of these author/checkpoint guarantees.
+- **Audit clipboard.** Whole bundles, individual proofs and witness receipts
+  all use `OsPrivacy.copySensitive`: Android sensitive marking, Apple local-only
+  copying, Windows history/cloud exclusion, and a 60-second own-copy expiry.
+  On Windows the expiry compares the clipboard owner window and the sequence
+  number read after `CloseClipboard`, which bumps the number when Windows
+  synthesizes text formats; a copy made by another app, even of the same text,
+  is never cleared. Linux clipboard managers and deliberate exports may retain
+  copies. Export
+  reveals the selected signed receipt metadata, IDs/keys, commitments, times,
+  leaf salts/paths, batch header and optional witness receipt; it includes no
+  message body. Export and witness exchange are user-initiated, with no automatic
+  gateway upload. Treat the resulting metadata as sensitive.
+
 ## What it does not defend against
 
 - **A compromised device, or the host of a group room.** A group room is
@@ -82,11 +145,14 @@ Do not rely on it where a failure would put someone in danger.
   keys, frame plaintext, file chunks, voice audio); the rest stays in freed
   memory until it is reused. Swap files, crash dumps and OS caches may hold
   copies.
-- **Copied text on Linux.** Copying a message, the security code or the portal
-  link marks the copy as sensitive on Android, keeps it on this device on iOS
+- **Copied text on Linux.** Copying a message, the security code, the portal
+  link or an audit bundle/proof/witness receipt marks the copy as sensitive on Android, keeps it on this device on iOS
   and macOS (no Universal Clipboard) and keeps it out of clipboard history and
   cloud sync on Windows, then clears it after 60 seconds if it is still ours.
-  On Linux it is a plain copy, so a clipboard manager may keep it.
+  On Linux the app keeps ownership of the copy, offers the KDE
+  `x-kde-passwordManagerHint` secret hint and clears it after 60 seconds only
+  while it still owns the clipboard; a clipboard manager may ignore the hint
+  and keep a copy.
 - **Where the vault lives on Apple platforms.** `vault.json` and `identity.json`
   live in the app's Application Support/IntraGram directory, separate from
   received files in `Documents/IntraGram`. On iOS the app requests complete file
@@ -104,7 +170,11 @@ Do not rely on it where a failure would put someone in danger.
 - **Availability.** A device on the LAN can still use up handshake capacity or
   flood a link. The caps above limit, not prevent, that.
 - **Screenshots.** Android enables `FLAG_SECURE` to block ordinary OS screenshots
-  and screen recordings. iOS detects screenshots after capture and obscures app
-  switcher snapshots; it cannot prevent a screenshot or an external camera.
+  and screen recordings, and Windows leaves the window out of captures
+  (`WDA_EXCLUDEFROMCAPTURE`). macOS marks the window as not shareable, which
+  recent capture tools may ignore, and reports the screenshots it notices. iOS
+  detects screenshots after capture and obscures app switcher snapshots; it
+  cannot prevent a screenshot. Linux has no such control, and nothing stops an
+  external camera.
 - **Unsigned binaries.** Release binaries other than a release-key-signed
   Android build are not code-signed or notarized; verify `SHA256SUMS.txt`.

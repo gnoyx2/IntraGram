@@ -16,7 +16,7 @@ import '../../support/vault_snapshot.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('duress panic deletes vault, identity and download settings', () async {
+  test('duress panic erases every file and replaces the key', () async {
     final dir = Directory.systemTemp.createTempSync('duress_panic_');
     final vault = Vault(resolveDir: () async => dir.path);
     final identityStore = IdentityStore(resolveDir: () async => dir.path);
@@ -54,6 +54,8 @@ void main() {
     final settings = File('${dir.path}/download_directories.json')
       ..writeAsStringSync('["/private/folder"]');
     File('${settings.path}.tmp').writeAsStringSync('pending');
+    final identity = testIdentity('a');
+    final oldPeerId = identity.peerId;
     final result = await executePanicWipe(
       sweepTemp: () async {},
       store: store,
@@ -64,13 +66,13 @@ void main() {
       vaultSettings: container.read(vaultSettingsProvider.notifier),
       vaultAccess: container.read(vaultAccessProvider.notifier),
       identityStore: identityStore,
-      identity: testIdentity('a'),
-      isDecoySession: true,
+      identity: identity,
       directorySettingsFile: File('${dir.path}/download_directories.json'),
       clearClipboard: () async {},
       releaseNativeSources: () async {},
     );
     expect(result.isComplete, isTrue, reason: '${result.failures}');
     expect(dir.listSync(), isEmpty);
+    expect(identity.peerId, isNot(oldPeerId));
   });
 }

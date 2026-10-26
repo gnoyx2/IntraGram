@@ -1,9 +1,7 @@
 part of '../link_registry.dart';
 
 extension _RoomBroadcast on _LinkRegistryState {
-  // 현재 방 링크 전부에 쓰기가 성공해야 true (받는 사람이 없으면
-  // 실패). 필수 프레임을 못 받은 링크는 닫아 명단/전송 상태가 수렴하게
-  // 함
+  // 방 링크 전부에 써져야 true (받을 사람이 없어도 false). 필수 프레임을 못 받은 링크는 닫아서 명단·전송 상태가 맞춰지게 함
   Future<bool> _broadcastToRoom(
     String roomId,
     Map<String, dynamic> inner, {
@@ -31,15 +29,44 @@ extension _RoomBroadcast on _LinkRegistryState {
           ? link.sendRawInnerOrClose(inner)
           : link.deliverRawInner(inner));
     } on Object {
-      // 종료 콜백/채널도 던질 수 있음: 필수 프레임은 링크를 닫고 실패로 반환
+      // 종료 콜백·채널도 던질 수 있음
       if (requiredDelivery) {
         try {
           await link.close();
         } on Object {
-          // 이미 닫히는 중인 링크의 cleanup 실패: 전달은 실패로 남김
+          // 이미 닫히는 중: 전달 실패로 남김
         }
       }
       return false;
     }
+  }
+
+  Future<void> _sendRoomText(EphemeralMessage message) async {
+    // 작성자 서명·체크포인트는 앱 방만 (브라우저 게스트 방은 평문이라 예전 프레임 그대로)
+    final appRoom = message.conversationId == _appRoomId;
+    if (appRoom) _ensureRoomIntegrity(message.conversationId);
+    final wire = await store.roomIntegrity
+        .sign(message.conversationId, identity, <String, dynamic>{
+          ...InnerFrame.message(
+            id: message.id,
+            text: message.text!,
+            ttlSeconds: message.ttlSeconds,
+            timestampMs: message.createdAt.millisecondsSinceEpoch,
+            replyToId: message.replyToId,
+          ),
+          'from': message.senderAlias,
+        });
+    if (wire == null ||
+        _disposed ||
+        store.messageById(message.id)?.conversationId !=
+            message.conversationId) {
+      return;
+    }
+    final delivered = await _broadcastToRoom(message.conversationId, wire);
+    if (appRoom && store.conversation(message.conversationId) != null) {
+      _broadcastRoomState(message.conversationId);
+    }
+    // 한 명이라도 못 받았으면 실패 (다시 보낼 수 있게). sent·delivered는 링크별 소켓 쓰기와 ack가 올림
+    if (!delivered) store.setDelivery(message.id, DeliveryState.failed);
   }
 }

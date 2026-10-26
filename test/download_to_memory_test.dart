@@ -132,4 +132,54 @@ void main() {
       expect(watch.elapsed, lessThan(const Duration(seconds: 2)));
     },
   );
+
+  // 2 MiB를 넘는 음성은 레코드 둘로 옴: 받은 조각은 결과로 옮긴 뒤 덮어써서 성공하든 실패하든 RAM에 사본이 안 남음
+  group('received audio pieces are overwritten', () {
+    const size = kFileChunkBytes + 64;
+    late List<Uint8List> opened;
+    late OpenChunk open;
+    late List<int> wire;
+
+    setUp(() async {
+      final (a, b) = await pairSessions();
+      wire = await encryptForTest(a, Uint8List(size)..fillRange(0, size, 9));
+      opened = <Uint8List>[];
+      open =
+          ({
+            required nonce,
+            required cipher,
+            required mac,
+            required aad,
+          }) async {
+            final plain = await b.openBytes(
+              nonce: nonce,
+              cipher: cipher,
+              mac: mac,
+              aad: aad,
+            );
+            opened.add(plain);
+            return plain;
+          };
+    });
+
+    test('after a pull that fails partway', () async {
+      handler = (r) => respondWith(r, wire.sublist(0, wire.length - 3));
+      await expectLater(
+        download(size, decrypt: open, maxBytes: size),
+        throwsA(isA<FormatException>()),
+      );
+      expect(opened, hasLength(1));
+      expect(opened.single.every((byte) => byte == 0), isTrue);
+    });
+
+    test('after a pull that succeeds', () async {
+      handler = (r) => respondWith(r, wire);
+      final bytes = await download(size, decrypt: open, maxBytes: size);
+      expect(bytes.every((byte) => byte == 9), isTrue);
+      expect(opened, hasLength(2));
+      for (final piece in opened) {
+        expect(piece.every((byte) => byte == 0), isTrue);
+      }
+    });
+  });
 }

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:intragram/network/file_streamer.dart'
     show TransferCleanupException;
+import 'package:intragram/network/registry/outgoing_transfers.dart';
 
 import 'support/mobile_source_rig.dart';
 
@@ -48,6 +49,21 @@ void main() {
     await m.offer();
     m.fake.failRelease.add('s1');
 
+    await expectLater(
+      m.rig.registry.disposeAll(),
+      throwsA(isA<TransferCleanupException>()),
+    );
+  });
+
+  test('a failing release on link close still releases the other sources and '
+      'is reported by teardown', () async {
+    await m.offer(count: 2);
+    m.fake.failRelease.add('s1');
+
+    await m.out.handleLinkClosed(m.roomId);
+
+    expect(m.fake.count('release:s1'), 1);
+    expect(m.fake.count('release:s2'), 1);
     await expectLater(
       m.rig.registry.disposeAll(),
       throwsA(isA<TransferCleanupException>()),

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intragram/app_providers.dart';
 import 'package:intragram/core/constants.dart';
 import 'package:intragram/core/network_guard.dart';
+import 'package:intragram/core/os_privacy.dart';
 import 'package:intragram/core/secure_bytes.dart' show generateSecureToken;
 import 'discovery_engine.dart';
 import 'local_server.dart';
@@ -14,6 +15,7 @@ import 'local_server.dart';
 export 'server_controller/room_hints.dart';
 
 part 'server_controller/state.dart';
+part 'server_controller/listener.dart';
 
 class ServerController extends Notifier<ServerState> {
   LocalServer? _server;
@@ -21,20 +23,19 @@ class ServerController extends Notifier<ServerState> {
   // 병렬 start 호출(앱 재개와 수동 새로고침이 겹침)이 각자 새 LocalServer를 만들어 하나가 영영 못 닫히는 걸 막음
   Future<void>? _startFuture;
 
-  // stop/panic마다 증가. start가 await 사이에서 이 값이 바뀐 걸 보면
-  // 늦은 자기 결과(서버 바인딩 등)를 스스로 정리하고 물러남
+  // stop·패닉마다 오름. start가 await 뒤에 바뀐 걸 보면 늦은 결과를 스스로 치우고 물러남
   int _generation = 0;
 
-  // 사용자가 마지막으로 원한 상태 (start가 true, stop이 false).
-  // ServerState.running(실제 바인딩 여부)과 다른 축이라
-  // 네트워크 유실로 _stopTransport만 도는 동안엔 안 바뀜
-  // refreshNetwork가 이걸 봐서, 수동 OFF/패닉 뒤 다음 네트워크 점검이나 앱 재개가 서버를 멋대로 다시 켜지 않게 함
+  // 사용자가 원한 상태 (실제 바인드 여부인 running과 다름). 수동으로 끄거나 패닉 뒤엔 네트워크 점검이 서버를 멋대로 다시 안 켬
   bool _desiredRunning = false;
 
-  // foreground 동안만 도는 단일 네트워크 점검 타이머 (setForeground
-  // 참고). 주기는 mDNS 재스캔 주기(kDiscoveryRefresh)와
-  // 같은 20초 (관심사는 달라서 합치진 않되 굳이 다른 숫자를 새로 정할 이유도 없음)
+  // 포그라운드에서만 도는 네트워크 점검 타이머 (주기는 mDNS 재스캔과 같은 20초)
   Timer? _networkCheckTimer;
+
+  // 테스트가 망 없음을 흉내낼 자리 (앱은 실제 인터페이스를 봄)
+  @visibleForTesting
+  static Future<InternetAddress?> Function() bindAddress =
+      NetworkGuard.localBindAddress;
 
   @override
   ServerState build() {
@@ -45,9 +46,7 @@ class ServerController extends Notifier<ServerState> {
     return const ServerState();
   }
 
-  // foreground로 들어오면 즉시 한 번, 이후 _networkCheckInterval마다 refreshNetwork를 부름
-  // (인터페이스 목록만 비교, 외부 ping/HTTP probe 없음). 백그라운드에선 타이머를 멈춤:
-  // 모바일 OS가 어차피 일시정지시킬 수 있는 걸 영구 생존으로 포장하지 않음
+  // 포그라운드로 오면 바로 한 번, 그 뒤 주기마다 인터페이스만 비교함 (외부 ping 없음). 백그라운드에선 멈춤
   void setForeground(bool foreground) {
     if (!foreground) {
       _networkCheckTimer?.cancel();
@@ -75,11 +74,20 @@ class ServerController extends Notifier<ServerState> {
   }
 
   Future<void> _startLocked(int generation) async {
+    final permitted = await OsPrivacy.localNetworkPermission();
+    if (!ref.mounted || generation != _generation) return;
+    if (!permitted) {
+      state = const ServerState(problem: ServerProblem.localNetworkDenied);
+      return;
+    }
+    final address = await bindAddress();
+    if (!ref.mounted || generation != _generation) return;
     final registry = ref.read(linkRegistryProvider);
     final identity = ref.read(appIdentityProvider);
     final server = LocalServer(
       registry: registry,
       identity: identity,
+      bindAddress: address,
       onInboundError: (error, stack) {
         if (ref.mounted && generation == _generation) {
           FlutterError.reportError(
@@ -97,7 +105,7 @@ class ServerController extends Notifier<ServerState> {
     try {
       final bound = await server.start();
       if (generation != _generation) {
-        // stop/panic이 이 await 사이에 옴: 아무도 안 쓸 서버라 필드에 안 남기고 바로 닫음 (고아 서버 누수 지점)
+        // 그사이 stop·패닉이 옴: 아무도 안 쓸 서버라 바로 닫음
         await server.stop();
         return;
       }
@@ -113,7 +121,7 @@ class ServerController extends Notifier<ServerState> {
         return;
       }
       _server = server;
-      // 포털은 옵트인: 서버가 뜨는 것만으로 웹 게스트 토큰을 발급하지 않고 setPortalEnabled가 켤 때만 발급함
+      // 포털은 옵트인: 서버가 떠도 토큰은 setPortalEnabled가 켤 때만 뽑음
       state = ServerState(running: true, host: bound.host, port: bound.port);
       // 그룹 방 멤버가 이 기기에서 파일 바이트를 직접 당길 주소
       registry.localEndpoint = (host: bound.host, port: bound.port);
@@ -121,8 +129,7 @@ class ServerController extends Notifier<ServerState> {
           .read(discoveryControllerProvider.notifier)
           .start(identity: identity, port: bound.port);
       if (generation != _generation) {
-        // 디스커버리 시작을 기다리는 사이에도 stop/panic이 올 수 있음: 방금 세운 상태를 두면 stop 뒤에 서버가
-        // 다시 살아난 것처럼 보여서 직접 되돌림 (바깥 stop을 다시 부르면 generation을 한 번 더 올려서 안 씀)
+        // 디스커버리를 기다리는 사이 stop·패닉이 옴: 방금 세운 걸 직접 되돌림 (stop을 다시 부르면 generation이 또 올라가서 안 씀)
         registry.localEndpoint = null;
         await ref.read(discoveryControllerProvider.notifier).stop();
         await server.stop();
@@ -138,17 +145,15 @@ class ServerController extends Notifier<ServerState> {
     }
   }
 
-  // 사용자/패닉이 명시적으로 끔: _desiredRunning을 내려서 이후 refreshNetwork가 되살리지 않게 함
+  // 사용자·패닉이 끔: 이후 네트워크 점검이 안 되살림
   Future<void> stop() async {
     _desiredRunning = false;
     await _stopTransport();
   }
 
-  // 실제 소켓/디스커버리 종료. 네트워크가 잠깐 사라지거나 주소가 바뀌어 refreshNetwork가 다시 묶을 때도 쓰는데,
-  // 사용자가 명시 OFF한 게 아니라서 _desiredRunning은 그대로
-  // 둬 네트워크가 돌아오면 되살릴 수 있게 함 외부에서 끄는 stop과 안 섞음
+  // 소켓·디스커버리만 내림. 네트워크가 잠깐 사라지거나 주소가 바뀔 때도 써서 _desiredRunning은 그대로 둠
   Future<void> _stopTransport() async {
-    _generation++; // 진행 중이던 start()가 스스로 정리하고 물러나게 함
+    _generation++; // 도는 start가 알아서 물러남
     final registry = ref.read(linkRegistryProvider)..localEndpoint = null;
     await ref.read(discoveryControllerProvider.notifier).stop();
     // 서버를 닫아도 이미 넘겨받은(hijack된) 웹소켓은 살아 있어서, 토큰을 먼저 지우고 브라우저 게스트를
@@ -162,20 +167,30 @@ class ServerController extends Notifier<ServerState> {
 
   Future<void> toggle() => state.running ? stop() : start();
 
-  // 실제 바인드 주소가 바뀌었으면(또는 꺼져 있다가 다시 잡히면) 그 위에
-  // 서버를 다시 올림 (옛 IP가 QR/파일 source에 남는 문제의 다른
-  // 축)
-  // 수동 OFF/패닉이면 _desiredRunning이 false라 손 안 댐 (없으면 OFF 직후
-  // 다음 점검/앱 재개에 서버가 멋대로 켜짐). 네트워크 자체가 사라지면 transport만 내림:
-  // 서버/mDNS는 인프라라 네트워크를 따라가는 게 맞고 피어 자동 재다이얼 금지 원칙(app.dart)과는
-  // 별개
+  // 바인드 주소가 바뀌었거나 다시 잡히면 서버를 새로 올림 (옛 IP가 QR에 남지 않게). 수동으로 껐으면 손 안 댐.
+  // 네트워크가 사라지면 transport만 내림 (서버·mDNS는 망을 따라가는 인프라라 피어 자동 재다이얼 금지와는 별개)
   Future<void> refreshNetwork({bool probeListener = false}) async {
     if (!_desiredRunning) return;
-    final address = await NetworkGuard.localBindAddress();
+    final generation = _generation;
+    final permitted = await OsPrivacy.localNetworkPermission();
+    if (!ref.mounted || !_desiredRunning || generation != _generation) return;
+    if (!permitted) {
+      if (state.running) await _stopTransport();
+      if (ref.mounted && _desiredRunning) {
+        state = const ServerState(problem: ServerProblem.localNetworkDenied);
+      }
+      return;
+    }
+    final address = await bindAddress();
     // 주소 조회 중 수동 OFF/패닉이 오면 이 refresh는 뒤늦게 서버를 못 켬
     if (!_desiredRunning) return;
     if (address == null) {
-      if (state.running) await _stopTransport();
+      if (state.running) {
+        await _stopTransport();
+      } else if (state.problem == ServerProblem.localNetworkDenied) {
+        // 설정에서 권한을 켜고 돌아왔는데 망이 없음: 거부 안내를 실제 이유(망 없음)로 바꿈
+        await start();
+      }
       return;
     }
     if (state.running && _server?.boundHost == address.address) {
@@ -186,27 +201,7 @@ class ServerController extends Notifier<ServerState> {
     await start();
   }
 
-  // 내 서버 포트에 TCP로 붙어 봄. 앱이 정지된 사이 OS가 소켓을 거뒀으면 거절돼서 다시 띄움
-  Future<bool> _listenerAlive() async {
-    final host = _server?.boundHost;
-    final port = _server?.boundPort;
-    if (host == null || port == null) return false;
-    try {
-      final socket = await Socket.connect(
-        host,
-        port,
-        timeout: const Duration(seconds: 1),
-      );
-      socket.destroy();
-      return true;
-    } on SocketException {
-      return false;
-    }
-  }
-
-  // 웹 포털(브라우저 게스트 입장) 옵트인 스위치. OFF는 토큰을 즉시 폐기하고 붙어있는 웹 게스트 링크도 전부 닫음
-  // (폐기한 토큰으로 pending web_hello가 통과하는 창을 안 남김).
-  // ON은 항상 새 256-bit RAM 토큰을 뽑음 서버가 꺼져 있으면 효과 없음
+  // 포털 스위치. 끄면 토큰을 바로 버리고 웹 게스트 링크도 다 닫음 (대기 중인 web_hello도 못 지나감). 켜면 늘 새 256비트 토큰
   Future<void> setPortalEnabled(bool enabled) async {
     if (!state.running) return;
     final server = _server;

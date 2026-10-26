@@ -47,7 +47,7 @@ void main() {
     if (dir.existsSync()) dir.deleteSync(recursive: true);
   });
 
-  Future<PanicWipeResult> panic({bool isDecoy = false}) => executePanicWipe(
+  Future<PanicWipeResult> panic() => executePanicWipe(
     sweepTemp: () async {},
     store: store,
     registry: PanicRegistry(steps, store: store),
@@ -58,7 +58,6 @@ void main() {
     vaultAccess: container.read(vaultAccessProvider.notifier),
     identityStore: IdentityStore(resolveDir: () async => dir.path),
     identity: identity,
-    isDecoySession: isDecoy,
     directorySettingsFile: File('${dir.path}/download_directories.json'),
     releaseNativeSources: () async {},
   );
@@ -104,16 +103,6 @@ void main() {
 
     steps.completeAll();
     await future;
-    expect(identity.peerId, isNot(oldPeerId));
-  });
-
-  test('a decoy session replaces the identity key too', () async {
-    steps.completeAll();
-    final oldPeerId = identity.peerId;
-
-    final result = await panic(isDecoy: true);
-
-    expect(result.isComplete, isTrue, reason: '${result.failures}');
     expect(identity.peerId, isNot(oldPeerId));
   });
 }

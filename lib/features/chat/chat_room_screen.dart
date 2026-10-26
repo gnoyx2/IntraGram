@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:intragram/widgets/keyboard_access.dart';
 import 'package:flutter/semantics.dart' show SemanticsService;
 import 'package:flutter/services.dart'
     show LogicalKeyboardKey, PlatformException;
@@ -20,6 +21,7 @@ import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/network/link_registry.dart';
 import 'package:intragram/store/models.dart';
 import 'package:intragram/theme/app_theme.dart';
+import 'package:intragram/theme/adaptive_layout.dart';
 import 'package:intragram/theme/motion.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/theme/type_scale.dart';
@@ -34,6 +36,7 @@ import 'widgets/attach_sheet.dart';
 import 'widgets/chat_app_bar.dart';
 import 'widgets/drop_overlay.dart';
 import 'widgets/message_list.dart';
+import 'widgets/room_integrity_banner.dart';
 import 'widgets/room_member_list_dialog.dart';
 import 'widgets/sas_fingerprint_dialog.dart';
 
@@ -41,6 +44,9 @@ part 'chat_room/search.dart';
 part 'chat_room/dialogs.dart';
 part 'chat_room/drag_drop.dart';
 part 'chat_room/scaffold.dart';
+part 'chat_room/body.dart';
+part 'chat_room/layout.dart';
+part 'chat_room/skeleton.dart';
 part 'chat_room/banners.dart';
 part 'chat_room/announce.dart';
 
@@ -53,8 +59,6 @@ class ChatRoomScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
-// 상태 필드는 여기, 동작은 chat_room/의 믹스인(_ChatRoomSearch / _ChatRoomDialogs /
-// _ChatRoomDragDrop / _ChatRoomScaffold)으로 나뉘고 _ChatRoomScreenState가 얹음
 abstract class _ChatRoomScreenStateBase extends ConsumerState<ChatRoomScreen> {
   LinkRegistry get _registry => ref.read(linkRegistryProvider);
   bool _dragging = false;
@@ -80,6 +84,7 @@ class _ChatRoomScreenState extends _ChatRoomScreenStateBase
         _ChatRoomDialogs,
         _ChatRoomDragDrop,
         _ChatRoomScaffold,
+        _ChatRoomBody,
         _ChatRoomAnnounce {
   @override
   void initState() {
@@ -163,7 +168,14 @@ class _ChatRoomScreenState extends _ChatRoomScreenStateBase
         const SingleActivator(LogicalKeyboardKey.keyO, meta: true): _attach,
         const SingleActivator(LogicalKeyboardKey.keyO, control: true): _attach,
       },
-      child: Focus(autofocus: true, child: _popScopeScaffold(body)),
+      child: Actions(
+        actions: {
+          SearchMessagesIntent: CallbackAction<SearchMessagesIntent>(
+            onInvoke: (_) => _openSearch(),
+          ),
+        },
+        child: Focus(autofocus: true, child: _popScopeScaffold(body)),
+      ),
     );
   }
 

@@ -27,9 +27,7 @@ void main() {
         attemptId: 'attempt-1',
       );
       expect(reserved.finalName, 'video.mp4');
-      // 정확한 문자열이 아니라 계약을 검사: bounded attempt +
-      // 로컬 난수 접미사로 이름을 만들고 wire attempt를 그대로 파일명에
-      // 안 씀
+      // 정확한 문자열이 아니라 계약을 봄: 이름은 제한된 시도 + 로컬 난수 접미사로 만들고 wire attempt를 파일명에 그대로 안 씀
       final basename = p.basename(reserved.partial.path);
       expect(basename, startsWith('.intragram-attempt-1-'));
       expect(basename, endsWith('.part'));
@@ -162,5 +160,37 @@ void main() {
       },
       testOn: '!windows',
     );
+
+    // Windows에선 폴더 위 create가 EEXIST가 아닌 코드로 실패해서 이름 확인이 따로 있어야 함
+    test('a folder at the final name is treated as occupied', () async {
+      Directory(p.join(dir.path, 'notes.txt')).createSync();
+
+      final reserved = await IncomingPathResolver.reserveDestination(
+        directory: dir.path,
+        name: 'notes.txt',
+        attemptId: 'attempt-4',
+      );
+      await reserved.partial.writeAsString('bytes');
+      final committed = await IncomingPathResolver.commitDestination(
+        reserved.partial,
+        reserved.finalName,
+      );
+      expect(committed, p.join(canonicalDir, 'notes (1).txt'));
+      expect(Directory(p.join(canonicalDir, 'notes.txt')).existsSync(), isTrue);
+    });
+
+    // 위 테스트는 POSIX에선 EEXIST로도 통과해서 Windows 경로(접근 거부 5)를 어느 OS에서나 따로 봄
+    test('a folder is taken even when the error is not EEXIST', () {
+      final folder = Directory(p.join(dir.path, 'notes.txt'))..createSync();
+      const denied = OSError('Access is denied', 5);
+      expect(IncomingPathResolver.isNameCollision(folder.path, denied), isTrue);
+      expect(
+        IncomingPathResolver.isNameCollision(
+          p.join(dir.path, 'missing.txt'),
+          denied,
+        ),
+        isFalse,
+      );
+    });
   });
 }

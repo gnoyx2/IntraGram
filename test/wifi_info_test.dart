@@ -140,7 +140,9 @@ void main() {
 
     expect(info?.ssid, '우리집');
     expect(info?.signal, '87%');
-    expect(info?.channel, '149');
+    expect(info?.channel, '149 (5745 MHz)');
+    // nmcli엔 802.11 세대 칸이 없음: 주파수를 모드 칸에 넣지 않음
+    expect(info?.phyMode, isNull);
     expect(info?.security, 'WPA2 WPA3');
     expect(parseNmcliWifi(' :Neighbor:40:6:2437 MHz:65 Mbit/s:WPA2\n'), isNull);
   });
@@ -153,7 +155,7 @@ void main() {
 
     expect(info?.ssid, r'Home:5G\x');
     expect(info?.signal, '87%');
-    expect(info?.channel, '149');
+    expect(info?.channel, '149 (5745 MHz)');
     expect(info?.security, 'WPA2');
   });
 

@@ -1,14 +1,16 @@
 part of '../chat_room_screen.dart';
 
 // 방 중계·오프라인·미검증 배너 묶음. 아주 큰 글씨(3배)에선 배너만으로 화면을 다 먹어 메시지 목록이 0이 되고
-// 입력창이 잘려서, 묶음 높이를 화면의 30%로 막고 넘치면 안에서 스크롤함
+// 입력창이 잘려서, 묶음 높이를 maxHeight(입력창 위 남은 높이의 30%)로 막고 넘치면 안에서 스크롤함
 class _ChatBanners extends StatelessWidget {
   const _ChatBanners({
+    required this.maxHeight,
     required this.conversation,
     required this.registry,
     required this.onShowSas,
   });
 
+  final double maxHeight;
   final Conversation conversation;
   final LinkRegistry registry;
   final VoidCallback onShowSas;
@@ -16,13 +18,17 @@ class _ChatBanners extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.3,
-      ),
+      constraints: BoxConstraints(maxHeight: maxHeight),
       child: SingleChildScrollView(
         child: Column(
           children: [
             if (conversation.isRoom) const RoomRelayBanner(),
+            if (conversation.isRoom &&
+                conversation.transport == PeerTransport.app)
+              RoomIntegrityBanner(
+                book: registry.store.roomIntegrity,
+                conversationId: conversation.id,
+              ),
             AnimatedSize(
               duration: motionDuration(
                 context,
@@ -32,7 +38,10 @@ class _ChatBanners extends StatelessWidget {
                   ? OfflineBanner(
                       blocked: conversation.blocked,
                       onUnblock: () => registry.unblockPeer(conversation.id),
-                      onReconnect: () => registry.reconnect(conversation.id),
+                      onReconnect:
+                          conversation.isRoom && conversation.hostAlias == null
+                          ? null
+                          : () => registry.reconnect(conversation.id),
                     )
                   : const SizedBox.shrink(),
             ),

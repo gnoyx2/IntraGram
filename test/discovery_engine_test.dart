@@ -71,6 +71,17 @@ void main() {
       expect(peer.inRoom, isTrue);
     });
 
+    test('an advertised os outside the app names reads as Unknown', () {
+      final service = _service(
+        hostAddresses: ['192.168.1.9'],
+        attributes: const {'id': 'peer-1', 'os': 'Linux (totally real)'},
+      );
+      expect(
+        peerFromBonsoirService(service, selfPeerId: 'me')!.platform,
+        'Unknown',
+      );
+    });
+
     test('a room member (not host) advertises inRoom without room', () {
       final service = _service(
         hostAddresses: ['192.168.1.9'],

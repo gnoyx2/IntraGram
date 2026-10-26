@@ -21,8 +21,8 @@ class _OfferActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        Wrap(
+          spacing: AppSpacing.sm,
           children: [
             PressScale(
               child: FilledButton.tonal(
@@ -30,7 +30,6 @@ class _OfferActions extends StatelessWidget {
                 child: Text(S.of(context).t('transfer.accept')),
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
             TextButton(
               onPressed: onDecline,
               child: Text(S.of(context).t('transfer.decline')),
@@ -40,8 +39,8 @@ class _OfferActions extends StatelessWidget {
         // offered인 형제가 2개 이상일 때만 "전부" 행을 보임 (단일 파일 배치는 개별 버튼으로 충분)
         if (offeredSiblings >= 2) ...[
           const SizedBox(height: AppSpacing.xs),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          Wrap(
+            spacing: AppSpacing.sm,
             children: [
               TextButton(
                 onPressed: onAcceptAll,
@@ -51,7 +50,6 @@ class _OfferActions extends StatelessWidget {
                   }),
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
               TextButton(
                 onPressed: onDeclineAll,
                 child: Text(S.of(context).t('transfer.declineAll')),

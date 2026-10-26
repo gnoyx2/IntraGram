@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=IntraGram
+Name[ko]=인트라그램
 GenericName=Local Network Messenger
 GenericName[ko]=로컬 네트워크 메신저
 Comment=Peer-to-peer chat and file transfer on your local network
@@ -13,3 +14,4 @@ Keywords=chat;messenger;lan;p2p;offline;local;
 Keywords[ko]=채팅;메신저;로컬;파일;
 StartupNotify=true
 StartupWMClass=com.yonghun0310.intragram
+X-GNOME-UsesNotifications=true

@@ -41,6 +41,20 @@ void main() {
     return guests;
   }
 
+  test('host text to browser guests stays a plain message frame', () async {
+    final guests = await connectGuests(<String>['guest-a']);
+    final states = guests[0].inboundOfKind('room_state').length;
+
+    await registry.sendText(registry.portalRoomId!, 'hello guests');
+    await pumpEventQueue(times: 40);
+
+    final message = guests[0].inboundOfKind('msg').last;
+    expect(message['text'], 'hello guests');
+    expect(message.keys, isNot(contains('pid')));
+    expect(message.keys, isNot(contains('authorSig')));
+    expect(guests[0].inboundOfKind('room_state'), hasLength(states));
+  });
+
   test('a reaction is relayed between guests with the sender tag', () async {
     final guests = await connectGuests(<String>['guest-a', 'guest-b']);
     guests[0].say('m1', 'poll');

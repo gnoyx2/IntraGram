@@ -2,16 +2,24 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
+import 'package:intragram/core/app_settings.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/app_theme.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/widgets/empty_state_art.dart';
 
-// "이 네트워크에서" 섹션이 빈 이유. 이유마다 문구/아이콘/보조 액션이 다름
-enum DiscoveryEmptyReason { searching, noDevices, noWifi, notPrivate, error }
+// '이 네트워크에서' 섹션이 빈 이유. 이유마다 문구·아이콘·보조 액션이 다름
+enum DiscoveryEmptyReason {
+  searching,
+  noDevices,
+  noWifi,
+  notPrivate,
+  // Android 17+ 로컬 네트워크 권한이 꺼짐 (Wi-Fi가 있어도 못 찾음)
+  localNetworkDenied,
+  error,
+}
 
-// 레이더 스위프·펄스는 실제로 찾는 중일 때만 돎 (스캔은 DiscoveryEngine이 하고 이 위젯은 상태 표시만)
-// 한 바퀴 3.2초, 펄스는 바퀴당 두 번
+// 레이더 애니메이션은 실제로 찾는 중일 때만 돎 (스캔은 DiscoveryEngine 몫이고 여긴 표시만)
 class DiscoveryRadar extends StatefulWidget {
   const DiscoveryRadar({
     required this.reason,
@@ -57,7 +65,7 @@ class _DiscoveryRadarState extends State<DiscoveryRadar>
     if (oldWidget.reason != widget.reason) _syncTicker();
   }
 
-  // reduce-motion이거나 찾는 중이 아니면 무한 반복 애니메이션을 안 돌림 (배터리 + 전정 감각 민감 사용자 배려)
+  // reduce motion이거나 찾는 중이 아니면 무한 반복 애니메이션을 안 돌림 (배터리, 어지럼증)
   void _syncTicker() {
     final shouldAnimate =
         widget.reason == DiscoveryEmptyReason.searching &&
@@ -108,6 +116,11 @@ class _DiscoveryRadarState extends State<DiscoveryRadar>
         Icons.public,
         scheme.onSurfaceVariant,
         s.t('home.notPrivate'),
+      ),
+      DiscoveryEmptyReason.localNetworkDenied => (
+        Icons.lan_outlined,
+        scheme.onSurfaceVariant,
+        s.t('server.localNetworkDeniedTitle'),
       ),
       DiscoveryEmptyReason.error => (
         Icons.error_outline,
@@ -172,6 +185,12 @@ class _DiscoveryRadarState extends State<DiscoveryRadar>
             TextButton(
               onPressed: widget.onManualConnect,
               child: Text(s.t('home.connectByIp')),
+            )
+          // 위 오류 배너와 같은 곳(앱 정보의 권한)을 엶. 켜고 돌아오면 앱 복귀 점검이 서버·탐색을 다시 켬
+          else if (widget.reason == DiscoveryEmptyReason.localNetworkDenied)
+            TextButton(
+              onPressed: () => openSettings(SettingsPane.localNetwork),
+              child: Text(s.t('settings.open')),
             ),
         ],
       ),

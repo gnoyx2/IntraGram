@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-// 음성 메시지의 유일한 형식(녹음기가 만드는 16비트 PCM WAV)을 읽은 결과
+// 음성 메시지 형식은 녹음기가 만드는 16비트 PCM WAV 하나뿐
 class PcmWav {
   const PcmWav({
     required this.samples,
@@ -22,8 +22,8 @@ class PcmWav {
   Uint8List get pcm => Uint8List.sublistView(samples);
 }
 
-// 상대가 보낸 바이트라 RIFF 청크를 끝까지 방어적으로 따라감. 정상 범위(8~48 kHz, 1~2채널,
-// 16비트 PCM)가 아니면 null이라, 재생기에는 이 형식만 넘어감 (다른 컨테이너·재생목록으로 해석될 여지 없음)
+// 상대가 보낸 바이트라 RIFF 청크를 방어적으로 따라감. 정상 범위(8~48 kHz, 1~2채널, 16비트 PCM)가 아니면 null이라
+// 재생기엔 이 형식만 넘어감
 PcmWav? parsePcm16Wav(Uint8List bytes) {
   if (bytes.length < 12) return null;
   final view = ByteData.sublistView(bytes);

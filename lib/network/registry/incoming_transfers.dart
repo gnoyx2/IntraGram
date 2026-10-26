@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 
+import 'package:intragram/audit/content_commitment.dart' show sha256B64;
+import 'package:intragram/audit/evidence_store.dart';
 import 'package:intragram/core/constants.dart';
+import 'package:intragram/core/app_identity.dart' show peerIdOfKey;
 import 'package:intragram/core/free_space.dart';
 import 'package:intragram/core/network_guard.dart';
 import 'package:intragram/core/path_safety.dart';
@@ -13,6 +16,8 @@ import 'package:intragram/core/secure_bytes.dart'
 import 'package:intragram/network/file_streamer.dart';
 import 'package:intragram/network/file_transfer_crypto.dart';
 import 'package:intragram/network/peer_link.dart';
+import 'package:intragram/network/peer_auth.dart' show isSmallOrderKey;
+import 'package:intragram/network/protocol.dart' show wireBytes;
 import 'package:intragram/network/registry/incoming_path_resolver.dart';
 import 'package:intragram/network/registry/transfer_gate.dart';
 import 'package:intragram/store/in_memory_store.dart';
@@ -25,10 +30,9 @@ part 'incoming_transfers_cleanup.dart';
 part 'incoming_transfers_pull.dart';
 part 'incoming_transfers_lifecycle.dart';
 part 'incoming_transfers_receive.dart';
+part 'incoming_transfers_receipt.dart';
 
-// 파일 전송의 받는 절반: 인커밍 제안 수락/거절, 안전한 목적지 고르기, 서버가 넘겨주는 바이트 스트림 받기
-// 목적지 폴더 선택/캐싱은 _pathResolver에 위임하고, 유저가 고른 폴더는 이번 실행만(RAM 전용) 기억함
-// (영속하면 유저 의도를 디스크에 쓰는 거라 제로 디스크 규칙 위반: 다음 실행에 다시 물어봄)
+// 받는 절반: 제안 수락·거절, 목적지 고르기, 서버가 넘겨준 바이트 받기. 고른 폴더는 이번 실행 동안만 다시 씀 (다음 실행엔 다시 물어봄)
 class IncomingTransfers {
   IncomingTransfers({
     required this.store,
@@ -37,7 +41,7 @@ class IncomingTransfers {
     required this.gate,
     this.chooseDirectory,
   })
-    // 호출부에서 이름 있는 linkFor:가 this._linkFor보다 잘 읽힘
+    // 호출부에선 linkFor:가 더 잘 읽힘
     // ignore: prefer_initializing_formals
     : _linkFor = linkFor,
        _linkForTransfer = linkForTransfer ?? ((t) => linkFor(t.conversationId));
@@ -46,10 +50,10 @@ class IncomingTransfers {
   final PeerLink? Function(String conversationId) _linkFor;
   final PeerLink? Function(FileTransfer transfer) _linkForTransfer;
 
-  // 동시 활성 전송 상한: TransferCoordinator가 OutgoingTransfers와 공유하는 인스턴스를 줌
+  // 보내는 쪽과 나눠 쓰는 동시 전송 게이트
   final TransferConcurrencyGate gate;
 
-  // 수락된 파일이 어디 써질지 고르는 seam (프로덕션은 null이라 내부 기본 플랫폼 로직이 돌고, 테스트는 임시 디렉토리 주입)
+  // 저장 폴더를 고르는 seam (프로덕션은 null이라 플랫폼 로직, 테스트는 임시 폴더)
   final Future<String?> Function(String suggestedName)? chooseDirectory;
 
   late final IncomingPathResolver _pathResolver = IncomingPathResolver(
@@ -58,23 +62,16 @@ class IncomingTransfers {
 
   final Map<String, _IncomingFile> _incoming = <String, _IncomingFile>{};
 
-  // clear가 admission을 닫은 뒤 true: 이후 accept/pull/receive는 새
-  // 작업을 시작 안 함. registry는 disposeAll 뒤 새 인스턴스로 교체되므로 되살아나지
-  // 않음
+  // clear가 세움: 그 뒤 accept·pull·receive는 새 작업을 안 시작함
   bool _closed = false;
 
-  // 이번 세션이 소유한 partial 전부 ((전송 id, attempt)별, 수락 때 예약한
-  // 것 + 직접 pull이 예약한 것). _incoming은 receive가 검증 뒤 지워서
-  // 활성 수신을 못 담으므로 여기서 끝까지 추적 (자세한 건 incoming_transfers_cleanup.dart)
+  // 이번 세션이 만든 .part 전부 ((전송 id, attempt)별). _incoming은 receive가 시작하면서 지워서 여기서 끝까지 따로 추적함
   final Map<String, _OwnedPartial> _activePartials = <String, _OwnedPartial>{};
 
-  // 배경 정리 경로(UI 취소 등)에서 partial 삭제가 실패한 기록
-  // (전송 id별): clear가 마지막에 그대로 보고함 (삼키지 않음)
-  // 나중에 같은 전송의 삭제가 성공하면 기록은 지워짐
+  // 배경 정리(UI 취소 등)에서 .part 삭제가 실패한 기록. clear가 마지막에 그대로 던짐 (나중에 지워지면 기록도 빠짐)
   final Map<String, List<Object>> _cleanupFailures = <String, List<Object>>{};
 
-  // 전송 중인 인커밍 전송을 무를 수 있는 토큰 (push의 receive, pull의
-  // _pullDirect/_pullVoice 공용). 시작할 때 세팅하고 끝나면 지움
+  // 받는 중인 전송을 끊는 토큰 (push·pull·음성 공용)
   final Map<String, CancelToken> _cancelTokens = <String, CancelToken>{};
 
   // transferId별 지금 실제로 도는 I/O 작업 (정리 전에 await)
@@ -86,7 +83,7 @@ class IncomingTransfers {
   void _track(String transferId, Future<void> future) =>
       _trackIncoming(this, transferId, future);
 
-  // 받을 공간이 모자람. 이번 세션에 고른 폴더를 잊어서 데스크톱 재시도가 다른 폴더를 묻게 함 (모바일은 고정 폴더)
+  // 공간 부족: 고른 폴더를 잊어서 데스크톱 재시도가 다른 폴더를 묻게 함 (모바일은 고정 폴더)
   void _failForSpace(String transferId) {
     _pathResolver.clear();
     store.updateTransfer(
@@ -95,7 +92,6 @@ class IncomingTransfers {
     );
   }
 
-  // 받는 중 실패를 사유로 기록. 공간 부족이면 위와 같이 폴더를 잊음
   void _failReceive(String transferId, Object error) {
     final reason = classifyTransferError(error);
     if (reason == 'diskFull') return _failForSpace(transferId);
@@ -168,13 +164,11 @@ class IncomingTransfers {
 
   Future<void> clear() => _clearIncoming(this);
 
-  // push accept로 발급한 POST /api/transfer 토큰 (테스트가 살아
-  // 있는 PeerLink 없이 accept -> receive를 직접 호출할 때만 씀)
+  // push accept로 발급한 POST 토큰 (테스트가 링크 없이 accept → receive를 몰 때만 씀)
   @visibleForTesting
   String? debugPushTokenFor(String transferId) => _incoming[transferId]?.token;
 
-  // transfer가 암호화됐다고 주장하면 이 대화의 링크에서 복호화 함수를 가져옴 (그룹 방/웹 게스트면 null)
-  // 크립토 세션이 없는데 암호화됐다고 하면 조용히 평문으로 넘기는 대신 던짐: 쓰레기를 파일 바이트인 척 안 흘림
+  // 암호화 전송이면 이 대화 링크의 복호화 함수. 세션이 없는데 암호화라면 평문으로 넘기지 않고 던짐
   OpenChunk? _decryptorFor(FileTransfer transfer) {
     if (!transfer.encrypted) return null;
     final link = _linkFor(transfer.conversationId);

@@ -1,12 +1,11 @@
 part of '../link_registry.dart';
 
-// 기기 차단과 '내가 연 대화만 받기'. 신원 키가 실행마다 새로 생겨서(저장 안 함) 차단도 이번 실행 동안만
-// RAM에 둠: 상대가 앱을 다시 켜면 새 ID라 다시 닿을 수 있고, 그걸 막는 게 '내가 연 대화만 받기'
-// 차단한 기기는 어느 방향으로도 핸드셰이크를 못 마침. 웹 게스트는 포털을 켠 호스트가 받는 것이라 해당 없음
+// 기기 차단과 '내가 연 대화만 받기'. 신원 키가 실행마다 새로 생겨서 차단도 이번 실행 동안만 RAM에 둠
+// (상대가 앱을 다시 켜면 새 ID라 닿음: 그걸 막는 게 '내가 연 대화만 받기'). 웹 게스트는 해당 없음
 mixin _LinkRegistryBlocking on _LinkRegistryState {
   bool isBlocked(String peerId) => _blockedPeers.contains(peerId);
 
-  // 1:1 대화의 상대만 (방은 호스트가 멤버를 관리). 링크를 닫은 뒤 차단 줄을 남김
+  // 1:1 상대만 (방은 호스트가 멤버를 관리)
   Future<void> blockPeer(String conversationId) async {
     final conversation = store.conversation(conversationId);
     final peerId = conversation?.peerId;

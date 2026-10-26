@@ -70,7 +70,7 @@ class _LinkableTextState extends State<_LinkableText> {
   void _copySelection() {
     final selected = _selected;
     if (selected == null) return;
-    unawaited(OsPrivacy.copySensitive(selected.replaceAll('⁠', '')));
+    unawaited(OsPrivacy.copySensitive(selected.replaceAll('\u2060', '')));
   }
 
   Widget _selectable(Widget text) => Actions(
@@ -188,9 +188,11 @@ class _LinkableTextState extends State<_LinkableText> {
     final host = asciiHost(shown);
     final s = S.of(context);
     final textTheme = Theme.of(context).textTheme;
+    final cupertino = isCupertinoDialog(context);
     final open = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppAlertDialog(
+        cupertino: cupertino,
         title: Text(s.t('link.openTitle')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -207,13 +209,16 @@ class _LinkableTextState extends State<_LinkableText> {
           ],
         ),
         actions: dialogActions(ctx, [
-          TextButton(
+          AdaptiveDialogAction(
+            cupertino: cupertino,
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(s.t('common.cancel')),
+            label: s.t('common.cancel'),
           ),
-          FilledButton(
+          AdaptiveDialogAction(
+            cupertino: cupertino,
+            emphasis: true,
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(s.t('link.open')),
+            label: s.t('link.open'),
           ),
         ]),
       ),

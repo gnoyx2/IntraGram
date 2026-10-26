@@ -27,7 +27,7 @@ class _TypingDotsState extends State<TypingDots>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // reduce-motion이면 무한 반복 애니메이션을 아예 안 돌림 (배터리 + 전정 감각 민감 사용자 배려)
+    // reduce motion이면 무한 반복 애니메이션을 아예 안 돌림 (배터리, 어지럼증)
     if (MediaQuery.of(context).disableAnimations) {
       _controller.stop();
     } else if (!_controller.isAnimating) {
@@ -56,7 +56,7 @@ class _TypingDotsState extends State<TypingDots>
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
-        // 단독 상대 말풍선과 같은 경계·그림자·꼬리라 라이트 캔버스 위에서도 윤곽이 보임
+        // 상대 말풍선과 같은 테두리·그림자·꼬리를 써서 밝은 배경에서도 윤곽이 보임
         decoration: bubbleDecoration(
           chat: chat,
           scheme: Theme.of(context).colorScheme,
@@ -91,7 +91,7 @@ class _TypingDotsState extends State<TypingDots>
     );
   }
 
-  // index마다 0.2주기씩 밀린 삼각파로 통통 튐. 진짜 스프링은 아니지만 충분하고 새 의존성이 없음
+  // 점마다 0.2주기씩 밀린 삼각파로 통통 튐 (진짜 스프링은 아니지만 충분하고 의존성이 안 늚)
   Widget _dot(int index, Color color) {
     return AnimatedBuilder(
       animation: _controller,

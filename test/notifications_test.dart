@@ -71,9 +71,7 @@ void main() {
       overrides: [
         inMemoryStoreProvider.overrideWithValue(store),
         notificationServiceProvider.overrideWithValue(fake),
-        // 실제 HapticFeedback은 이 bare container에 없는 플랫폼
-        // 채널이 필요해서 no-op으로 교체 (NotificationService와 같은
-        // seam)
+        // 실제 HapticFeedback은 이 bare container에 없는 플랫폼 채널이 필요해서 no-op으로 바꿈 (NotificationService와 같은 seam)
         foregroundMessageHapticProvider.overrideWithValue(() async {}),
         localeControllerProvider.overrideWith(_FixedLang.new),
       ],

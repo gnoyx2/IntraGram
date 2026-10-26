@@ -4,28 +4,28 @@ part of '../component_themes.dart';
 AppBarTheme _appBarTheme(
   ColorScheme scheme, {
   bool headerBar = false,
+  bool definedBorders = false,
 }) => AppBarTheme(
   backgroundColor: scheme.surface,
   surfaceTintColor: Colors.transparent,
   elevation: 0,
   scrolledUnderElevation: headerBar ? 0 : 1,
   centerTitle: headerBar,
-  shape: headerBar
+  shape: headerBar || definedBorders
       ? Border(
           bottom: BorderSide(
             color: scheme.outlineVariant,
-            width: AppBorder.hairline,
+            width: definedBorders ? AppBorder.defined : AppBorder.hairline,
           ),
         )
       : null,
   titleTextStyle: AppType.scale.titleMedium?.copyWith(color: scheme.onSurface),
   toolbarTextStyle: AppType.scale.bodyMedium?.copyWith(color: scheme.onSurface),
-  // 명시 안 하면 AppBar가 전경색을 스스로 계산해서 iOS에서 타이머/더보기 아이콘이 흰색으로 뜨는
-  // 보고가 있었음. 플랫폼별 기본 계산에 기대지 않게 못 박음
+  // 안 박으면 AppBar가 전경색을 스스로 계산해서 iOS에서 아이콘이 흰색으로 뜬 적 있음
   foregroundColor: scheme.onSurface,
   iconTheme: IconThemeData(color: scheme.onSurface),
   actionsIconTheme: IconThemeData(color: scheme.onSurface),
-  // 상태바/내비게이션바 아이콘 밝기를 테마에 맞춰 선언적으로 바꿈 (SystemChrome 명령형 호출 불필요)
+  // 상태바·내비바 아이콘 밝기를 테마로 정함 (SystemChrome을 직접 안 불러도 됨)
   systemOverlayStyle:
       (scheme.brightness == Brightness.dark
               ? SystemUiOverlayStyle.light
@@ -33,9 +33,7 @@ AppBarTheme _appBarTheme(
           .copyWith(systemNavigationBarColor: Colors.transparent),
 );
 
-// iOS는 스와이프-백 Cupertino 전환, Android는 predictive back, 데스크톱(macOS 포함)은 페이드
-// macOS 창 안에서 옆으로 밀려 들어오고 왼쪽 끝을 끌면 뒤로 가는 건 Mac 앱 관례가 아님
-// (라우트마다 안 건드리고 여기 한 곳에서 지정)
+// iOS는 스와이프 뒤로 가기, Android는 predictive back, 데스크톱(macOS 포함)은 페이드 (Mac 창에서 옆으로 밀려 들어오는 건 Mac 관례가 아님)
 PageTransitionsTheme _pageTransitionsTheme() => PageTransitionsTheme(
   builders: <TargetPlatform, PageTransitionsBuilder>{
     TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),

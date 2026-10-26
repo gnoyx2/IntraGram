@@ -6,10 +6,7 @@ mixin _LinkRegistrySession
         _LinkRegistryRoom,
         _LinkRegistryFileWiring,
         _LinkRegistryDuplicates {
-  // slot은 acceptInbound가 첫 await 전에 잡은 미인증
-  // 슬롯: 링크가 _links에 오르는 자리에서 풀어 두 번 세지 않음
-  // 세션 생성이 던지거나 dispose 경합으로 등록이 무산되는 출구에선 호출부가 풀고, 링크가 못 된 채널과
-  // 인바운드의 임시 대화는 _abandonRegistration에서 정리
+  // slot은 acceptInbound가 잡은 미인증 슬롯: 링크가 _links에 오르는 순간 풀어서 두 번 안 셈 (무산되면 호출부가 풂)
   Future<void> _register({
     required String conversationId,
     required StreamChannel<dynamic> channel,
@@ -33,7 +30,7 @@ mixin _LinkRegistrySession
       rethrow;
     }
     if (_disposed || generation != _generation) {
-      // disposeAll이 이 await 도는 동안 돎: 늦게 얻은 세션/채널은 store에 안 올리고 바로 버림
+      // 이 await 동안 disposeAll이 돎: 늦은 세션·채널은 버림
       session.destroy();
       _abandonRegistration(conversationId, channel, dialledByUs);
       return;
@@ -56,24 +53,20 @@ mixin _LinkRegistrySession
       unawaited(_transfers.incoming.accept(transferId));
     };
     link.onWebGuestHello = () => _joinRoom(link);
-    // onRoomFrame은 방 멤버 링크에만 세팅 (_joinRoom/_promoteToRoom에서).
-    // 1:1 링크에 세팅하면 1:1 메시지가 방으로 새므로 여기선 안 함
+    // onRoomFrame은 방 멤버 링크에만 검 (여기서 걸면 1:1 메시지가 방으로 샘)
     link.onClosed = _onLinkClosed;
     link.refusePeer = (peerId) =>
         _refusal(peerId, dialledByUs: link.dialledByUs);
-    // 다이얼한 쪽은 connectToPeer가 다이얼 전에 이미 host로
-    // dedupe함. 인바운드만 hello로 정체가 밝혀진 뒤 중복 체크가
-    // 필요
+    // 다이얼한 쪽은 connectToPeer가 이미 거름. 인바운드만 hello 뒤에 중복을 봄
     if (!dialledByUs) {
       link.onAppPeerIdentified = () => _mergeDuplicateHost(link);
     }
     _adoptLink(conversationId, link);
-    slot?.release(); // 이제 _links의 미인증 링크로 세어지니 예약을 풀어 이중 집계 방지
+    slot?.release(); // 이제 _links에서 세어지니 예약은 풂
     await link.start();
   }
 
-  // 링크가 못 된 채널을 닫음. 인바운드면 acceptInbound가 만든 임시 "peer" 대화도 지워 유령 tile이 안 남게 함
-  // (다이얼한 쪽 대화는 사용자가 누른 상대의 오프라인 tile이라 둠)
+  // 링크가 못 된 채널을 닫음. 인바운드면 임시 대화도 지움 (다이얼한 쪽은 사용자가 누른 상대라 오프라인으로 둠)
   void _abandonRegistration(
     String conversationId,
     StreamChannel<dynamic> channel,
@@ -83,22 +76,18 @@ mixin _LinkRegistrySession
     if (!dialledByUs) store.wipeConversation(conversationId);
   }
 
-  // link 자신을 받아서 현재 맵 값과 identical일 때만 제거: 대체된 옛 링크의 뒤늦은 종료가 새 링크를 지우지 않게 함
-  // 일부러 sync: onClosed가 void Function이라 아무도 반환값을 안 기다리고,
-  // async로 바꾸면 store 정리/방 브로드캐스트가 첫 await 뒤로 밀려 테스트/호출부가
-  // 갱신 전 값을 봄. 전송 정리는 handleLinkClosed가 내부에서 await
+  // 맵 값이 이 링크일 때만 지움 (대체된 옛 링크가 늦게 닫혀도 새 링크를 안 지움).
+  // 일부러 sync: async면 store 정리·방 알림이 await 뒤로 밀려서 호출부가 갱신 전 값을 봄
   void _onLinkClosed(PeerLink link) {
-    // 같은 멤버의 다른 열린 링크가 방에 남았으면(재접속 직후 옛 링크가 뒤늦게 닫힘) 나간 게 아님: 경로를 그 링크로 넘기고
-    // 멤버 정리(오프라인/퇴장 알림/전송 실패)는 건너뜀. 없으면 경로를 지움
+    // 같은 멤버의 열린 링크가 남았으면(재접속 직후 옛 링크가 늦게 닫힘) 나간 게 아님: 경로만 넘기고 멤버 정리는 건너뜀
     final survivor = _sameMemberLink(link);
     _handOverRoomFileRoutes(link, survivor);
     if (identical(_links[link.conversationId], link)) {
       _links.remove(link.conversationId);
     }
     final roomId = link.conversationId;
-    // 방 멤버 링크였으면 그 멤버의 전송 상태만 정리함. 소속은 _roomLinks가
-    // 아니라 방 id로 판단: 한 틱에 같이 끊긴 링크는 먼저 끝난 링크의 정리가
-    // 이미 목록에서 뺐을 수 있는데, 그걸 1:1 종료로 오해하면 방의 다른 멤버 전송까지 통째로 버림
+    // 방 멤버였는지는 _roomLinks가 아니라 방 id로 봄: 같이 끊긴 링크는 먼저 정리된 쪽이 목록에서 뺐을 수 있어서,
+    // 1:1 종료로 착각하면 다른 멤버 전송까지 다 버림
     final wasRoomLink = _isRoomHub(roomId);
     final leftAliases = _roomLinks
         .where(
@@ -117,8 +106,7 @@ mixin _LinkRegistrySession
           peerKey: wasRoomLink ? recipientKeyOf(link) : null,
         ),
       );
-      // 방 멤버 슬롯이 있으면(앱 그룹 방만, 웹 게스트는 멤버 슬롯 없음) online=false + SAS/검증 초기화
-      // 재합류하면 upsertRoomMember가 새 인스턴스로 덮어써서 되돌아옴
+      // 앱 그룹 방 멤버 슬롯이면 offline으로 내리고 SAS·확인도 지움 (다시 들어오면 새로 채워짐)
       final leavingPeerId = link.remotePeerId;
       if (leavingPeerId != null) {
         store.setRoomMemberOffline(roomId, leavingPeerId);
@@ -126,11 +114,7 @@ mixin _LinkRegistrySession
     }
 
     if (!_isRoomHub(roomId)) return;
-    // 로컬 시스템 메시지는 나간 사람마다 한 줄씩, 원격 브로드캐스트는 루프 밖에서
-    // 한 번만 (여러 멤버가 한 틱에 끊기면 불안정한 남은 소켓에 N번 쓰게 됨)
-    // _broadcastRoomState는 프로토콜상 left 한 명분만 실어서 동시 이탈이면
-    // 마지막 한 명만 원격 알림에 실리지만 로컬 메시지는 전원 보여 정보 손실은 없고 count는
-    // 최신값
+    // 내 화면엔 나간 사람마다 한 줄, 알림은 한 번만 보냄 (room_state는 left가 하나뿐이라 동시에 나가면 마지막 한 명만 실림. count는 최신)
     for (final alias in leftAliases) {
       if (store.conversation(roomId) != null) {
         store.addSystemMessage(
@@ -148,9 +132,7 @@ mixin _LinkRegistrySession
     if (!stillHasMembers) {
       store.setConversationOnline(roomId, online: false);
     } else {
-      // 링크가 닫히면서 PeerLink._shutdown이 방을 offline으로
-      // 돌려놨는데 아직 다른 멤버가 남았으니 다시 online으로 올리고 라벨/인원을
-      // 갱신
+      // 링크 종료가 방을 offline으로 내렸지만 남은 멤버가 있으니 다시 올림
       final count = _roomMemberCount(roomId);
       store.updateConversation(
         roomId,
@@ -163,9 +145,9 @@ mixin _LinkRegistrySession
     }
   }
 
-  // 1:1이면 그 링크를, 내가 호스트인 방이면 그 방의 멤버 링크 전부를 닫고 방 자리도 비움
-  // (방 대화만 지우고 링크를 두면 기기가 숨은 중계를 계속하고, 그 뒤 메시지가 지운 방 id로 다시 쌓임)
+  // 내가 호스트인 방이면 멤버 링크를 전부 닫고 방 자리도 비움 (링크를 두면 숨은 중계가 계속되고 지운 방 id로 메시지가 다시 쌓임)
   Future<void> disconnect(String conversationId) async {
+    store.roomIntegrity.remove(conversationId);
     if (_isRoomHub(conversationId)) {
       if (conversationId == _appRoomId) {
         _appRoomId = null;
@@ -183,10 +165,9 @@ mixin _LinkRegistrySession
   }
 
   Future<void> disposeAll() async {
-    // 첫 await 전에 동기적으로 닫음: 이 시점 이후 시작되는(또는 이미
-    // await 중이던) _register는 전부 자기 admission 검사에서
-    // 걸림
+    // 첫 await 전에 세움: 이후 시작하거나 await 중이던 _register는 전부 걸림
     _disposed = true;
+    store.roomIntegrity.clear();
     _roomFileRoutes.clear();
     _inboundAccepts.clear(); // 접속했던 기기 주소를 RAM에 남기지 않음
     _generation++;
@@ -197,8 +178,7 @@ mixin _LinkRegistrySession
     _roomLinks.clear();
     _webGuestRoomId = null;
     _appRoomId = null;
-    // 전송 정리가 실패해도(파셜 삭제 실패 등) 링크는 끝까지 닫고 실패는 마지막에 그대로 던짐:
-    // 실패를 성공처럼 삼키지도, 일부 링크를 열어둔 채 멈추지도 않음
+    // 전송 정리가 실패해도(조각 파일 삭제 실패 등) 링크는 끝까지 닫고 실패는 마지막에 던짐
     Object? transferError;
     StackTrace? transferStack;
     try {

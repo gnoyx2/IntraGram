@@ -207,9 +207,7 @@ class MemberRoomRig {
     await pumpEventQueue(times: 40);
   }
 
-  // 조건이 참이 될 때까지(최대 ~4000 이벤트 턴) 이벤트 큐를 돌림:
-  // 큰 프레임처럼 암호화에 시간이 걸리는 경로에서 고정 횟수 펌프 대신
-  // 씀
+  // 조건이 참이 될 때까지(최대 ~4000 이벤트 턴) 이벤트 큐를 돌림: 큰 프레임처럼 암호화가 오래 걸리는 경로에서 고정 횟수 펌프 대신 씀
   Future<void> until(bool Function() done) async {
     for (var i = 0; i < 200 && !done(); i++) {
       await pumpEventQueue(times: 20);

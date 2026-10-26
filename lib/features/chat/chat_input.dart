@@ -56,8 +56,6 @@ class ChatInput extends StatefulWidget {
   State<ChatInput> createState() => _ChatInputState();
 }
 
-// 상태 필드는 여기, 동작은 chat_input/의 믹스인(_ChatInputClipboard / _ChatInputCompose /
-// _ChatInputActionBar)으로 나뉘고 _ChatInputState가 얹음
 abstract class _ChatInputStateBase extends State<ChatInput> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();

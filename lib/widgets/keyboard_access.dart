@@ -4,6 +4,10 @@ import 'package:flutter/services.dart';
 
 import 'package:intragram/theme/tokens.dart';
 
+class SearchMessagesIntent extends Intent {
+  const SearchMessagesIntent();
+}
+
 // 우클릭·길게 누르기와 같은 동작 메뉴를 키보드로 여는 키 (메뉴 키, Shift+F10)
 Map<ShortcutActivator, VoidCallback> menuKeyBindings(VoidCallback onMenu) => {
   const SingleActivator(LogicalKeyboardKey.contextMenu): onMenu,

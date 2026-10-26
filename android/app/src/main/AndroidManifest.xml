@@ -1,23 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- Local network only. INTERNET is required for any TCP socket on Android
-         even to a private LAN address; the app itself never dials a public IP
-         (see lib/core/network_guard.dart). -->
+    <!-- 로컬 네트워크만 씀. Android는 사설 LAN 주소라도 TCP 소켓을 열려면 INTERNET이 필요함
+         (앱은 공인 IP로 절대 안 나감, lib/core/network_guard.dart 참고) -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
-    <!-- mDNS discovery goes through NsdManager (bonsoir), which needs no
-         runtime permission, so NEARBY_WIFI_DEVICES is not declared. -->
-    <!-- Android 13+: local notification when a message arrives in the
-         background. Requested at runtime; no push service, no network. -->
+    <!-- Android 17+의 LAN 권한만 요청함. 주변 Wi-Fi 기기 권한은 선언 안 함 -->
+    <!-- Android 13+: 백그라운드에서 메시지가 오면 띄우는 로컬 알림. 런타임에 물어보고 푸시 서비스·네트워크는 안 씀 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- In-app QR scan of another device's code. Requested at runtime by the
-         camera plugin; frames are decoded on the device (ZXing, pure Dart) and
-         the camera is only ever a QR reader. The plugin also asks for
-         camera.any as required and for old-Android storage writes (which the
-         merger turns into an implied storage read as well); a phone without a
-         camera can still install the app, and nothing is saved. -->
+    <!-- 다른 기기 코드를 앱 안에서 QR로 스캔함. 카메라 플러그인이 런타임에 물어보고 프레임은 기기에서
+         순수 Dart(ZXing)로 풂 (카메라는 QR 읽기에만 씀). 플러그인이 camera.any를 필수로, 옛 Android
+         저장소 쓰기(병합하면 읽기도 따라옴)를 요구해서 아래서 다 꺼 둠: 카메라 없는 폰도 설치되고 저장하는 것도 없음 -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature
@@ -30,25 +25,20 @@
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         tools:node="remove"/>
-    <!-- Hold-to-record voice messages. Requested at runtime by the record
-         plugin; audio is streamed to the peer and kept in RAM, never saved. -->
+    <!-- 눌러서 녹음하는 음성 메시지. record 플러그인이 런타임에 물어보고 소리는 RAM에만 두고 저장 안 함 -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
-    <!-- Android 14+: be told when the user screenshots a chat so the peer can be
-         notified (detection only — a screenshot cannot be blocked). Normal
-         permission, no prompt; a no-op below API 34. -->
+    <!-- Android 14+: 대화를 스크린샷하면 알아채서 상대에게 알림 (감지만 하고 막지는 못함).
+         일반 권한이라 묻는 창이 없고 API 34 밑에선 아무 일도 안 함 -->
     <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE"/>
-    <!-- Opt-in "stay connected in the background": a remoteMessaging foreground
-         service (messages passed between the user's nearby devices) holds the
-         process alive so peer links survive backgrounding. Off by default. No
-         network beyond the private LAN the app already uses. -->
+    <!-- 옵트인 '백그라운드에서 연결 유지': remoteMessaging 포그라운드 서비스(가까운 기기끼리 메시지 전달)가
+         프로세스를 붙잡아서 백그라운드에서도 피어 링크가 살아 있음. 기본 꺼짐이고 쓰던 사설 LAN 밖으론 안 나감 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
-    <!-- allowBackup=false: the opt-in vault and the identity file live in the
-         app's own data folder, which Android Auto Backup would otherwise copy
-         to the user's cloud account, against the zero-disk promise. -->
+    <!-- allowBackup=false: 옵트인 보관소와 신원 파일이 앱 데이터 폴더에 있어서 안 끄면 Auto Backup이
+         사용자 클라우드로 올림 (제로 디스크 약속 위반) -->
     <application
         android:label="IntraGram"
         android:name="${applicationName}"
@@ -63,15 +53,13 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
+            android:resizeableActivity="true"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- Specifies an Android theme to apply to this Activity as soon as
-                 the Android process has started. This theme is visible to the user
-                 while the Flutter UI initializes. After that, this theme continues
-                 to determine the Window background behind the Flutter UI. -->
+            <!-- Flutter UI가 뜨는 동안 보이고 그 뒤로도 창 배경을 정하는 테마 -->
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
@@ -81,25 +69,20 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- Opt-in background connection keeper (Settings → Stay connected).
-             Never started unless the user turns it on. -->
+        <!-- 옵트인 백그라운드 연결 유지 (설정 → 백그라운드에서 연결 유지). 사용자가 켜야만 시작됨 -->
         <service
             android:name=".ConnectionService"
             android:exported="false"
             android:stopWithTask="true"
             android:foregroundServiceType="remoteMessaging" />
 
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <!-- 아래 meta-data는 지우면 안 됨 (Flutter 도구가 GeneratedPluginRegistrant.java를 만들 때 씀) -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
-
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <!-- Flutter 엔진의 ProcessTextPlugin이 텍스트 처리 앱을 찾을 때 필요함 (패키지 가시성,
+         https://developer.android.com/training/package-visibility) -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

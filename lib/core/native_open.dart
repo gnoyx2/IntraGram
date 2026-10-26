@@ -6,10 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
-// LocalSend의 open_file / open_folder에서 아이디어만
-// 가져옴. open_filex, open_dir, permission_handler는
-// 제로 CDN·최소 의존성 원칙에 안 맞아서 플러그인 없이 Process.run으로 다시 구현함
-// 데스크톱 전용. 모바일에선 isSupported가 false고 모든 호출이 false를 돌려주는 no-op
+// 받은 파일 열기·폴더에서 보기 (데스크톱 전용, 모바일은 전부 false). LocalSend open_file·open_folder에서 아이디어만 가져와
+// 플러그인 없이 새로 짬
 final class NativeOpen {
   const NativeOpen._();
 
@@ -18,8 +16,7 @@ final class NativeOpen {
       defaultTargetPlatform == TargetPlatform.windows ||
       defaultTargetPlatform == TargetPlatform.linux;
 
-  // 테스트 seam: fake로 바꿔서 셸 메타문자가 든 파일명이 Uri로만 전달되고
-  // 명령어로 재해석되지 않는지 검증함
+  // 테스트에서 바꿔 끼워서 셸 메타문자 든 파일 이름이 Uri로만 넘어가는지 봄
   @visibleForTesting
   static Future<bool> Function(Uri uri, {required LaunchMode mode})
   launchUrlOverride = launchUrl;
@@ -76,8 +73,8 @@ final class NativeOpen {
   static bool isExecutable(String path) =>
       _executableExts.contains(p.extension(path).toLowerCase());
 
-  // 열면 OS 앱이 NetworkGuard 밖으로 나가는 형식: 브라우저가 원격 리소스를 불러오는 웹 문서,
-  // 인터넷 바로 가기, 원격 데스크톱, 원격 URL 재생 목록, 원격 설치기, 원격 위치를 여는 탐색기 형식
+  // 열면 OS 앱이 NetworkGuard 밖으로 나가는 형식: 원격 리소스를 부르는 웹 문서, 인터넷 바로 가기, 원격 데스크톱,
+  // 원격 재생 목록·설치기, 원격 위치를 여는 탐색기 형식
   static const Set<String> _networkExts = {
     '.html',
     '.htm',
@@ -105,8 +102,8 @@ final class NativeOpen {
   static bool reachesNetwork(String path) =>
       _networkExts.contains(p.extension(path).toLowerCase());
 
-  // Windows만: Zone.Identifier ADS에 MOTW(ZoneId=3, 인터넷)를 남겨 SmartScreen/Office 보호 보기가
-  // 받은 파일로 취급하게 함. FAT/exFAT/일부 네트워크 드라이브는 ADS가 없어 못 남기고 넘어감
+  // Windows만: Zone.Identifier ADS에 MOTW(ZoneId=3)를 남겨 SmartScreen·Office 보호 보기가 받은 파일로 다룸.
+  // FAT·exFAT처럼 ADS가 없으면 그냥 넘어감
   static Future<void> markFromInternet(String path) async {
     if (!Platform.isWindows) return;
     try {
@@ -114,22 +111,19 @@ final class NativeOpen {
         '$path:Zone.Identifier',
       ).writeAsString('[ZoneTransfer]\r\nZoneId=3\r\n', flush: true);
     } on FileSystemException {
-      // 표식만 못 남김. 파일 자체는 이미 저장 완료라 전송을 실패로 돌리지 않음
+      // 표식만 못 남긴 거라 전송은 성공으로 둠
     }
   }
 
   static Future<bool> open(String path) async {
     if (!isSupported || !File(path).existsSync()) return false;
     return switch (defaultTargetPlatform) {
-      // macOS는 프로세스 안 NSWorkspace(url_launcher)로 엶: 자식 /usr/bin/open엔 사용자가 고른
-      // 폴더의 샌드박스 접근 권한이 안 넘어갈 수 있음
+      // macOS는 프로세스 안 NSWorkspace(url_launcher)로 엶: 자식 /usr/bin/open엔 사용자가 고른 폴더의 샌드박스 권한이 안 넘어갈 수 있음
       TargetPlatform.macOS => launchUrlOverride(
         Uri.file(path),
         mode: LaunchMode.externalApplication,
       ),
-      // cmd /c start 대신 url_launcher: 받은 파일 이름은 상대가 정한 값이라 cmd.exe가
-      // 인자를 다시 파싱할 때 &/^/괄호가 명령어로 해석될 수 있음
-      // launchUrl은 셸 호출 없이 ShellExecute로 경로를 직접 넘김
+      // cmd /c start 말고 url_launcher(ShellExecute): 상대가 정한 파일 이름의 &·^·괄호를 cmd.exe가 명령으로 읽을 수 있음
       TargetPlatform.windows => launchUrlOverride(
         Uri.file(path, windows: true),
         mode: LaunchMode.externalApplication,
@@ -139,24 +133,19 @@ final class NativeOpen {
     };
   }
 
-  // macOS NSWorkspace(채널, 프로세스 안), Windows explorer /select,로 파일을 선택 상태로 둠
-  // 리눅스는 의존성 없이 하이라이트할 방법이 없어서 부모 폴더만 엶
+  // 네이티브 파일 관리자에 경로를 직접 넘겨 선택함 (셸 명령 문자열 없음).
   static Future<bool> revealInFolder(String path) async {
     if (!isSupported) return false;
     final dir = p.dirname(path);
     if (!File(path).existsSync() && !Directory(dir).existsSync()) return false;
-    return switch (defaultTargetPlatform) {
-      TargetPlatform.macOS => _revealOnMac(path),
-      TargetPlatform.windows => _run('explorer', <String>[
-        '/select,${path.replaceAll('/', r'\')}',
-      ]),
-      TargetPlatform.linux => _run('xdg-open', <String>[dir]),
-      _ => false,
-    };
+    final revealed = await _revealFile(path);
+    if (revealed || defaultTargetPlatform != TargetPlatform.linux) {
+      return revealed;
+    }
+    return _run('xdg-open', <String>[dir]);
   }
 
-  // URL을 OS에 넘기기만 하고 앱이 fetch하진 않음. 에어갭 밖으로 나가는 유일한 지점이라
-  // 사용자가 링크를 탭했을 때만 호출됨
+  // URL을 OS에 넘기기만 함 (앱은 fetch 안 함). 사용자가 링크를 열기로 했을 때만 불림
   static Future<bool> openUrl(String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
@@ -171,7 +160,7 @@ final class NativeOpen {
 
   static const _privacy = MethodChannel('intragram/privacy');
 
-  static Future<bool> _revealOnMac(String path) async {
+  static Future<bool> _revealFile(String path) async {
     try {
       return await _privacy.invokeMethod<bool>('revealFile', path) ?? false;
     } on PlatformException {
@@ -184,8 +173,7 @@ final class NativeOpen {
   static Future<bool> _run(String executable, List<String> arguments) async {
     try {
       final result = await Process.run(executable, arguments);
-      // explorer.exe는 성공해도 exit code가 1임
-      return executable == 'explorer' || result.exitCode == 0;
+      return result.exitCode == 0;
     } on ProcessException {
       return false;
     }

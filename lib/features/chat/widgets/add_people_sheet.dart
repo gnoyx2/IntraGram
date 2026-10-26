@@ -34,9 +34,8 @@ class _AddPeopleSheetState extends ConsumerState<_AddPeopleSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // 이미 이 방(또는 대화)에 들어온 피어는 뺌. discovery는 방 멤버십을 몰라서 목록에 남는데,
-    // 다시 고르면 LinkRegistry의 연결 dedupe가 활성 링크 맵만 보고 방 멤버 맵은 안 봐서
-    // 새 소켓을 또 열어 "초대가 안 먹힘"처럼 보임
+    // 이미 이 방에 있는 피어는 뺌: discovery는 멤버십을 몰라서 목록에 남는데, 다시 고르면
+    // 연결 중복 거르기가 방 멤버는 안 봐서 소켓을 또 엶 (초대가 안 먹힌 것처럼 보임)
     final members = ref.watch(
       conversationProvider(widget.conversationId).select((c) => c?.members),
     );
@@ -44,80 +43,69 @@ class _AddPeopleSheetState extends ConsumerState<_AddPeopleSheet> {
         .watch(discoveryControllerProvider)
         .where((p) => !(members?.containsKey(p.peerId) ?? false))
         .toList();
+    // 시트 전체가 스크롤됨: 작은 플로팅 창·큰 글씨에서 빈 상태 그림이나 버튼이 시트 밖으로 넘치지 않게
     return SafeArea(
-      child: Padding(
+      child: ListView(
+        shrinkWrap: true,
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,
           0,
           AppSpacing.lg,
           AppSpacing.lg,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              S.of(context).t('addPeople.title'),
-              style: Theme.of(context).textTheme.titleMedium,
+        children: [
+          Text(
+            S.of(context).t('addPeople.title'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            S.of(context).t('addPeople.body'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (peers.isEmpty)
+            EmptyState(
+              art: EmptyStateArt.bubbles,
+              title: S.of(context).t('empty.addPeopleTitle'),
+              body: S.of(context).t('empty.addPeopleBody'),
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              S.of(context).t('addPeople.body'),
-              style: Theme.of(context).textTheme.bodySmall,
+          for (final peer in peers)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _picked.contains(peer.peerId),
+              onChanged: (on) => setState(() {
+                if (on ?? false) {
+                  _picked.add(peer.peerId);
+                } else {
+                  _picked.remove(peer.peerId);
+                }
+              }),
+              title: Text(peer.alias),
+              subtitle: Text(peer.detail),
             ),
-            const SizedBox(height: AppSpacing.md),
-            if (peers.isEmpty)
-              EmptyState(
-                art: EmptyStateArt.bubbles,
-                title: S.of(context).t('empty.addPeopleTitle'),
-                body: S.of(context).t('empty.addPeopleBody'),
-              )
-            else
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: peers
-                      .map(
-                        (peer) => CheckboxListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _picked.contains(peer.peerId),
-                          onChanged: (on) => setState(() {
-                            if (on ?? false) {
-                              _picked.add(peer.peerId);
-                            } else {
-                              _picked.remove(peer.peerId);
-                            }
-                          }),
-                          title: Text(peer.alias),
-                          subtitle: Text(peer.detail),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-            const SizedBox(height: AppSpacing.sm),
-            FilledButton(
-              onPressed: _picked.isEmpty
-                  ? null
-                  : () {
-                      final chosen = peers
-                          .where((p) => _picked.contains(p.peerId))
-                          .toList();
-                      ref
-                          .read(linkRegistryProvider)
-                          .addPeersToRoom(widget.conversationId, chosen);
-                      Navigator.of(context).pop();
-                    },
-              child: Text(
-                _picked.isEmpty
-                    ? S.of(context).t('common.add')
-                    : S.of(context).t('addPeople.add', {
-                        'n': '${_picked.length}',
-                      }),
-              ),
+          const SizedBox(height: AppSpacing.sm),
+          FilledButton(
+            onPressed: _picked.isEmpty
+                ? null
+                : () {
+                    final chosen = peers
+                        .where((p) => _picked.contains(p.peerId))
+                        .toList();
+                    ref
+                        .read(linkRegistryProvider)
+                        .addPeersToRoom(widget.conversationId, chosen);
+                    Navigator.of(context).pop();
+                  },
+            child: Text(
+              _picked.isEmpty
+                  ? S.of(context).t('common.add')
+                  : S.of(context).t('addPeople.add', {
+                      'n': '${_picked.length}',
+                    }),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

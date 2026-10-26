@@ -20,7 +20,7 @@ part 'message_list/entry_builder.dart';
 part 'message_list/view.dart';
 part 'message_list/burn_ghost.dart';
 
-// reverse: true로 렌더링해서 새 메시지가 스크롤 점프 없이 바닥에 고정됨
+// reverse 목록이라 새 메시지가 스크롤 점프 없이 바닥에 붙음
 class MessageList extends StatefulWidget {
   const MessageList({
     required this.messages,
@@ -50,22 +50,21 @@ class MessageList extends StatefulWidget {
 
 class _MessageListState extends State<MessageList> {
   final ScrollController _scroll = ScrollController();
-  // 목록 자체의 Tab 칸. 키보드 스크롤 뒤 포커스한 말풍선이 화면 밖으로 사라져도 다음 키가 이어지게
-  // 포커스를 여기로 옮김
+  // 목록 자체의 Tab 칸. 키보드로 스크롤하다 포커스한 말풍선이 화면 밖으로 사라지면 여기로 포커스를 옮겨 다음 키가 이어짐
   final FocusNode _listFocus = FocusNode(debugLabel: 'messages');
   bool _showJump = false;
 
-  // 검색 스크롤용으로 빌드된 메시지 행의 컨텍스트를 잡아둠 (build마다 살아있는 id로 가지치기)
+  // 점프와 소각 크기 재기에 쓰는 행 키 (build마다 살아 있는 id로 가지치기)
   final Map<String, GlobalKey> _rowKeys = <String, GlobalKey>{};
 
-  // 처음 열 때 있던 메시지와 한 번이라도 빌드된 메시지의 id. 도착 애니메이션은 처음 빌드될 때 한 번만 켬
-  // 스크롤로 행이 버려졌다 다시 만들어져도 다시 튀지 않음
+  // 처음 열 때 있던 메시지와 한 번이라도 빌드된 메시지의 id. 도착 애니메이션은 처음 빌드될 때 한 번만 돌아서
+  // 스크롤로 행이 다시 만들어져도 또 안 튐
   late final Set<String> _seen;
 
-  // 소각 타이머로 스토어에서 막 지워진 메시지의 "고스트". 사라지는 애니메이션이 끝날 때까지 더 그림
+  // 소각 타이머로 막 지워진 메시지의 고스트. 사라지는 애니메이션이 끝날 때까지 더 그림
   final Map<String, _BurnGhostSpec> _burning = <String, _BurnGhostSpec>{};
 
-  // 답장 인용을 눌러 스크롤해 온 메시지의 일회성 탭 피드백 (검색 점프 하이라이트와 별개 신호)
+  // 답장 인용을 눌러 온 메시지의 일회성 깜빡임 (검색 점프 강조와 별개)
   String? _flashId;
 
   void _jumpToMessage(String id) {
@@ -93,8 +92,7 @@ class _MessageListState extends State<MessageList> {
     _detectBurns(oldWidget.messages);
   }
 
-  // previous에 있었는데 지금 없고 타이머(ttlSeconds > 0)가 걸려 있던 메시지만 소각 애니메이션을 한 번 더 그림
-  // 타이머 없이 사라진 메시지(대화 삭제 등)는 건드리지 않음
+  // 있다가 사라진 메시지 중 타이머가 걸려 있던 것만 소각 애니메이션을 그림 (대화 삭제 등은 그냥 사라짐)
   void _detectBurns(List<EphemeralMessage> previous) {
     final liveIds = widget.messages.map((m) => m.id).toSet();
     for (final m in previous) {
@@ -106,7 +104,7 @@ class _MessageListState extends State<MessageList> {
         id: m.id,
         createdAt: m.createdAt,
         mine: m.isMine,
-        // 한계: 화면 밖이라 못 재면 평범한 버블 크기로 대체
+        // 화면 밖이라 못 재면 평범한 말풍선 크기로 대신함
         size: box?.size ?? const Size(160, 44),
       );
       final id = m.id;
@@ -127,15 +125,14 @@ class _MessageListState extends State<MessageList> {
     super.dispose();
   }
 
-  // 이미 빌드됐으면 바로 정렬, 화면 밖이면 평균 행 높이로 대략 점프한 뒤 빌드되면 정렬
-  // 한계: 평균 76px 추정이라 버블 크기 편차가 크면 한 번에 안
-  // 맞을 수 있음 (post-frame 재시도로 보정, 수백 개까진 충분)
+  // 빌드돼 있으면 바로 맞추고, 화면 밖이면 평균 행 높이(76px)로 대충 뛴 뒤 빌드되면 맞춤.
+  // 말풍선 크기 편차가 크면 한 번에 안 맞지만 post-frame 재시도로 보정됨 (수백 개까진 충분)
   void _focus(String id) {
     if (!mounted) return;
     final ctx = _rowKeys[id]?.currentContext;
     if (ctx != null) {
-      // ensureVisible 애니메이션 중 스크롤 리스너가 중간 offset에 반응해 "맨 아래로" 버튼이 잠깐
-      // 나왔다 꺼지므로, 애니메이션이 멈춘 뒤 최종 offset 기준으로 한 번 더 동기화함
+      // ensureVisible 애니메이션 도중엔 스크롤 리스너가 중간 offset을 봐서 맨 아래로 버튼이 깜빡임.
+      // 멈춘 뒤 최종 offset으로 한 번 더 맞춤
       unawaited(
         Scrollable.ensureVisible(
           ctx,
@@ -195,8 +192,8 @@ class _MessageListState extends State<MessageList> {
     );
   }
 
-  // PageUp·PageDown은 한 화면의 80%, Home은 가장 오래된 쪽(reverse 목록의 끝), End는 최신
-  // 지연 빌드라 끝 위치 추정이 늘 수 있어서 Home은 다음 프레임에 한 번 더 맞춤
+  // PageUp·PageDown은 한 화면의 80%, Home은 가장 오래된 쪽(reverse라 목록 끝), End는 최신.
+  // 지연 빌드라 끝 위치 추정이 늘어날 수 있어서 Home은 다음 프레임에 한 번 더 맞춤
   void _keyScroll(
     double Function(ScrollPosition p) target, {
     bool settle = false,

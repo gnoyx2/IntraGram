@@ -82,9 +82,7 @@ extension _MessageBubbleActions on MessageBubble {
     await _runAction(context, ref, action);
   }
 
-  // 자유 텍스트 대신 탭 선택만 씀: onChanged(IME 조합 중 호출) 안에서 pop하면
-  // TextField Element가 unmount되며 _dependents.isEmpty assertion으로 앱이 죽었음
-  // 텍스트 입력/IME가 아예 안 끼니 이 크래시 종류가 원천 차단됨
+  // 자유 입력 대신 탭으로만 고름: IME 조합 중 onChanged에서 pop하면 TextField가 내려가며 assertion으로 앱이 죽었음
   Widget _quickReaction(
     BuildContext sheetContext, {
     required String label,

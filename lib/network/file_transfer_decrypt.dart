@@ -11,10 +11,8 @@ class _SealedRecord {
   final Uint8List cipher;
 }
 
-// wire 바이트를 레코드 경계로 다시 자르는 상태 기계. 버퍼를 레코드 하나의 최대 크기(_kMaxRecordBytes)로
-// 한 번만 잡고 도착 조각을 바로 복사해서 메모리가 전송 크기와 무관함
-// 본문을 버퍼링하기 전에 길이 접두를 검증 (범위 밖, 여분 레코드, 그 위치의 기대 평문 길이와 불일치면
-// 즉시 FormatException). 한 번 실패하면 나머지 바이트는 전부 버림(_failed)
+// wire 바이트를 레코드 경계로 다시 자르는 상태 기계. 버퍼는 레코드 하나 최대 크기로 한 번만 잡아서 메모리가 전송 크기와 무관함.
+// 본문을 모으기 전에 길이 접두부터 검사하고(범위 밖·여분 레코드·그 자리 기대 길이와 다르면 FormatException) 한 번 실패하면 나머진 버림
 class _RecordReader {
   _RecordReader(this.totalBytes)
     : expectedChunks = _expectedChunkCount(totalBytes);
@@ -122,10 +120,8 @@ class _RecordReader {
   }
 }
 
-// encryptChunks의 역. 도착 바이트를 얼마나 잘게 받든 _RecordReader가 재조립하고 open으로 복호화함
-// tag가 틀리면(변조/키 불일치/다른 전송·시도·순번의 AAD) 즉시 던지고 이후 평문을 안 내보냄.
-// 레코드가 0개/길이 불일치/여분/중간 끊김이면 FormatException (약속한 파일 전체를 강제)
-// 결과 스트림의 구독 취소는 소스 구독에 즉시 전달됨 (async*와 달리 await에 안 막힘)
+// encryptChunks의 역. 조각이 어떻게 오든 _RecordReader가 다시 맞추고 open으로 품. tag가 틀리면 바로 던지고 그 뒤 평문은 안 내보냄.
+// 레코드 수·길이가 약속과 다르면 FormatException. 구독 취소는 소스에 바로 넘어감 (async*처럼 await에 안 막힘)
 Stream<List<int>> decryptChunks(
   Stream<List<int>> wire,
   OpenChunk open, {
@@ -160,12 +156,12 @@ Stream<List<int>> decryptChunks(
       }
       return plain;
     } on Object catch (e) {
-      failure = e; // 이후 레코드는 복호화하지 않고 같은 오류로 끝냄
+      failure = e; // 이후 레코드는 안 풀고 같은 오류로 끝냄
       rethrow;
     }
   }
 
-  // wire의 런타임 타입이 Stream<Uint8List>일 수 있어 cast로 감쌈 (file_chunks.dart 참고)
+  // 런타임 타입이 Stream<Uint8List>일 수 있어 cast로 감쌈
   return wire
       .cast<List<int>>()
       .transform(reader.transformer)

@@ -4,8 +4,7 @@ extension OutgoingTransfersApi on OutgoingTransfers {
   Future<void> offerFile(String conversationId, PlatformFile file) =>
       _offerPicked(conversationId, file, null, null);
 
-  // 각 파일은 평범한 독립 file_offer이고, 유일한 차이는 전송 타일마다
-  // "n / total" 위치를 보여줘서 받는 쪽이 배치 진행을 보는 것
+  // 파일마다 따로 offer하고 'n / 전체' 라벨만 붙음
   Future<void> offerFiles(
     String conversationId,
     List<PlatformFile> files,
@@ -21,7 +20,7 @@ extension OutgoingTransfersApi on OutgoingTransfers {
     }
   }
 
-  // 데스크톱 드래그 앤 드롭 진입점. 더 이상 없는 경로는 빈 파일로 제안하지 않고 건너뜀
+  // 데스크톱 끌어 놓기. 사라진 경로는 빈 파일로 안 내고 건너뜀
   Future<void> offerFilesFromPaths(
     String conversationId,
     List<String> paths,
@@ -44,10 +43,7 @@ extension OutgoingTransfersApi on OutgoingTransfers {
     }
   }
 
-  // 모바일 zero-disk 첨부(MobileFileSource) 하나를 파일 제안으로:
-  // file_picker의 캐시 복사 경로 대신 네이티브 메모리 스트리밍 소스를 그대로
-  // 씀
-  // (보내는 쪽 디스크/앱 캐시엔 아무것도 안 씀)
+  // 모바일 첨부 하나: file_picker 캐시 사본 대신 네이티브 스트림을 그대로 씀 (디스크·캐시에 안 남김)
   Future<void> offerStreamSource({
     required String conversationId,
     required String name,
@@ -69,8 +65,7 @@ extension OutgoingTransfersApi on OutgoingTransfers {
     releaseSource: releaseSource,
   );
 
-  // spillToFile 모드의 긴 메시지: 보내는 쪽 디스크엔 아무것도 안 쓰고(source
-  // 스트림이 바이트를 RAM에서 흘림) 받는 쪽은 평범한 .txt 파일 제안으로 봄
+  // 긴 메시지를 .txt로: 디스크엔 안 쓰고 RAM에서 흘림
   Future<void> offerInlineText(
     String conversationId,
     String name,
@@ -88,8 +83,7 @@ extension OutgoingTransfersApi on OutgoingTransfers {
     );
   }
 
-  // 앞부분 kSpillPreviewBytes바이트 스니펫. allowMalformed라 멀티바이트
-  // 문자 중간에서 잘려도 그 경계에 대체 문자 하나가 남을 뿐 throw 안 함 (미리보기용이라 충분)
+  // 앞부분 미리보기. 글자 중간에서 잘려도 대체 문자 하나로 끝남 (allowMalformed)
   static String _previewOf(List<int> bytes) => utf8.decode(
     bytes.length <= kSpillPreviewBytes
         ? bytes

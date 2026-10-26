@@ -12,6 +12,7 @@
   --on-surface: #171c26;
   --on-surface-variant: #3d495c;
   --outline-variant: #d6dee8;
+  --defined-edge: #3d495c;
   --accent: #2563eb;
   --accent-ink: #1e40af;
   --action: #1e40af;
@@ -33,6 +34,8 @@
   --glass-edge: rgba(15, 23, 42, 0.08);
   --glow: rgba(37, 99, 235, 0.35);
   --aura: rgba(37, 99, 235, 0.07);
+
+  --chat-width: 840px;
 
   --r-tail: 6px;
   --r-xs: 8px;
@@ -62,6 +65,7 @@
     --on-surface: #f1f5fc;
     --on-surface-variant: #b6c2d2;
     --outline-variant: #282e3d;
+    --defined-edge: #b6c2d2;
     --accent: #60a5fa;
     --accent-ink: #bfdbfe;
     --action: #60a5fa;

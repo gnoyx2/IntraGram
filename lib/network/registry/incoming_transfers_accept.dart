@@ -1,7 +1,6 @@
 part of 'incoming_transfers.dart';
 
-// 인커밍 제안을 수락하고 서버가 바이트를 받게 목적지를 등록한 뒤 피어에게 알림. 데스크톱에선 유저가 폴더를 고르고,
-// 모바일은 앱 문서 디렉토리 밑 IntraGram/에 떨어져 resolve된 경로가 채팅에 뜸
+// 제안을 수락: 목적지를 잡고 상대에게 알림. 데스크톱은 사용자가 폴더를 고르고 모바일은 앱 문서 폴더의 IntraGram/
 Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
   final transfer = self.store.transfer(transferId);
   if (transfer == null ||
@@ -10,8 +9,7 @@ Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
     return;
   }
 
-  // 음성 메시지: 폴더를 안 물어봄. 원본 기기 서버에서 RAM으로 바로 당겨 재생만 함 (디스크/보관소에 안 감)
-  // srcHost/srcPort가 제안에 박혀 있어야 함
+  // 음성은 폴더를 안 물음: 보낸 기기에서 RAM으로 당겨 재생만 함 (디스크·보관소엔 안 감)
   if (transfer.voice) {
     final future = self._pullVoice(transfer);
     self._track(transferId, future);
@@ -23,12 +21,10 @@ Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
   final directory = await self._pathResolver.saveDir(
     safeBasename(transfer.fileName),
   );
-  if (directory == null) return; // 유저가 취소했거나 목적지 없음
-  // 폴더 선택을 기다리는 사이 clear/소각/새 attempt가 왔으면
-  // 물러남: 늦게 돌아온 선택이 정리가 끝난 세션에 .part를 만들지 못하게
+  if (directory == null) return; // 사용자가 취소함
+  // 폴더를 고르는 사이 정리·소각·새 attempt가 왔으면 물러남 (늦은 선택이 끝난 세션에 .part를 못 만들게)
   if (!self._isCurrent(transferId, attemptId)) return;
-  // 선언 크기가 남은 공간을 넘으면 받기 전에 멈춤 (끝까지 받다 같은 실패를 보지 않게). 보낸 쪽엔
-  // 취소로 알려서 공간을 비운 뒤 받는 쪽 재시도(file_retry)가 새 offer를 받게 함
+  // 남은 공간보다 크면 받기 전에 멈춤. 보낸 쪽엔 취소로 알려서, 공간을 비운 뒤 재시도가 새 offer를 받게 함
   final free = freeBytesAt(directory);
   if (free != null && transfer.totalBytes > free) {
     self._failForSpace(transferId);
@@ -38,13 +34,10 @@ Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
     return;
   }
 
-  // 화면에 즉시 보여줄 잠정 경로: 실제 커밋된 이름은 전송 완료 시
-  // commitDestination이 (충돌하면 접미사 붙여) 다시 알려줌
-  // 지금은 아직 아무 파일도 안 쓰는 순수 경로 계산
+  // 화면에 바로 띄울 잠정 경로 (실제 이름은 커밋 때 정해짐)
   final provisional = p.join(directory, safeBasename(transfer.fileName));
 
-  // 그룹 방 제안: 호스트를 안 거치고 원본 멤버 서버에서 바이트를 직접 당김.
-  // 수락은 여전히 호스트 경유로 알림 (진행 표시 + 그 offer의 수신자로 기록)
+  // 방 제안: 바이트는 보낸 멤버 서버에서 직접 당기고 수락만 호스트를 거쳐 알림
   final srcHost = transfer.srcHost;
   final srcPort = transfer.srcPort;
   if (srcHost != null && srcPort != null) {
@@ -52,8 +45,7 @@ Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
       transferId,
       (t) => t.copyWith(state: TransferState.accepted, localPath: provisional),
     );
-    // pull의 accept는 승인 의사 표시일 뿐이지만 file_accept의 tok은 프로토콜상
-    // 항상 필수라 형식만 맞춰 새로 발급해 실음 (보내는 쪽은 pull이면 이 값을 안 씀)
+    // pull이면 tok은 안 쓰이지만 file_accept 필수 필드라 형식만 맞춰 새로 실음
     await self
         ._linkForTransfer(transfer)
         ?.sendFileAccept(
@@ -78,8 +70,7 @@ Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
     return;
   }
 
-  // push: 목적지는 이번 시도(attemptId) 전용 .part 파일이라
-  // 완료 전엔 최종 이름으로 절대 안 보이고, 실패하면 이 파셜만 지우면 됨
+  // push: 이번 시도 전용 .part에 받음. 끝나기 전엔 최종 이름으로 안 보이고 실패하면 이것만 지우면 됨
   final (
     partial: partial,
     finalName: finalName,
@@ -88,15 +79,13 @@ Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
     name: transfer.fileName,
     attemptId: attemptId,
   );
-  // push 수신 인가 토큰: 우리가 발급해 accept에 실어 보냄. 상대는 POST할
-  // 때 이 값(과 attempt)을 다시 실어 와야 하고 서버가 이 값과 비교함
-  // (server_routes.dart의 _receiveFile 참고)
-  // 예약 직후 다음 await 전에 소유 등록하고, 예약을 기다리는 사이 세션이 정리됐다면 방금 만든 파셜을 바로 치움
+  // 예약 직후 await 전에 소유 등록. 예약을 기다리는 사이 세션이 정리됐으면 방금 만든 .part를 바로 치움
   self._ownPartial(transferId, transfer.conversationId, attemptId, partial);
   if (!self._isCurrent(transferId, attemptId)) {
     await self._deleteOwnedPartialsRecorded(transferId);
     return;
   }
+  // 상대가 POST에 다시 실어 와야 하는 수신 토큰 (서버가 비교함)
   final pushToken = generateSecureToken();
   self._incoming[transferId] = _IncomingFile(
     conversationId: transfer.conversationId,

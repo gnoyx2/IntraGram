@@ -26,6 +26,7 @@ import 'widgets/discovery_refresh_row.dart';
 import 'widgets/home_sections.dart';
 import 'widgets/identity_card.dart';
 import 'widgets/peer_tile.dart';
+import 'adaptive_panes.dart';
 import 'two_pane.dart';
 
 part 'home_screen/app_bar.dart';
@@ -39,14 +40,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with _HomeScreenAppBar {
-  // 열자마자 첫 mDNS 사이클이 안 끝났을 뿐인데 "기기 없음"이라고 성급히 단정하지 않으려는 유예
-  // 스캔 완료 신호 대신 새로고침 주기 하나만큼 기다리는 근사치
+  // 첫 mDNS 사이클이 안 끝났을 뿐인데 기기 없음이라고 성급히 말하지 않게 새로고침 한 주기만큼 기다림 (스캔 완료 신호가 없어서 근사치)
   bool _searchGraceOver = false;
   Timer? _graceTimer;
 
-  // 넓은 창에서 목록 옆 창에 띄운 대화. GlobalKey라 창 폭이 기준을 넘나들어도 대화 상태(입력 중인 글 등)가 남음
+  // 대화 창에 띄운 대화. 목록·대화 창이 접고 펼쳐도 같은 자리에 남아 입력 중인 글과 대화 상태가 유지됨
   String? _paneChat;
-  final _paneKey = GlobalKey();
+  final _chatSettled = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -61,55 +61,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void dispose() {
     if (showChatInPane == _showInPane) showChatInPane = null;
     _graceTimer?.cancel();
+    _chatSettled.dispose();
     super.dispose();
   }
 
-  // 넓은 창이면 위에 쌓인 화면(검색·설정 등)을 걷고 오른쪽 창에 띄움
+  // 다른 대화가 들어오면 전환이 끝날 때까지 밑의 목록을 다시 그림
+  void _setPaneChat(String? id) {
+    if (id != _paneChat) _chatSettled.value = false;
+    setState(() => _paneChat = id);
+  }
+
+  // 검색·설정 등 위에 쌓인 화면을 걷고 같은 대화 창에 띄움
   bool _showInPane(String conversationId) {
-    if (!mounted || MediaQuery.sizeOf(context).width < kTwoPaneMinWidth) {
-      return false;
-    }
+    if (!mounted) return false;
     final home = ModalRoute.of(context);
     Navigator.of(context).popUntil((route) => route == home);
-    setState(() => _paneChat = conversationId);
+    _setPaneChat(conversationId);
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    final list = _list(context);
     // 지워진 대화(종료·긴급 소거)는 창에서도 내림
     final ids = ref.watch(conversationsProvider).value?.map((c) => c.id);
     final paneChat = ids?.contains(_paneChat) ?? false ? _paneChat : null;
-    final wide = MediaQuery.sizeOf(context).width >= kTwoPaneMinWidth;
-    if (!wide && paneChat == null) return list;
-    final pane = ChatPane(
-      key: _paneKey,
-      conversationId: paneChat,
-      onClosed: () => setState(() => _paneChat = null),
-    );
-    // 창이 좁아지면 열려 있던 대화만 전체로 보여 주고, 닫으면 목록으로
-    if (!wide) return pane;
+    final split = paneSplit(context);
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.tab, control: true): () =>
-            _stepPane(1),
-        const SingleActivator(
-          LogicalKeyboardKey.tab,
-          control: true,
-          shift: true,
-        ): () =>
-            _stepPane(-1),
+        for (final shift in const [false, true])
+          SingleActivator(
+            LogicalKeyboardKey.tab,
+            control: true,
+            shift: shift,
+          ): () =>
+              _stepPane(shift ? -1 : 1),
       },
-      child: Row(
-        children: [
-          SizedBox(
-            width: kListPaneWidth,
-            child: PaneMedia(removeRight: true, child: list),
-          ),
-          const VerticalDivider(width: 1, thickness: 1),
-          Expanded(child: PaneMedia(removeLeft: true, child: pane)),
-        ],
+      child: AdaptivePanes(
+        split: split,
+        chatOpen: paneChat != null,
+        chatSettled: _chatSettled,
+        list: _list(context),
+        pane: ChatPane(
+          wide: split != null,
+          conversationId: paneChat,
+          onClosed: () => _setPaneChat(null),
+          onSettled: (settled) => _chatSettled.value = settled,
+        ),
       ),
     );
   }
@@ -118,18 +115,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _list(BuildContext context) =>
       Focus(autofocus: true, child: _homeScaffold(context));
 
-  // 2단에서 Ctrl+Tab / Ctrl+Shift+Tab: 목록 순서대로 다음·이전 대화를 오른쪽 창에
+  // Ctrl+Tab / Ctrl+Shift+Tab: 목록 순서대로 다음·이전 대화를 대화 창에
   void _stepPane(int step) {
-    final ids = [
-      for (final c in ref.read(conversationsProvider).value ?? <Conversation>[])
-        c.id,
-    ];
+    final ids = [...?ref.read(conversationsProvider).value?.map((c) => c.id)];
     if (ids.isEmpty) return;
     final at = ids.indexOf(_paneChat ?? '');
     final next = at < 0
         ? (step > 0 ? 0 : ids.length - 1)
         : (at + step) % ids.length;
-    setState(() => _paneChat = ids[next]);
+    _setPaneChat(ids[next]);
   }
 
   Widget _homeScaffold(BuildContext context) {
@@ -137,8 +131,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final server = ref.watch(serverControllerProvider);
     final conversationsAsync = ref.watch(conversationsProvider);
     final conversations = conversationsAsync.value ?? const <Conversation>[];
-    // 이미 대화가 열려 있는 피어는 "진행 중인 대화"에 보이니 "이 네트워크에서"엔 중복으로 안 띄움
-    // (connectToPeer와 같은 peerHost 매칭)
+    // 이미 대화 중인 피어는 '진행 중인 대화'에 보여서 '이 네트워크에서'엔 안 띄움 (connectToPeer와 같은 peerHost 매칭)
     final chattingHosts = conversations
         .map((c) => c.peerHost)
         .whereType<String>()
@@ -153,9 +146,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         )
         .toList();
     final emptyReason = switch (server.problem) {
-      // 서버가 못 뜬 이유는 대개 "LAN 없음"이라 위 ErrorBanner와 같은 원인을 재확인하는 근사치
-      // 포트 충돌 같은 다른 bind 실패도 섞이지만 둘 다 네트워크 쪽 문제라 문구를 안 나눔
+      // 서버가 못 뜨는 건 대개 LAN이 없어서라 위 ErrorBanner와 같은 원인으로 봄 (포트 충돌도 섞이지만 둘 다 네트워크 문제라 문구를 안 나눔)
       ServerProblem.notPrivate => DiscoveryEmptyReason.notPrivate,
+      ServerProblem.localNetworkDenied =>
+        DiscoveryEmptyReason.localNetworkDenied,
       _? => DiscoveryEmptyReason.noWifi,
       _ when !ref.read(discoveryControllerProvider.notifier).isRunning =>
         DiscoveryEmptyReason.error,
@@ -194,7 +188,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         other: S.of(context).t('home.activeChatsCountOther'),
                       ),
           ),
-          // 첫 스냅샷 도착 전엔 "대화 없음" 힌트를 숨김 (안 그러면 로딩 중 빈 상태가 한 프레임 깜빡임)
+          // 첫 스냅샷이 오기 전엔 대화 없음 힌트를 숨김 (안 그러면 빈 상태가 한 프레임 깜빡임)
           if (conversationsAsync.hasValue && conversations.isEmpty)
             Hint(S.of(context).t('home.noChats')),
           for (final conversation in conversations)

@@ -29,6 +29,16 @@ enum SystemEventKind {
   peerBlocked,
 }
 
+// 소각 증적에 남기는 이유. replaced는 실패 버블을 같은 글의 새 메시지로 바꾼 것뿐이라 증적을 안 남김
+enum BurnCause {
+  ttlAfterRead,
+  unreadCeiling,
+  deletedForEveryone,
+  deletedForMe,
+  peerRequest,
+  replaced,
+}
+
 // inline: RAM에 최대 1 MiB(kMaxInlineMessageBytes), 초과분 거부
 // unlimited: 인라인 상한 없음 (kFrameCeilingBytes만 최후 가드)
 // spillToFile: kSpillThresholdBytes를 넘으면 .txt 전송으로 보냄
@@ -50,7 +60,5 @@ enum TransferState {
 
 enum PeerTransport { app, web }
 
-// push: 보내는 쪽이 POST로 밈 (1:1 전용). pull: 받는
-// 쪽이 원본 서버에서 GET으로 당김 (그룹 방 직접 전송, 음성 메시지)
-// FileOfferInner.mode의 wire 표현을 받는 쪽 레코드에 타입 있게 고정한 값
+// push: 보내는 쪽이 POST로 밈 (1:1). pull: 받는 쪽이 보낸 기기 서버에서 GET으로 당김 (방 파일, 음성)
 enum FileTransferMode { push, pull }

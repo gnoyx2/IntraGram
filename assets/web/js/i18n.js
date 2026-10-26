@@ -1,4 +1,4 @@
-// 브라우저 언어를 기본으로 쓰고 헤더 선택값은 RAM에만 둠. 게스트 설정 화면이나 영구 저장은 없음.
+// 브라우저 언어를 기본으로 쓰고 헤더에서 고른 값은 RAM에만 둠 (게스트 설정 화면이나 영구 저장은 없음)
 var langOverride = null;
 
 function storedLang() {
@@ -13,7 +13,7 @@ function detectLang() {
 
 var KO = detectLang() === "ko";
 
-// 언어 변경 때 새로고침 없이 문구를 다시 만들어 RAM 대화를 보존함.
+// 언어를 바꿀 때 새로고침 없이 문구를 다시 만들어서 RAM 대화를 지킴
 function buildI18N() {
   return {
     guestTitle: KO ? "IntraGram 게스트" : "IntraGram Guest",
@@ -25,6 +25,7 @@ function buildI18N() {
     ttlSeconds: KO ? "{n}초" : "{n}s",
     langAuto: KO ? "자동" : "Auto",
     logLabel: KO ? "메시지" : "Messages",
+    like: KO ? "좋아요 토글" : "Toggle like",
     reactHint: KO ? "Enter를 누르거나 두 번 눌러 좋아요" : "Press Enter or double-click to like",
     langLabel: KO ? "언어" : "Language",
     sendFile: KO ? "파일 보내기" : "Send a file",
@@ -57,11 +58,12 @@ function buildI18N() {
     messageDeleted: KO ? "삭제된 메시지" : "Message deleted",
     fileDeclined: KO ? "상대가 파일을 거절했어요." : "The other side declined the file.",
     voiceMessage: KO ? "음성 메시지" : "Voice message",
+    voiceExpired: KO ? "더 이상 재생할 수 없음" : "No longer available",
     download: KO ? "다운로드" : "Download",
     decline: KO ? "거절" : "Decline",
     downloading: KO ? "{name} 내려받는 중…" : "Downloading {name}…",
     downloadComplete: KO
-      ? "{name} 받음 — 브라우저 다운로드를 확인하세요"
+      ? "{name} 받음. 브라우저 다운로드를 확인하세요"
       : "{name} received — check your browser's downloads",
     bigDownload: KO
       ? "큰 파일이에요. 브라우저가 메모리에 다 받은 뒤 저장해서 휴대폰에선 실패할 수 있어요."
@@ -72,7 +74,9 @@ function buildI18N() {
     filesQueued: KO ? "파일 {n}개를 하나씩 보내요." : "Sending {n} files one at a time.",
     downloadFailed: KO ? "다운로드 실패" : "Download failed",
     uploading: KO ? "{name} 보내는 중…" : "Sending {name}…",
-    waitingForPeer: KO ? "{name} — 상대 기다리는 중…" : "{name} — waiting for peer…",
+    waitingForPeer: KO
+      ? "{name} · 상대 기다리는 중…"
+      : "{name} — waiting for peer…",
     sent: KO ? "{name} 보냄" : "{name} sent",
     uploadFailed: KO ? "업로드 실패" : "Upload failed",
     cancel: KO ? "취소" : "Cancel",

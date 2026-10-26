@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Backs Android 13+ Settings -> App info -> App language for IntraGram.
-     Mirrors the two locales lib/l10n's strings_{en,ko}_*.dart files support. -->
+<!-- Android 13+ 설정 → 앱 정보 → 앱 언어에 뜨는 목록. lib/l10n이 지원하는 두 언어(strings_{en,ko}_*.dart)와 맞춤 -->
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
     <locale android:name="en"/>
     <locale android:name="ko"/>

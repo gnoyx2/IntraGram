@@ -30,9 +30,7 @@ class IdentityAliasNotifier extends Notifier<String> {
   @override
   String build() {
     final identity = ref.read(appIdentityProvider);
-    // 값이 늦게 도착해도 notifier가 재생성되지 않게 watch 대신 listen으로 시드함
-    // vault의 savedAlias와 legacy identity.json 둘 다 구독: 보관소 켜기 전엔
-    // legacy가 적용되고, 켠 뒤 한 번 저장하면 vault 값이 적용됨
+    // 값이 늦게 와도 notifier가 다시 안 만들어지게 watch 대신 listen. 보관소 savedAlias와 identity.json을 둘 다 봄
     ref.listen<VaultSettings>(vaultSettingsProvider, (_, next) {
       final saved = next.savedAlias;
       if (saved != null && saved.isNotEmpty) _apply(identity, saved);
@@ -44,9 +42,7 @@ class IdentityAliasNotifier extends Notifier<String> {
     return identity.alias;
   }
 
-  // 저장된 이름이 디스크에서 늦게 로드될 수 있어서 mDNS 광고도 같이 갱신함
-  // 안 하면 화면엔 새 이름인데 다른 기기는 옛 랜덤 alias(kind-crow-90 등)를 봄
-  // restartBroadcast는 광고 전(서버 꺼짐)이면 조용히 무시하니 매번 불러도 안전
+  // 저장된 이름이 늦게 올 수 있어서 mDNS 광고도 다시 뿌림 (안 그러면 남들은 옛 랜덤 이름을 봄). 광고 전이면 그냥 무시됨
   void _apply(AppIdentity identity, String alias) {
     identity.rename(alias);
     state = alias;

@@ -1,8 +1,7 @@
 part of '../protocol.dart';
 
-// InboundInner.fromJson의 실제 파싱: 필수 필드는 _req*로 검증하고 없거나 형식/범위가 틀리면 _BadField로
-// 프레임 전체를 거부 (?? ''/?? 0 기본값으로 정상 프레임인 척 안 만듦). 값이 있는 선택 필드가 틀려도 거부
-// from/pid는 릴레이가 붙이는 표기라 신뢰 판단은 PeerLink의 인가 단계가 인증된 링크 신원으로 덮어써서 함
+// 실제 파싱: 필수 필드는 _req*로 보고 없거나 틀리면 _BadField로 프레임째 거부 (기본값으로 정상 프레임인 척 안 만듦). 값 있는 선택 필드가 틀려도 거부.
+// from/pid는 릴레이 표기라 신뢰 판단은 인가 단계가 인증된 링크 신원으로 덮어써서 함
 InboundInner _parseInner(Map<String, dynamic> j) {
   final from = _optText(j, 'from', 256);
   final pid = _optId(j, 'pid');
@@ -86,6 +85,7 @@ InboundInner _parseInner(Map<String, dynamic> j) {
         attempt: _reqId(j, 'at'),
         from: from,
         peerId: pid,
+        receipt: _optObject(j, 'rc'),
       );
     case 'file_retry':
       return FileRetryInner(
@@ -108,8 +108,7 @@ InboundInner _parseInner(Map<String, dynamic> j) {
   }
 }
 
-// file_offer 전용 조합 검증: pull은 토큰 + 사설 RFC1918
-// IPv4 endpoint 셋 다 필수, push는 셋 다 없어야 함
+// file_offer 조합 검증: pull은 토큰 + 정규 RFC 1918 주소·포트가 다 있어야 하고, push는 셋 다 없어야 함
 InboundInner _parseFileOffer(
   Map<String, dynamic> j, {
   required String? from,
@@ -136,13 +135,18 @@ InboundInner _parseFileOffer(
   if (digest != null && wireBytes(digest, length: 32) == null) {
     throw const _BadField('dg');
   }
+  final senderKey = j['sk'];
+  final keyBytes = wireBytes(senderKey, length: 32);
+  if (senderKey != null && (keyBytes == null || isSmallOrderKey(keyBytes))) {
+    throw const _BadField('sk');
+  }
   return FileOfferInner(
     id: _reqId(j, 'id'),
     attempt: _reqId(j, 'at'),
     mode: mode as String,
     name: _reqText(j, 'name', 1024),
     size: _reqInt(j, 'size', 0, 1 << 62),
-    // 음성 MIME은 피어가 조작할 수 있으니 저장 전부터 실제 인코더 형식으로 고정함
+    // 음성 MIME은 상대가 바꿀 수 있어서 저장 전부터 실제 녹음 형식으로 고정함
     mime: voice ? 'audio/wav' : mime,
     srcHost: srcHost,
     srcPort: srcPort,
@@ -157,6 +161,7 @@ InboundInner _parseFileOffer(
     peerId: pid,
     to: _optId(j, 'to'),
     digest: digest as String?,
+    senderPubKey: senderKey as String?,
   );
 }
 

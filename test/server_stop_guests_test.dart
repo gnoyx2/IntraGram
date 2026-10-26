@@ -9,7 +9,7 @@ import 'package:intragram/store/in_memory_store.dart';
 
 import 'support/portal_guest.dart' show identity;
 
-// 로컬 서버를 끄면 이미 들어온 브라우저 게스트도 나가야 함 ("꺼짐 — 게스트가 들어올 수 없음"과 일치)
+// 로컬 서버를 끄면 이미 들어온 브라우저 게스트도 나가야 함 (포털의 '꺼져 있어서 게스트가 들어올 수 없어요' 안내와 맞춤)
 class _RecordingRegistry extends LinkRegistry {
   _RecordingRegistry(InMemoryStore store)
     : super(store: store, crypto: CryptoEngine(), identity: identity());

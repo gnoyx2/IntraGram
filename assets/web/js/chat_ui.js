@@ -30,7 +30,7 @@ function system(text) {
   scroll();
 }
 
-// ---- date separators ------------------------------------------------
+// 날짜 구분선
 var lastDateKey = null;
 function dateKey(ms) {
   var d = new Date(ms);
@@ -58,7 +58,7 @@ function maybeInsertDateSep(ms) {
   logEl.appendChild(el);
 }
 
-// ---- unread / jump-to-latest -----------------------------------------
+// 안 읽음 표시와 최신으로 이동
 var unread = 0;
 function updateJump() {
   if (unread > 0) {
@@ -69,7 +69,7 @@ function updateJump() {
   }
 }
 
-// ---- message rendering ---------------------------------------------
+// 메시지 그리기
 var LINK_RE = /https?:\/\/[^\s<>()\[\]]+/gi;
 function linkifyInto(el, text) {
   LINK_RE.lastIndex = 0;
@@ -122,8 +122,7 @@ function addBubble(opts) {
 
   var meta = document.createElement("div");
   meta.className = "meta";
-  // 카운트다운·읽음·시각 갱신 때 aria-live가 같은 줄을 반복 낭독하지 않게 함.
-  // 새 메시지 본문은 별도 노드라 정상 낭독됨.
+  // 카운트다운·읽음·시각을 갱신할 때 aria-live가 같은 줄을 또 읽지 않게 함 (새 메시지 본문은 별도 노드라 그대로 읽힘)
   meta.setAttribute("aria-hidden", "true");
   var burnSpan = document.createElement("span");
   burnSpan.className = "burn";
@@ -148,6 +147,19 @@ function addBubble(opts) {
       sendInner({ k: "react", id: opts.id, emoji: "👍", on: on });
       applyReaction(opts.id, ALIAS, "👍", on);
     };
+    var action = document.createElement("button");
+    action.type = "button";
+    action.className = "btn reaction-action";
+    action.textContent = "👍";
+    action.setAttribute("aria-label", t("like"));
+    action.setAttribute("aria-pressed", "false");
+    // 더블클릭의 두 번째 click(detail 2)과 Enter를 누르고 있을 때의 반복 keydown은 한 번 누른 것으로 침.
+    // 키보드로 누른 click은 detail이 0이라 그대로 토글됨
+    action.onclick = function (e) { if (!e || e.detail <= 1) toggleLike(); };
+    action.addEventListener("keydown", function (e) {
+      if (e.repeat && (e.key === "Enter" || e.key === " ")) e.preventDefault();
+    });
+    action.addEventListener("dblclick", function (e) { e.stopPropagation(); });
     bubble.tabIndex = 0;
     bubble.title = t("reactHint");
     bubble.setAttribute("aria-description", t("reactHint"));
@@ -155,11 +167,12 @@ function addBubble(opts) {
     bubble.addEventListener("keydown", function (e) {
       if (e.target !== bubble || (e.key !== "Enter" && e.key !== " ")) return;
       e.preventDefault();
-      toggleLike();
+      if (!e.repeat) toggleLike();
     });
   }
 
   row.appendChild(bubble);
+  if (action) row.appendChild(action);
   logEl.appendChild(row);
   if (stick) {
     scroll();
@@ -169,7 +182,7 @@ function addBubble(opts) {
   }
 
   // 카운트다운은 앱과 같이 '읽은 뒤'부터: 내 글은 상대 읽음이 올 때, 받은 글은 내가 볼 때 beginBurn
-  if (opts.ttl > 0) pendingBurns[opts.id] = { ttl: opts.ttl, span: burnSpan, row: row, body: body };
+  if (opts.ttl > 0) pendingBurns[opts.id] = { ttl: opts.ttl, span: burnSpan, body: body };
   return bubble;
 }
 
@@ -184,10 +197,10 @@ function beginBurn(id) {
   hint.className = "sr-only";
   hint.textContent = " " + t("burnsIn", { n: burn.ttl });
   burn.body.appendChild(hint);
-  startBurn(id, burn.ttl, burn.span, burn.row);
+  startBurn(id, burn.ttl, burn.span);
 }
 
-// 진동을 지원하지 않는 브라우저에서는 조용히 건너뜀.
+// 진동을 지원 안 하는 브라우저면 조용히 건너뜀
 function vibrate(pattern) {
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
 }
@@ -210,6 +223,8 @@ function applyReaction(id, from, emoji, on) {
   else if (state[from] === emoji) { delete state[from]; }
   var counts = {};
   Object.keys(state).forEach(function (k) { counts[state[k]] = (counts[state[k]] || 0) + 1; });
+  var action = bubble.parentNode.querySelector(".reaction-action");
+  if (action) action.setAttribute("aria-pressed", String(state[ALIAS] === "👍"));
   var box = bubble.querySelector(".reactions");
   box.textContent = "";
   Object.keys(counts).forEach(function (e) {
@@ -220,21 +235,20 @@ function applyReaction(id, from, emoji, on) {
 }
 
 var timers = {}; // messageId -> intervalId
-function startBurn(id, ttl, span, row) {
+function startBurn(id, ttl, span) {
   var deadline = Date.now() + ttl * 1000;
   function tick() {
     var left = Math.round((deadline - Date.now()) / 1000);
     if (left <= 0) {
       clearInterval(timers[id]);
       delete timers[id];
-      delete reactionState[id];
-      row.remove();
+      removeBubble(id);
       return;
     }
     span.textContent = t("burnLeft", { n: left });
   }
-  tick();
   timers[id] = setInterval(tick, 1000);
+  tick();
 }
 
 function cssEscape(s) { return String(s).replace(/["\\]/g, "\\$&"); }
@@ -244,6 +258,7 @@ function markRead(id) {
   if (b && b.textContent.indexOf("\u2713") === -1) b.textContent += " \u2713\u2713";
 }
 function removeBubble(id) {
+  releaseVoice(id);
   delete pendingBurns[id];
   if (timers[id]) { clearInterval(timers[id]); delete timers[id]; }
   delete reactionState[id];

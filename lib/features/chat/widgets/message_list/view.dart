@@ -20,7 +20,7 @@ extension _MessageListView on _MessageListState {
           bindings: _scrollKeys,
           child: Focus(
             focusNode: _listFocus,
-            // 데스크톱은 스크롤 동작이 스크롤바를 붙이고, 폰은 여기서 붙임 (스크롤할 때만 보임)
+            // 데스크톱은 ScrollBehavior가 스크롤바를 붙여서 폰만 여기서 붙임 (스크롤할 때만 보임)
             child: _mobileScrollbar(
               context,
               LayoutBuilder(
@@ -119,9 +119,8 @@ extension _MessageListView on _MessageListState {
       };
 }
 
-// 같은 발신자가 5분 안에 이어 보낸 메시지만 한 묶음으로 봄
-// 날짜/안 읽음 구분선과 시스템 알림은 묶지 않고, 반응 칩이 달린 말풍선은 칩이 사이에 끼어 묶음을 끊음
-// 인증된 ID가 없을 때만 별칭으로 비교함
+// 같은 발신자가 5분 안에 이어 보낸 것만 한 묶음. 구분선·시스템 줄은 안 묶고, 반응 칩이 달린 말풍선은
+// 칩이 끼어서 묶음이 끊김. 인증된 ID가 없을 때만 별칭으로 비교함
 bool _joins(_Entry before, _Entry after) {
   if (before is! _MessageEntry || after is! _MessageEntry) return false;
   final a = before.message;

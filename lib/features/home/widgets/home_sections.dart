@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:intragram/core/app_settings.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/network/server_controller.dart';
 import 'package:intragram/theme/tokens.dart';
@@ -7,6 +8,10 @@ import 'package:intragram/theme/tokens.dart';
 // 서버를 못 띄운 이유(server.problem)를 번역해서 (제목, 본문)으로. 포털 시트도 같은 문구를 씀
 (String, String) serverProblemText(S s, ServerState server) =>
     switch (server.problem) {
+      ServerProblem.localNetworkDenied => (
+        s.t('server.localNetworkDeniedTitle'),
+        s.t('server.localNetworkDenied'),
+      ),
       ServerProblem.notPrivate => (
         s.t('server.notPrivateTitle'),
         s.t('server.notPrivate', {'address': server.address ?? '?'}),
@@ -65,10 +70,16 @@ class ErrorBanner extends StatelessWidget {
                 if (server.problem == ServerProblem.failed &&
                     server.error != null)
                   _RawError(server.error!, color: scheme.onErrorContainer),
+                if (server.problem == ServerProblem.localNetworkDenied)
+                  TextButton(
+                    onPressed: () => openSettings(SettingsPane.localNetwork),
+                    child: Text(s.t('settings.open')),
+                  ),
               ],
             ),
           ),
-          if (onRetry != null)
+          if (onRetry != null &&
+              server.problem != ServerProblem.localNetworkDenied)
             TextButton(onPressed: onRetry, child: Text(s.t('common.retry'))),
         ],
       ),

@@ -5,6 +5,11 @@ repository: `*.jks`, `*.keystore`, `key.properties`, `*.p12`, `*.p8`, `*.pfx`,
 `*.mobileprovision` and `.env*` are git-ignored. Do not paste a password,
 token or certificate into a commit, an issue, a log or a release note.
 
+Public source baseline: app `1.0.0+7`, wire protocol `7`, from development
+HEAD `c5b247b` plus the current desktop/web work. Only selected project files
+are exported into the separate public history; development Git history,
+local build state and signing material are excluded.
+
 ## 1. Gates (run on the exact commit you will build)
 
 ```bash
@@ -15,9 +20,56 @@ flutter analyze
 flutter test --exclude-tags large
 node tool/browser_guard_test.js
 node tool/web_design_test.js
+sh -n linux/install.sh
+flutter build macos --debug
 git diff --check
+# Optional, outside the ten required gates; not run in the verification below.
 flutter test --tags large     # 64/256 MiB; add --dart-define=LARGE_SIZES_MIB=1024,4096 for 1/4 GiB
 ```
+
+Historical local verification (2026-10-26, development snapshot): all ten
+required commands exit 0;
+**1,411 Flutter tests** (`large` excluded, 0 failed, 0 skipped), **21 browser
+guard groups** (374 assertion calls), **88 web design assertion calls** and 0
+analyzer issues. The macOS debug app builds, but not warning-free. Which warning
+appears depends on the build:
+
+- Clean build (fresh copy, every plugin compiled): `bonsoir_darwin` 7.1.1 warns
+  `result of call to 'resolveAddress(for:hostname:)' is unused`
+  (BonsoirServiceDiscovery.swift:227); Xcode 27.1 also prints those lines as
+  `error: ... failed with exit code 0` while the build succeeds. An incremental
+  build of an already compiled plugin does not repeat it.
+- Every build: Flutter lists `flutter_local_notifications` and `pasteboard` as
+  plugins without Swift Package Manager support for macOS.
+- This Mac only: CoreSimulator 1171.7.0 is older than Xcode 27.1's 1174.9.2, so
+  xcodebuild disables simulator support; the macOS build is unaffected.
+
+No app (Runner) warning appeared. These warnings are not suppressed and no
+dependency or signing team setting changed. The code, tests and build
+configuration match private CI snapshot `95a1db6` (branch
+`desktop-web-20261026`, tree `508b1c4`); documentation changed afterward.
+This public snapshot has not yet run in GitHub Actions. In the private snapshot:
+`native` run 40309070215 passed windows (windows-2022 debug, no compiler
+warnings), linux (ubuntu-24.04: Linux desktop logic test, CMake debug build and
+link, bundle `install.sh` syntax) and the macOS debug step, and `ci` run
+40309070292 passed verify (1,411 tests on Linux) and the Android debug APK. The
+`apple` job's iOS debug step failed: the macos-15 runner's Xcode has no
+`UIHinge` (iOS 27.1 SDK) used by `ios/Runner/DisplayRegions.swift` from c5b247b.
+Use a runner with Xcode 27.1, or compile the probe only with that SDK, before
+relying on that job or the release workflow for iOS. Headless Firefox 158 checks
+are browser automation, not device QA. Large-transfer and physical target-OS QA
+were not run.
+
+Desktop/Web scope: live accessibility and native menus on macOS 27 (requested
+Golden Gate profile), Windows 11 25H2/26H2 taskbar attention without Toast,
+GNOME 50/KDE Plasma 6 CSD/SSD, asynchronous XDG portals, sensitive clipboard
+hints and PulseAudio/PipeWire pipes. The guest remains assets/web + inline
+SHA-256 CSP, with streaming cancellation, voice resource disposal, BFCache
+reconnection, 840 px chat width and forced colors. No root web/ target.
+Capture exclusion cannot certify Visual Intelligence/ScreenCaptureKit blocking
+or absolute Windows capture protection; verify actual capture tools in QA.
+
+Re-run the gates on the release commit after any further changes.
 
 Build release artifacts from a clean export of that commit, not from a
 working tree with local leftovers: `git archive <commit> | tar -x -C <dir>`.
@@ -85,18 +137,23 @@ from the user's nearby devices while the app is in the background, and that
 turning it off only means messages arrive when the app is open again) and
 the camera (QR scan only) and microphone (voice messages) permissions. The app
 has no server and the developer collects nothing; the privacy policy is
-`PRIVACY.md` (also in the app under Settings, App, Privacy policy). Before
+`PRIVACY.md` (also in the app under Settings, App, Privacy policy). Both stores
+want it at a public URL, so link the file on the public repository (or a
+GitHub Pages copy) in the listing. Before
 answering "no data collected" in Data safety, confirm on a device with a packet
 capture that the app, including a QR scan, opens no connection to a public
 address (DEVICE_QA N9; the scanner decodes on the device and bundles no ML Kit
 or other Google service). Target SDK 36, min SDK 24.
 
-Before raising the target to SDK 37: Android 17 then enforces local network
-protection (the runtime `ACCESS_LOCAL_NETWORK` permission covers mDNS,
-NsdManager and inbound TCP). Request it with a short explanation before the
-first discovery and give a denied permission the same recovery path as iOS
-Local Network (the checklist's Open settings button), or discovery and inbound
-chats stop on Android 17.
+Android 17 local-network support is implemented: the manifest declares
+`ACCESS_LOCAL_NETWORK`; native code uses the permission string and integer
+`SDK_INT >= 37`, so compile SDK 36 remains valid. The runtime gate also checks
+target SDK 37+, matching Android's enforcement boundary; older targets return
+granted without a prompt. Before shipping a target-37 build, run DEVICE_QA F7:
+request before binding/discovery, deny, open app settings, enable, refresh.
+`NEARBY_WIFI_DEVICES` remains absent. The activity is resizable, handles fold
+and freeform size changes without recreation, and keeps edge-to-edge system
+bars transparent. Verify a 320×360 floating bubble with the keyboard (F4).
 
 ## 4. iOS and macOS
 
@@ -138,6 +195,23 @@ Without those, users must approve the app by hand: on macOS 15 and later
 through System Settings, Privacy & Security, Open Anyway, and on 12 to 14 by
 right-clicking the app and choosing Open.
 
+The Mac App Store is a different path: the app would need a sandboxed App
+Store build and its own `PrivacyInfo.xcprivacy` (the macOS runner reads
+`UserDefaults` to restore the window frame, a required-reason API, `CA92.1`).
+iOS already ships one in `ios/Runner/PrivacyInfo.xcprivacy`.
+
+iOS 27 Liquid Glass accessibility follows live Reduce Transparency and high
+contrast with opaque surfaces and defined borders; Safari guests use CSS
+fallbacks. Privacy covers resize with every scene/window and do not enable
+Spotlight/NSUserActivity chat indexing. Device idiom keeps unfolded iPhones
+identified as iOS. On iOS 27.1+ `ios/Runner/DisplayRegions.swift` reports the
+system's fold (division regions and hinge state) into the same display-feature
+layout Android uses; older iOS keeps the center-split guess. Before release, run
+DEVICE_QA F1–F6 and F9 for the requested iPhone Duo profiles, book/clamshell
+continuity, hinge avoidance and tabletop QR placement, and F10 for back
+gestures over dialogs. Browser viewport segment checks are F8. Automated layout tests do
+not certify a device or replace camera/snapshot verification.
+
 ## 5. Windows and Linux
 
 Both must be built on their own OS. A macOS compile says nothing about them.
@@ -148,8 +222,10 @@ Both must be built on their own OS. A macOS compile says nothing about them.
   the VC++ runtime DLLs next to the exe. Without a code-signing certificate
   SmartScreen warns; to sign: `signtool sign /fd SHA256 /tr <timestamp-url> /td SHA256 /a intragram.exe`.
 - **Linux** (x64): build needs `clang cmake ninja-build pkg-config libgtk-3-dev`.
-  Users need `pulseaudio-utils` (voice messages: `parecord` records, `pacat`
-  plays), `avahi-daemon` (mDNS discovery) and `xdg-desktop-portal` with a
+  Users need PulseAudio tools (`parecord`/`pacat`) or PipeWire tools
+  (`pw-record`/`pw-play`, then `pw-cat` fallback) for voice messages; with
+  PulseAudio tools but no reachable server the app switches to PipeWire once
+  (recording before its first audio, playback from where it stopped), `avahi-daemon` (mDNS discovery) and `xdg-desktop-portal` with a
   backend (`-gtk`, `-gnome` or `-kde`) for file dialogs. There is no OS-level signing; publish
   checksums. The bundle carries `install.sh`, which adds the desktop entry and
   icons to the user's app menu.

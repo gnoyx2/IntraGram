@@ -8,8 +8,7 @@ import 'package:intragram/widgets/action_menu.dart';
 import 'package:intragram/widgets/keyboard_access.dart';
 import 'package:intragram/widgets/peer_avatar.dart';
 
-// 회색 방패(gpp_maybe)는 링크는 암호화됐지만 6자리 지문을 아직 안 맞췄다는 뜻이라
-// 중간자 가능성을 못 배제함. SAS를 검증해야 초록(gpp_good)이 됨
+// 회색 방패는 암호화는 됐지만 6자리 코드를 아직 안 맞춘 상태라 중간자를 못 배제함. SAS를 맞춰야 초록이 됨
 class ConversationTile extends StatelessWidget {
   const ConversationTile({
     required this.conversation,
@@ -31,7 +30,7 @@ class ConversationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final chat = context.chat;
     final s = S.of(context);
-    // 우클릭(데스크톱)도 롱프레스와 같은 액션 시트를 엶
+    // ListTile엔 우클릭 훅이 없어서 GestureDetector로 감쌈
     return CallbackShortcuts(
       bindings: menuKeyBindings(() => onMenu(menuAnchor(context))),
       child: GestureDetector(

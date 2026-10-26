@@ -23,9 +23,7 @@ Future<void> main() async {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
-  // 신원 키는 메모리에만 있고, 피어 링크가 이 키로 peerId를 증명함
-  // 컨테이너를 직접 쥐는 건 시그널 핸들러에서 OS 회수 전에 RAM 스크럽하려는 것
-  // 지난 실행이 크래시/강제 종료로 남긴 수신 파셜 정리. 서버가 아직 안 떠서 활성 전송 없음
+  // 지난 실행이 크래시·강제 종료로 남긴 .part를 지움 (서버가 아직 안 떠서 받는 전송이 없음)
   try {
     await IncomingSessionFiles.restoreDirectories();
   } catch (e) {
@@ -43,7 +41,11 @@ Future<void> main() async {
     debugPrint('temp sweep failed: $e');
   }
 
+  // 신원 키는 메모리에만 둠. 컨테이너를 직접 쥐는 건 종료 시그널에서 RAM을 지우려는 것
   final identity = await AppIdentity.create();
+  // iOS 27.1+가 접힘선을 알려 주는지 첫 화면 전에 정함 (안 알려 주면 펼친 iPhone은 화면 크기로 짐작)
+  await OsPrivacy.refreshDisplayRegions();
+  await OsPrivacy.refreshAccessibility();
   final container = ProviderContainer(
     overrides: [appIdentityProvider.overrideWithValue(identity)],
   );

@@ -1,10 +1,7 @@
 part of 'local_server.dart';
 
 extension LocalServerRoutes on LocalServer {
-  // portal/health/download는 브라우저나 중간 프록시가 캐싱하면
-  // 안 됨 (identity, 파일 바이트, 전송 확인 응답은 매번 새로 나가야
-  // 함)
-  // /ws의 101 업그레이드는 hijack으로 직접 쓰므로 여기까지 돌아오지 않음
+  // 모든 응답에 no-store와 보안 헤더를 붙임. Host가 바인드 주소와 다르면 421: DNS 리바인딩으로 남의 페이지가 이 서버를 못 부름
   Middleware _noStore() => (Handler inner) {
     return (Request request) async {
       final expected = boundHost == null
@@ -87,9 +84,7 @@ extension LocalServerRoutes on LocalServer {
         : '0.0.0.0';
     final remotePort = info is HttpConnectionInfo ? info.remotePort : null;
 
-    // 브라우저는 same-origin이어도 WS 핸드셰이크에 Origin
-    // 헤더를 실음. 네이티브 앱 피어(Dart WebSocket 클라이언트)는
-    // 이 헤더를 안 보내니 null이면 통과 (앱 hello 경로는 이 검사 대상이 아님)
+    // 브라우저는 같은 출처여도 WS 핸드셰이크에 Origin을 실음. 앱 피어(Dart 클라이언트)는 안 실어서 null이면 통과
     final origin = request.headers['origin'];
     if (origin != null && !_isOwnOrigin(origin)) {
       return Response.forbidden('origin not allowed');
@@ -128,9 +123,7 @@ extension LocalServerRoutes on LocalServer {
     return origin == 'http://${NetworkGuard.hostForUri(host)}:$port';
   }
 
-  // 토큰/attempt/선언 크기(x-file-size)가 전부 있고 형식이
-  // 맞아야 registry까지 감: 하나라도 없거나 파싱이 안 되면 400이고
-  // 슬롯은 안 건드림. 실제 검증/소비는 registry의 receiveTransfer
+  // 헤더가 다 있고 형식이 맞아야 registry로 감 (아니면 400이고 슬롯은 안 건드림). 검증과 소비는 registry가 함
   Future<Response> _receiveFile(Request request) async {
     final transferId = request.headers['x-transfer-id'];
     if (transferId == null || transferId.isEmpty) {
@@ -162,9 +155,7 @@ extension LocalServerRoutes on LocalServer {
           );
   }
 
-  // 토큰/attempt/선언 크기 헤더가 없으면 400. 실제 인가(토큰, attempt, 크기, 현재 상태)와 AEAD wrapping,
-  // 응답 body의 EOF/취소 기록은 전부 레지스트리 한 곳에서 하고 여긴 결과를 Response로 감쌀 뿐
-  // 평문 source.openStream()을 여기서 직접 읽는 경로는 없음
+  // 헤더가 없으면 400. 인가·봉인·EOF 기록은 다 레지스트리가 하고 여긴 결과를 Response로 쌀 뿐 (평문 source를 직접 안 읽음)
   Future<Response> _downloadFile(
     String transferId,
     Map<String, String> headers,
@@ -190,9 +181,7 @@ extension LocalServerRoutes on LocalServer {
     }
     if (download == null) return Response.notFound('unknown transfer');
 
-    // wireBytes는 openDownload가 암호화 여부까지 반영해 이미 계산함. 안 맞으면 dart:io가
-    // "Content size exceeds specified contentLength"로
-    // 끊음 (음성 메시지 pull이 실기기에서 이걸로 매번 실패했던 버그)
+    // wireBytes는 암호화까지 반영된 값 (안 맞으면 dart:io가 응답을 중간에 끊음)
     return Response.ok(
       download.body,
       headers: {

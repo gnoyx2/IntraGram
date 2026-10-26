@@ -1,10 +1,7 @@
 part of '../link_registry.dart';
 
 mixin _LinkRegistryFacade on _LinkRegistryState {
-  // 검증은 양쪽 다 이걸 해야 완성됨: 피어가 아직 안 눌렀으면 Conversation.verified는
-  // false로 남고 UI는 "대기중"으로 보여줌
-  // expectedSas는 다이얼로그가 열렸을 때 보여준 SAS: 그 사이 재연결로 세션이 바뀌어 실제 sas가 달라졌으면 조용히 무시
-  // (새 세션의 확인 결과로 잘못 적용되는 걸 막음)
+  // 양쪽 다 눌러야 확인 완료 (상대가 아직이면 UI는 '대기 중'). expectedSas는 대화상자에 띄웠던 코드: 그사이 재연결로 바뀌었으면 무시
   void markVerified(String conversationId, {required String? expectedSas}) {
     final conversation = store.conversation(conversationId);
     if (conversation == null || conversation.sas != expectedSas) return;
@@ -22,10 +19,7 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
     if (link != null) unawaited(link.sendRawInnerOrClose(InnerFrame.verify()));
   }
 
-  // 방 멤버 한 명에게 markVerified와 같은 걸 함 (대화 전체가 아니라 그
-  // 멤버 슬롯만). 호스트는 _roomLinks에서 peerId로 그 멤버의 링크를
-  // 찾고
-  // 멤버는 링크가 하나뿐이라 _links에서 찾음. expectedSas는 markVerified와 같은 stale 방지용
+  // markVerified의 방 멤버판: 대화 전체가 아니라 그 멤버 슬롯만 바꿈
   void markRoomMemberVerified(
     String conversationId,
     String peerId, {
@@ -43,14 +37,11 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
             : SystemEventKind.markedVerified,
       ),
     );
-    final link =
-        _links[conversationId] ??
-        _roomLinks.firstWhereOrNull((l) => l.remotePeerId == peerId);
+    final link = _linkToMember(conversationId, peerId);
     if (link != null) unawaited(link.sendRawInnerOrClose(InnerFrame.verify()));
   }
 
-  // 사용자가 숫자가 다르다고 확인함(버튼 또는 다른 숫자의 코드 스캔): 중간자가 있을 수 있어
-  // 그 상대와의 링크를 바로 닫고 경고 줄을 남김. 방이면 그 멤버 링크(호스트) 또는 호스트 링크(멤버)를 닫음
+  // 숫자가 다름(버튼이나 다른 코드 스캔): 중간자일 수 있어서 그 링크를 바로 닫고 경고 줄을 남김
   Future<void> reportSasMismatch(
     String conversationId, {
     String? memberPeerId,
@@ -61,17 +52,21 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
     );
     // 재연결이 예전 확인을 이어 가지 않게 지움 (_carryVerification)
     store.clearVerified(conversationId);
-    final link =
-        _links[conversationId] ??
-        (memberPeerId == null
-            ? null
-            : _roomLinks.firstWhereOrNull(
-                (l) => l.remotePeerId == memberPeerId,
-              ));
+    final link = memberPeerId == null
+        ? _links[conversationId]
+        : _linkToMember(conversationId, memberPeerId);
     await link?.close();
   }
 
-  // hello는 핸드셰이크 때 한 번뿐이라, 이미 연결된 피어는 이 호출 없인 이름을 바꿔도 예전 이름을 영영 못 봄
+  // 호스트면 그 멤버의 지금 링크만 봄 (재접속 직후엔 닫히는 중인 옛 링크가 아직 목록에 있음). 멤버면 호스트 링크 하나뿐
+  PeerLink? _linkToMember(String conversationId, String peerId) =>
+      _isRoomHub(conversationId)
+      ? _memberLinks(
+          conversationId,
+        ).firstWhereOrNull((l) => l.remotePeerId == peerId)
+      : _links[conversationId];
+
+  // hello는 핸드셰이크 때 한 번뿐이라 이게 없으면 연결된 상대는 바뀐 이름을 못 봄
   void broadcastRename(String alias) {
     for (final link in <PeerLink>{..._links.values, ..._roomLinks}) {
       if (link.isClosed) continue;
@@ -83,15 +78,14 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
     }
   }
 
-  // SAS로 검증 안 한 대화에선 무시: 검증 안 된 피어는 MITM일 수 있어서 그 파일은 탭 없이는 절대 안 떨어짐
+  // 확인 안 된 대화에선 무시: 중간자일 수 있어서 그 파일은 탭 없이는 안 떨어짐
   void setAutoAcceptFiles(String conversationId, {required bool enabled}) {
     final conversation = store.conversation(conversationId);
     if (conversation == null || !conversation.verified) return;
     store.setConversationAutoAccept(conversationId, value: enabled);
   }
 
-  // 파일: TransferCoordinator의 두 절반으로 가는 얇은 delegate
-  // (UI, 임베디드 서버, 테스트가 객체 하나와만 얘기하게 여기 둠)
+  // 파일: TransferCoordinator로 넘기는 얇은 위임
 
   Future<void> offerFile(String conversationId, PlatformFile file) =>
       _transfers.outgoing.offerFile(conversationId, file);
@@ -102,9 +96,8 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
   Future<void> offerFilesFromPaths(String conversationId, List<String> paths) =>
       _transfers.outgoing.offerFilesFromPaths(conversationId, paths);
 
-  // 모바일 zero-disk 첨부(MobileFileSource) 배치 제안: 디스크 사본 없이 네이티브 스트리밍 소스를 그대로 씀
-  // 각 소스의 native 자원은 그 전송이 끝날 때 레지스트리가 놓고(releaseSource),
-  // 배치 도중 실패하면 아직 손도 못 댄 나머지 소스를 여기서 놓음
+  // 모바일 첨부를 디스크 사본 없이 네이티브 스트림 그대로 제안. 소스 자원은 전송이 끝날 때 레지스트리가 놓고,
+  // 도중에 실패하면 손도 못 댄 나머지는 여기서 놓음
   Future<void> offerStreamSources(
     String conversationId,
     List<MobileFileSource> sources,
@@ -127,14 +120,13 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
         );
       }
     } on Object {
-      // 예외가 난 소스는 offerStreamSource가 맡음 (스테이징
-      // 전이면 그 안에서 놓고, 후엔 레지스트리 몫). 나머지만 여기서
+      // 던진 소스는 offerStreamSource가 맡음. 나머지만 여기서 놓음
       await MobileFileSource.releaseEach(sources.skip(next + 1));
       rethrow;
     }
   }
 
-  // 붙여넣은 이미지나 음성 메시지 같은 RAM 바이트 하나를 파일 제안으로 (보내는 쪽 디스크엔 안 씀)
+  // 붙여넣은 이미지·음성 메시지 같은 RAM 바이트를 파일로 제안 (디스크엔 안 씀)
   Future<void> offerInlineBytes(
     String conversationId,
     String name,
@@ -183,14 +175,11 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
     }
   }
 
-  // backing source 조회 (테스트/진단용)
+  // 테스트·진단용
   OutgoingFileSource? outgoingSource(String transferId) =>
       _transfers.outgoing.source(transferId);
 
-  // GET /api/download/<id> 인가 + AEAD wrapping. server_routes.dart가
-  // outgoingSource를 직접 읽어 평문을 내보내던 경로를 대체함:
-  // 토큰/attempt/선언 크기/현재 상태를 전부 검증한 뒤에만 그 수신자의 토큰을 소비
-  // (자세한 건 OutgoingTransfersDownload.openDownload 참고)
+  // GET /api/download/<id>: 토큰·attempt·선언 크기·상태를 다 확인한 뒤에만 그 수신자 토큰을 씀
   Future<OutgoingDownload?> openDownload({
     required String transferId,
     required String attemptId,
@@ -203,7 +192,7 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
     declaredSize: declaredSize,
   );
 
-  // attemptId/headerDeclaredSize는 서버가 헤더에서 이미 필수로 검사해서 넘김
+  // attemptId·headerDeclaredSize는 서버가 헤더에서 이미 필수로 검사함
   Future<bool> receiveTransfer({
     required String transferId,
     required String attemptId,
@@ -218,23 +207,19 @@ mixin _LinkRegistryFacade on _LinkRegistryState {
     headerDeclaredSize: headerDeclaredSize,
   );
 
-  // 테스트가 살아 있는 PeerLink 없이 accept -> receive를 직접 호출할 때만
-  // 씀. 객체를 그대로 넘겨 debugPushTokenFor 호출은 테스트 파일에서 일어나게
-  // 함
-  // (@visibleForTesting은 선언 라이브러리나 test/에서만 호출 가능해서 여기서 직접 부르면 lint 위반)
+  // 테스트가 링크 없이 accept → receive를 직접 몰 때만 씀
   @visibleForTesting
   IncomingTransfers get debugIncoming => _transfers.incoming;
 
-  // debugIncoming의 아웃고잉판: 테스트가 EOF/ACK 결합 규칙을 직접 몰 때만 씀
+  // debugIncoming의 보내는 쪽판
   @visibleForTesting
   OutgoingTransfers get debugOutgoing => _transfers.outgoing;
 
-  // InMemoryStore.onTransferRemoved가 부르는 진입점 (app_providers가
-  // 연결). 자세한 건 TransferCoordinator.discardTransfer 참고
+  // InMemoryStore.onTransferRemoved에서 불림 (app_providers가 이음)
   Future<void> discardRemovedTransfer(FileTransfer transfer) =>
       _transfers.discardTransfer(transfer);
 
-  // 포털 OFF: 붙어있는 웹 게스트 링크 전부 닫음 (토큰 폐기와 짝). 앱 그룹 방 멤버는 별개 방(_appRoomId)이라 안 건드림
+  // 포털 끔: 웹 게스트 링크를 다 닫음 (토큰 폐기와 짝). 앱 그룹 방은 안 건드림
   Future<void> disconnectWebGuests() async {
     final guestRoomId = _webGuestRoomId;
     if (guestRoomId == null) return;

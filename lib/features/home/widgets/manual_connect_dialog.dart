@@ -10,10 +10,7 @@ import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/widgets/adaptive_dialog_action.dart';
 
-// 에어갭 검사 두 개 중 첫 번째: 리터럴 IPv4가 아니면 거부하고(InternetAddress.tryParse가
-// router.local 같은 이름을 거부) RFC 1918 + link-local 밖도 거부함
-// 레지스트리가 소켓을 열기 전에 assertReachable을 또 돌려서 여기 버그가 있어도 패킷은 못 나감
-// 이 레이어는 실패한 연결 대신 읽을 수 있는 이유를 바로 주려는 것
+// 입력 오류는 여기서 안내하고, 피어 주소의 최종 허용 여부는 다이얼 직전에 다시 검사함
 class ManualConnectDialog extends StatefulWidget {
   const ManualConnectDialog({super.key});
 
@@ -96,11 +93,10 @@ class _ManualConnectDialogState extends State<ManualConnectDialog> {
       ],
     );
 
-    return AlertDialog.adaptive(
+    return AppAlertDialog(
+      cupertino: cupertino,
       title: Text(s.t('home.connectByIp')),
-      // Cupertino 경로는 CupertinoTextField라
-      // Material 조상이 필요 없고 Material 경로의 TextField만
-      // debugCheckHasMaterial에 걸림. transparency 타입으로 시각 변화 없이 요구만 충족시킴
+      // Cupertino 경로는 CupertinoTextField라 괜찮지만 Material 경로의 TextField는 Material 조상이 필요함: 투명 Material로 겉모습은 그대로 둠
       content: cupertino
           ? fields
           : Material(type: MaterialType.transparency, child: fields),

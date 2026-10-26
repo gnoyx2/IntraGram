@@ -21,18 +21,40 @@ statusEl.textContent = t("connecting");
 
 var ws = null;
 var ready = false;
+var reconnectTimer = null;
+var connectionCallbacks = null;
+var suspended = false;
+var retryAllowed = true;
+
+function suspendConnection() {
+  suspended = true;
+  ready = false;
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+  if (connectionCallbacks) connectionCallbacks.onClose();
+  if (ws) ws.close();
+  ws = null;
+}
+window.addEventListener("pagehide", suspendConnection);
+window.addEventListener("pageshow", function (event) {
+  if (!event.persisted || !connectionCallbacks || !retryAllowed) return;
+  suspendConnection();
+  suspended = false;
+  reconnectAttempts = 0;
+  setStatus(t("reconnecting"), false);
+  connect(connectionCallbacks.onFrame, connectionCallbacks.onOpen, connectionCallbacks.onClose);
+});
 // 호스트가 이번 페이지에서 한 번이라도 받아 줬는지 (다음 입장은 '다시 연결됨')
 var everAccepted = false;
 var reconnectAttempts = 0;
 var RECONNECT_BASE_MS = 1000;
 var RECONNECT_MAX_MS = 15000;
 
-// lib/core/constants.dart의 kProtocolVersion과 함께 올려야 함.
+// lib/core/constants.dart의 kProtocolVersion과 같이 올려야 함
 var PROTOCOL_VERSION = "7";
 
-// QR/URL 조각(#t=...)의 포털 토큰은 한 번 읽고 주소창에서 지움. 브라우저 기록 노출도 막음.
-// 새로고침·탭 복원에도 다시 들어오게 이 탭의 sessionStorage에만 둠(탭을 닫으면 사라짐).
-// 호스트가 받아 주지 않으면(포털 끔·새 코드) 지움
+// QR·URL 조각(#t=...)의 포털 토큰은 한 번 읽고 주소창에서 지움 (브라우저 기록에도 안 남게).
+// 새로고침·탭 복원에도 다시 들어오게 이 탭의 sessionStorage에만 둠 (탭을 닫으면 사라짐). 호스트가 안 받아 주면(포털 끔, 새 코드) 지움
 var TOKEN_KEY = "intragram-entry";
 function rememberToken(value) {
   try {
@@ -61,8 +83,12 @@ function send(obj) {
 }
 function sendInner(inner) { return send({ t: "plain", d: inner }); }
 
-// 평문 프레임과 연결 상태를 콜백으로 넘김. 채팅/파일 UI 연결은 app.js가 맡음.
+// 평문 프레임과 연결 상태를 콜백으로 넘김 (채팅·파일 UI 연결은 app.js 몫)
 function connect(onFrame, onOpen, onClose) {
+  connectionCallbacks = { onFrame: onFrame, onOpen: onOpen, onClose: onClose };
+  if (suspended) return;
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
   // 입장 토큰 없이는 서버가 web_hello를 거절하고 끊으므로 재시도하지 않고 이유를 보여 줌
   // (주소를 손으로 치거나 새로고침해서 #t=…가 빠진 경우)
   if (!TOKEN) {
@@ -71,25 +97,30 @@ function connect(onFrame, onOpen, onClose) {
     return;
   }
   var wsUrl = (location.protocol === "https:" ? "wss:" : "ws:") + "//" + location.host + "/ws";
-  ws = new WebSocket(wsUrl);
+  var socket = new WebSocket(wsUrl);
+  ws = socket;
   // 소켓이 열린 것과 호스트가 입장 코드를 받아 준 것(첫 프레임, 지금 인원)은 다름:
   // '온라인'과 재시도 간격 초기화는 받아 준 뒤에만 함
   var opened = false;
   var accepted = false;
   var roomFull = false;
 
-  ws.onopen = function () {
+  socket.onopen = function () {
+    if (ws !== socket || suspended) return;
     opened = true;
     send({ t: "web_hello", v: PROTOCOL_VERSION, alias: ALIAS, tok: TOKEN });
     setStatus(t("joining"), false);
   };
-  ws.onclose = function () {
+  socket.onclose = function () {
+    if (ws !== socket || suspended) return;
     ready = false;
     onClose();
     if (roomFull) return;
     if (opened && !accepted) {
       // 열렸는데 받아 주지 않고 닫힘 = 포털이 꺼졌거나 입장 코드가 바뀜. 계속 두드리지 않고 이유를 보여 줌
       rememberToken(null);
+      TOKEN = null;
+      retryAllowed = false;
       setStatus(t("rejected"), false);
       system(t("rejected"));
       return;
@@ -97,17 +128,19 @@ function connect(onFrame, onOpen, onClose) {
     setStatus(t("reconnecting"), false);
     var delay = Math.min(RECONNECT_MAX_MS, RECONNECT_BASE_MS * Math.pow(1.6, reconnectAttempts));
     reconnectAttempts++;
-    // 재연결에도 같은 콜백을 넘겨 UI 상태 갱신을 이어감.
-    setTimeout(function () { connect(onFrame, onOpen, onClose); }, delay);
+    // 재연결에도 같은 콜백을 넘겨서 UI 상태 갱신이 이어짐
+    reconnectTimer = setTimeout(function () { connect(onFrame, onOpen, onClose); }, delay);
   };
-  ws.onerror = function () { try { ws.close(); } catch (e) {} };
-  ws.onmessage = function (ev) {
+  socket.onerror = function () { try { socket.close(); } catch (e) {} };
+  socket.onmessage = function (ev) {
+    if (ws !== socket || suspended) return;
     var frame;
     try { frame = JSON.parse(ev.data); } catch (e) { return; }
     if (frame.t !== "plain" || !frame.d) return;
     if (frame.d.k === "room_full") {
       // 게스트 수 상한: 받아 주지 않은 것과 같게 재시도 없이 이유만 보여 줌
       roomFull = true;
+      retryAllowed = false;
       setStatus(t("roomFull"), false);
       system(t("roomFull"));
       return;

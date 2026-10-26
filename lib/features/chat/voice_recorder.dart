@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Process, ProcessException, ProcessSignal;
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -14,6 +15,7 @@ import 'package:intragram/core/haptics.dart';
 import 'package:intragram/core/constants.dart';
 import 'package:intragram/core/secure_bytes.dart';
 import 'package:intragram/core/voice_producer_registry.dart';
+import 'package:intragram/core/voice/linux_audio.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/app_theme.dart';
 import 'package:intragram/theme/motion.dart';
@@ -63,8 +65,7 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
   // 한 번 false면 이후 true가 와도 안 덮음 (권한 대기 중 취소가 전송으로 둔갑하던 버그 방지)
   bool? _pendingSend;
 
-  // _start 호출마다 증가. await 뒤에 다시 확인해서 그사이 dispose/재시작된 낡은 결과가
-  // 최신 상태를 덮지 않게 함
+  // _start마다 오름. await 뒤에 다시 봐서 그사이 dispose·재시작됐으면 늦은 결과가 최신 상태를 안 덮음
   int _captureGeneration = 0;
 
   OverlayEntry? _banner;
@@ -207,8 +208,7 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
           onPointerMove: _onPointerMove,
           onPointerUp: _onPointerUp,
           onPointerCancel: _onPointerCancel,
-          // Tooltip/IconButton.tooltip은 자체 롱프레스 핸들러가
-          // 홀드-투-녹음 제스처를 먹어서 안 씀 접근성 라벨은 Semantics로
+          // Tooltip·IconButton.tooltip은 자체 롱프레스 처리가 홀드 녹음 제스처를 먹어서 안 씀 (접근성 라벨은 Semantics로)
           child: Semantics(
             button: true,
             enabled: widget.enabled,

@@ -2,9 +2,14 @@ part of '../in_memory_store.dart';
 
 mixin _StoreLifecycle on _InMemoryStoreState, _StoreCore {
   void wipeConversation(String conversationId) {
+    final generation = evidence.generation;
+    roomIntegrity.remove(conversationId);
     _typingTimers.remove(conversationId)?.cancel();
+    // 정리 증적이 묶을 대상: 지우기 전에 메시지 id만 뽑음, 본문은 안 읽음 (안내 줄뿐인 임시 대화는 증적을 안 남김)
+    final wipedMessageIds = <String>[];
     for (final m
         in _messages[conversationId]?.values ?? const <EphemeralMessage>[]) {
+      if (m.kind != MessageKind.system) wipedMessageIds.add(m.id);
       _messageRooms.remove(m.id);
       _burnTimers.remove(m.id)?.cancel();
       _ceilingTimers.remove(m.id)?.cancel();
@@ -13,15 +18,29 @@ mixin _StoreLifecycle on _InMemoryStoreState, _StoreCore {
     _conversations.remove(conversationId);
     _owedReads.remove(conversationId);
     _owedBurns.remove(conversationId);
-    // 맵을 도는 동시에 지우면 ConcurrentModificationError라 id부터 뽑음
-    // 개별 _removeTransfer를 거쳐야 owned voiceBytes
-    // wipe와 네트워크 정리가 전송마다 실행됨 (removeWhere는 참조만 뗌)
+    // _removeTransfer를 하나씩 거쳐야 음성 바이트 덮기와 네트워크 정리가 돎 (도는 중에 지우면 안 돼서 id부터 뽑음)
     final transferIds = _transfers.values
         .where((t) => t.conversationId == conversationId)
         .map((t) => t.id)
         .toList();
-    for (final id in transferIds) {
-      _removeTransfer(id);
+    // 전송마다 따로 말고 대화 하나로 정리 증적을 남김 (다 정리돼야 completed)
+    final disposals = <Future<void>>[
+      for (final id in transferIds) _removeTransfer(id, attest: false),
+    ];
+    if (wipedMessageIds.isNotEmpty || transferIds.isNotEmpty) {
+      _attestCleanup(
+        this,
+        done: Future.wait(disposals),
+        subjectId: conversationId,
+        conversationId: conversationId,
+        policy: 'cleanup/conversation',
+        sinceGeneration: generation,
+        fields: <Object?>[
+          conversationId,
+          (wipedMessageIds..sort()).join(','),
+          (transferIds..sort()).join(','),
+        ],
+      );
     }
     final controller = _roomEvents.remove(conversationId);
     controller?.add(const <EphemeralMessage>[]);
@@ -30,10 +49,12 @@ mixin _StoreLifecycle on _InMemoryStoreState, _StoreCore {
     _emitTransfers();
   }
 
-  // 모든 타이머 취소, 컬렉션 비움, 리스너에 빈 결과 통보. 이후에도 스토어는 계속 씀 (새로운 빈 세션)
-  // 메시지 String은 참조만 끊음(덮을 수 없음). 전송 바이트 버퍼는 _removeTransfer가 덮음
-  // 전송은 _removeTransfer를 하나씩 거침. 끝까지 기다리려면 drainDisposals를 쓸 것 (패닉 경로가 그럼)
+  // 다 비우고 빈 결과를 알림. 스토어는 계속 씀 (빈 새 세션). 정리가 끝나길 기다리려면 drainDisposals.
+  // Panic 진입 때 동결·소거한 장부도 다시 비움: 종료 중 파생된 잔여물이 새 세션에 남지 않게 함.
   void secureWipe() {
+    evidence.clear();
+    roomIntegrity.clear();
+    orgCredentials.clear();
     for (final timer in _burnTimers.values) {
       timer.cancel();
     }
@@ -54,7 +75,7 @@ mixin _StoreLifecycle on _InMemoryStoreState, _StoreCore {
     _owedReads.clear();
     _owedBurns.clear();
     for (final id in _transfers.keys.toList()) {
-      _removeTransfer(id);
+      _removeTransfer(id, attest: false);
     }
 
     for (final room in rooms) {
@@ -73,6 +94,9 @@ mixin _StoreLifecycle on _InMemoryStoreState, _StoreCore {
     _saveMaxWait?.cancel();
     _saveMaxWait = null;
     secureWipe();
+    evidence.close();
+    roomIntegrity.dispose();
+    orgCredentials.close();
     for (final controller in _roomEvents.values) {
       controller.close();
     }

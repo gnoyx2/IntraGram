@@ -27,8 +27,7 @@ mixin _StoreMessages on _InMemoryStoreState, _StoreCore {
     }
   }
 
-  // 로컬에서만 만들어지고 전선으로 안 나감. 타이머 없고 vault 스냅샷에서도 빠짐
-  // 영어 문자열이 아니라 의미(SystemEvent)를 담아서 렌더 시점에 UI가 번역함
+  // 내 화면에만 있는 줄 (wire로 안 나가고 보관소에도 안 감). 문자열 대신 SystemEvent를 담아 그릴 때 번역함
   void addSystemMessage(String conversationId, SystemEvent event) {
     addMessage(
       EphemeralMessage(
@@ -39,8 +38,7 @@ mixin _StoreMessages on _InMemoryStoreState, _StoreCore {
         senderAlias: 'system',
         createdAt: DateTime.now(),
         systemEvent: event,
-        // 로컬 합성 줄이라 실제 배달 개념이 없어 "sent"는 중립값. 렌더 경로(message_bubble.dart)가
-        // system kind는 다른 갈래로 그려서 배달 틱이 안 보임
+        // 배달 개념이 없어서 중립값 (시스템 줄은 틱 없이 그려짐)
         delivery: DeliveryState.sent,
       ),
     );
@@ -54,7 +52,7 @@ mixin _StoreMessages on _InMemoryStoreState, _StoreCore {
     _emitRoom(conversationId);
   }
 
-  // 타이머 달린 메시지는 자기파괴 카운트다운도 시작함. 전이된 id들을 리턴해서 호출자가 read 프레임을 보내게 함
+  // 읽음으로 바꾼 id를 돌려줘서 호출부가 read를 보냄. 타이머 달린 메시지는 카운트다운도 시작
   List<String> markIncomingRead(String conversationId) {
     final room = _messages[conversationId];
     if (room == null) return const <String>[];
@@ -70,7 +68,7 @@ mixin _StoreMessages on _InMemoryStoreState, _StoreCore {
     return transitioned;
   }
 
-  // reader는 읽은 사람의 alias. 방에선 멤버별로 누적해 "몇 명 읽음"을 만들고 1:1은 UI가 안 씀
+  // reader는 읽은 사람 peerId (웹 게스트는 alias). 방에선 쌓아서 '몇 명 읽음'을 만듦
   void applyReadReceipt(String messageId, String reader) {
     final m = _findMessage(messageId);
     if (m == null || m.direction != MessageDirection.outgoing) return;
@@ -146,7 +144,7 @@ mixin _StoreMessages on _InMemoryStoreState, _StoreCore {
       if (!_localBurns.isClosed) {
         _localBurns.add((conversationId: conversationId, messageId: messageId));
       }
-      burnMessage(messageId);
+      burnMessage(messageId, cause: BurnCause.ttlAfterRead);
     });
   }
 
@@ -175,6 +173,6 @@ mixin _StoreMessages on _InMemoryStoreState, _StoreCore {
     if (!_localBurns.isClosed) {
       _localBurns.add((conversationId: m.conversationId, messageId: messageId));
     }
-    burnMessage(messageId);
+    burnMessage(messageId, cause: BurnCause.deletedForEveryone);
   }
 }

@@ -10,7 +10,7 @@ import 'package:intragram/widgets/empty_state.dart';
 import 'package:intragram/widgets/empty_state_art.dart';
 import 'package:intragram/widgets/readable_list.dart';
 
-// RAM에 있는 텍스트 메시지만 대상. 보관이 켜져 있으면 이전 세션 이력도 하이드레이트돼 있어 같이 잡힘
+// RAM에 있는 텍스트 메시지만 찾음. 보관이 켜져 있으면 지난 세션 기록도 RAM에 올라와 있어서 같이 잡힘
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 

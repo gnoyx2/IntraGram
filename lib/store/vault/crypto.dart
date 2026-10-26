@@ -1,7 +1,6 @@
 part of '../vault.dart';
 
-// PBKDF2 유도 키 + ChaCha20-Poly1305 AEAD로 PIN
-// 봉인, duress PIN 확인. part라서 Vault의 세션 필드에 붙어 돎
+// PIN 봉인(PBKDF2 키 + ChaCha20-Poly1305)과 duress PIN 확인
 extension _VaultCrypto on Vault {
   void _clearKey() {
     _keyGeneration++;
@@ -155,9 +154,7 @@ Future<List<int>> _dchkFromKey(List<int> pbkdf2Out) async {
   return key.extractBytes();
 }
 
-// kdf.iter가 현행 200k 또는 구형 100k인지 확인함. 나머지는 거부함.
-// (호출부의 on Object가 "이 PIN은 못 엶"으로 통일 처리). 공격자가 조작한 반복 횟수로
-// KDF 비용을 낮추거나 파일 읽기를 영원히 묶어두지 못하게 함
+// iter는 현행 200k나 옛 100k만 받음: 조작한 횟수로 KDF 비용을 낮추거나 읽기를 하염없이 묶지 못하게
 int _requireSupportedIterations(Object? rawIter) {
   if (rawIter is! int ||
       (rawIter != kVaultPbkdf2Iterations &&

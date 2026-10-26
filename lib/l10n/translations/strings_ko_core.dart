@@ -41,14 +41,14 @@ const Map<String, String> kStringsKoCore = {
   'error.messagesTitle': '메시지를 불러오지 못했어요',
   'error.messagesAction': '대화를 불러오는 중 문제가 생겼어요.',
   'empty.messagesTitle': '아직 메시지가 없어요',
-  'empty.messagesBody': '먼저 인사해 보세요 — 이 두 기기에만 남아요.',
+  'empty.messagesBody': '먼저 인사해 보세요. 대화는 이 두 기기에만 남아요.',
   'empty.searchTitle': '대화 안에서 검색해요',
   'empty.searchNoResultsTitle': '일치하는 결과가 없어요',
   'empty.searchNoResultsBody': '다른 단어나 문구로 다시 시도해 보세요.',
   'empty.addPeopleTitle': '근처에 다른 사람이 없어요',
   'empty.addPeopleBody': '같은 Wi-Fi에 있는 기기가 여기 나타나요.',
   'empty.endedTitle': '대화가 종료됐어요',
-  'empty.endedBody': '아무것도 남지 않았어요 — 뒤로 가서 새로 시작해 보세요.',
+  'empty.endedBody': '아무것도 남지 않았어요. 뒤로 가서 새로 시작해 보세요.',
   'empty.roomMembersTitle': '아직 아무도 없어요',
 
   'home.slogan': '클라우드 없음. 계정 없음. 이 Wi-Fi 하나로.',
@@ -107,7 +107,7 @@ const Map<String, String> kStringsKoCore = {
   'chat.status.webGuestRoom': '내가 호스트 · {people} · 브라우저 게스트는 LAN에서 평문',
   'chat.status.verified': '검증됨 · 종단 간 암호화',
   'chat.status.encrypted': '암호화됨 · 코드 미확인',
-  'chat.status.pending': '상대 확인 대기중',
+  'chat.status.pending': '상대 확인 대기 중',
   'chat.status.connecting': '연결 중…',
   'chat.withCount': '{who} · {people}',
   'chat.person': '{n}명',
@@ -115,14 +115,15 @@ const Map<String, String> kStringsKoCore = {
   'chat.roomMembersTitle': '방 멤버',
   'chat.sasVerified': '보안 코드 검증됨',
   'chat.sasCheck': '보안 코드 확인',
-  'chat.sasPending': '상대 확인 대기중',
+  'chat.sasPending': '상대 확인 대기 중',
   'chat.unverifiedBanner':
-      '코드가 확인되지 않았어요 — 눌러서 6자리 코드를 '
-      '상대와 맞춰보세요.',
-  'chat.unverifiedBannerPending': '상대 확인 대기중이에요 — 내 쪽은 이미 확인했어요.',
+      '코드가 확인되지 않았어요. 눌러서 6자리 코드를 '
+      '상대와 맞춰 보세요.',
+  'chat.unverifiedBannerPending': '상대 확인을 기다리고 있어요. 내 쪽은 이미 확인했어요.',
   'chat.relayBanner':
       '호스트 중계(Hop-by-Hop) · 종단 간 암호화 아님: 호스트는 이 방 내용을 볼 수 있어요. '
       '파일과 브라우저 게스트 트래픽은 LAN에서 암호화되지 않아요.',
+  'chat.roomEmptyBanner': '모두 나갔어요. 멤버가 자기 기기에서 다시 들어올 수 있어요.',
   'chat.burnTimer': '자동 삭제 타이머',
   'chat.timerOff': '타이머 끔',
   'chat.burnAfter': '{n}초 후 삭제',

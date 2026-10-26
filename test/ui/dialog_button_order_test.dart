@@ -53,11 +53,16 @@ void main() {
   });
 
   test('every alert dialog orders its buttons per platform', () {
-    final dialog = RegExp(r'(?<![A-Za-z])AlertDialog(\.adaptive)?\(');
+    // AppAlertDialog 정의 파일은 받은 actions를 그대로 넘기기만 해서 뺌
+    final dialog = RegExp(r'(?<![A-Za-z])(?:App)?AlertDialog(\.adaptive)?\(');
     final files = Directory('lib')
         .listSync(recursive: true)
         .whereType<File>()
-        .where((f) => f.path.endsWith('.dart'));
+        .where(
+          (f) =>
+              f.path.endsWith('.dart') &&
+              !f.path.endsWith('adaptive_dialog_action.dart'),
+        );
     var dialogs = 0;
     for (final file in files) {
       final src = file.readAsStringSync();

@@ -11,14 +11,9 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 
-/**
- * 앱이 백그라운드에 있는 동안 임베디드 서버 + 피어 링크를 살려두는 포그라운드
- * 서비스. 낮은 우선순위의 지속 알림 하나를 띄운다.
- *
- * 실제 소켓은 Flutter/Dart 엔진이 들고 있다 — 이 서비스는 OS 가 그 프로세스를
- * 죽이지 않도록 붙잡아 두는 역할만 한다. `intragram/foreground` 채널로
- * [MainActivity] 가 시작/중지한다. 설정에서 옵트인, 기본 꺼짐.
- */
+// 앱이 백그라운드에 있는 동안 서버와 피어 링크를 살려 두는 포그라운드 서비스 (낮은 우선순위 지속 알림 하나).
+// 소켓은 Dart 엔진이 쥐고 있고 이 서비스는 OS가 그 프로세스를 안 죽이게 붙잡기만 함.
+// MainActivity가 intragram/foreground 채널로 켜고 끔 (설정에서 옵트인, 기본 꺼짐)
 class ConnectionService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -35,8 +30,7 @@ class ConnectionService : Service() {
             manager.createNotificationChannel(channel)
         }
 
-        // 탭해도 지금까진 아무 일도 안 났음 — MainActivity가 이미 떠 있으면
-        // 앞으로 가져오고, 아니면 새로 띄움.
+        // 알림을 누르면 떠 있는 MainActivity를 앞으로 가져오고 없으면 새로 띄움
         val openApp =
             PendingIntent.getActivity(
                 this,
@@ -66,18 +60,14 @@ class ConnectionService : Service() {
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
-        // 프로세스가 죽으면 실제 소켓을 쥔 Dart 엔진도 없음 — 다시 띄워 봐야
-        // 연결 안 된 "connected" 알림만 남아서 재시작하지 않음.
+        // 프로세스가 죽으면 소켓을 쥔 Dart 엔진도 없어서 다시 띄워 봐야 연결 안 된 알림만 남음: 재시작 안 함
         return START_NOT_STICKY
     }
 
-    /**
-     * Android 15+(API 35)에서 시간 제한이 있는 타입(dataSync 등)만 부름. 지금
-     * 타입(remoteMessaging)엔 제한이 없지만, 타입이 바뀌어도 `START_STICKY`
-     * 무한 재시작으로 제한을 우회하지 않고 멈춘 뒤 [onTimedOut]으로 Dart 쪽에
-     * 알려서 "백그라운드 연결 유지"가 꺼진 걸 설정에 보이게 함.
-     * https://developer.android.com/develop/background-work/services/fgs/timeout
-     */
+    // Android 15+(API 35)에서 시간 제한이 있는 타입(dataSync 등)에만 불림. 지금 타입(remoteMessaging)엔 제한이 없지만
+    // 타입이 바뀌어도 START_STICKY 무한 재시작으로 제한을 피하지 않고, 멈춘 뒤 onTimedOut으로 Dart에 알려서
+    // 백그라운드 연결 유지가 꺼진 걸 설정에 보여 줌
+    // https://developer.android.com/develop/background-work/services/fgs/timeout
     override fun onTimeout(startId: Int, fgsType: Int) {
         onTimedOut?.invoke()
         stopSelf(startId)
@@ -87,7 +77,7 @@ class ConnectionService : Service() {
         private const val CHANNEL_ID = "connection"
         private const val NOTIFICATION_ID = 42
 
-        /** [MainActivity]가 등록함 — [onTimeout]에서 Dart 쪽에 알리는 통로. */
+        // MainActivity가 등록함. onTimeout에서 Dart에 알리는 통로
         var onTimedOut: (() -> Unit)? = null
 
         fun start(context: Context) {

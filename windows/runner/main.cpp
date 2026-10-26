@@ -10,14 +10,12 @@
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
-  // Attach to console when present (e.g., 'flutter run') or create a
-  // new console when running with a debugger.
+  // 콘솔이 있으면(flutter run 등) 붙고, 디버거로 돌면 새 콘솔을 만듦
   if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
     CreateAndAttachConsole();
   }
 
-  // Initialize COM, so that it is available for use in the library and/or
-  // plugins.
+  // 라이브러리·플러그인이 COM을 쓸 수 있게 초기화
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
@@ -28,17 +26,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
   FlutterWindow window(project);
-  // 1100x760 default / 420x560 minimum (win32_window.cpp's WM_GETMINMAXINFO
-  // case) is kept in sync by hand with the macOS/Linux runners
-  // (MainFlutterWindow.swift, linux/runner/my_application.cc).
-  // Center on the work area, not the full monitor rect (SM_CXSCREEN /
-  // SM_CYSCREEN) -- the latter ignores the taskbar, so on a bottom or side
-  // taskbar the window could land partly hidden behind it.
-  // The work area comes back in physical pixels (per-monitor DPI aware), but
-  // Create() takes a logical origin and size and scales both itself, so
-  // convert first; otherwise the origin is scaled twice and at 150 % the
-  // window lands partly off screen. The size is also clamped so the default
-  // 1100x760 fits a 1080p screen at 150 %.
+  // 기본 1100x760, 최소 420x560(win32_window_proc.cpp의 WM_GETMINMAXINFO)은 macOS·Linux 러너
+  // (MainFlutterWindow.swift, linux/runner/my_application.cc)와 손으로 맞춤.
+  // 가운데 정렬은 모니터 전체(SM_CXSCREEN·SM_CYSCREEN)가 아니라 작업 영역 기준: 전체 기준이면 작업 표시줄을 무시해서
+  // 아래나 옆 작업 표시줄 뒤에 창이 일부 가려질 수 있음. 작업 영역은 물리 픽셀(모니터별 DPI)로 오는데 Create()는
+  // 논리 원점·크기를 받아 직접 배율을 곱해서 먼저 바꿔 둠 (안 그러면 원점이 두 번 늘어 150%에서 창이 화면 밖으로 일부 나감).
+  // 기본 1100x760이 150% 1080p 화면에 들어가게 크기도 묶음
   RECT work_area;
   ::SystemParametersInfo(SPI_GETWORKAREA, 0, &work_area, 0);
   const POINT corner = {work_area.left, work_area.top};

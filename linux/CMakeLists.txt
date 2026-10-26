@@ -1,22 +1,18 @@
-# Project-level configuration.
 cmake_minimum_required(VERSION 3.13)
 project(runner LANGUAGES CXX)
 
-# The name of the executable created for the application. Change this to change
-# the on-disk name of your application.
+# 실행 파일 이름 (디스크에 깔리는 앱 이름)
 set(BINARY_NAME "intragram")
-# The unique GTK application identifier for this application. See:
-# https://wiki.gnome.org/HowDoI/ChooseApplicationID
+# GTK 앱 ID (https://wiki.gnome.org/HowDoI/ChooseApplicationID)
 set(APPLICATION_ID "com.yonghun0310.intragram")
 
-# Explicitly opt in to modern CMake behaviors to avoid warnings with recent
-# versions of CMake.
+# 새 CMake의 경고를 피하려고 최신 동작을 명시적으로 켬
 cmake_policy(SET CMP0063 NEW)
 
-# Load bundled libraries from the lib/ directory relative to the binary.
+# 번들 라이브러리는 실행 파일 옆 lib/에서 읽음
 set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 
-# Root filesystem for cross-building.
+# 크로스 빌드용 루트 파일 시스템
 if(FLUTTER_TARGET_PLATFORM_SYSROOT)
   set(CMAKE_SYSROOT ${FLUTTER_TARGET_PLATFORM_SYSROOT})
   set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT})
@@ -26,7 +22,6 @@ if(FLUTTER_TARGET_PLATFORM_SYSROOT)
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 endif()
 
-# Define build configuration options.
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Debug" CACHE
     STRING "Flutter build mode" FORCE)
@@ -34,11 +29,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Profile" "Release")
 endif()
 
-# Compilation settings that should be applied to most targets.
-#
-# Be cautious about adding new options here, as plugins use this function by
-# default. In most cases, you should add new options to specific targets instead
-# of modifying this function.
+# 대부분의 타깃에 거는 컴파일 설정. 플러그인도 기본으로 이 함수를 써서 옵션은 여기보다 타깃별로 더할 것
 function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_features(${TARGET} PUBLIC cxx_std_14)
   target_compile_options(${TARGET} PRIVATE -Wall -Werror)
@@ -46,44 +37,37 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_definitions(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")
 endfunction()
 
-# Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
 
-# System-level dependencies.
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
-# Application build; see runner/CMakeLists.txt.
+# 앱 빌드는 runner/CMakeLists.txt
 add_subdirectory("runner")
 
-# Run the Flutter tool portions of the build. This must not be removed.
+# Flutter 도구 쪽 빌드. 지우면 안 됨
 add_dependencies(${BINARY_NAME} flutter_assemble)
 
-# Only the install-generated bundle's copy of the executable will launch
-# correctly, since the resources must in the right relative locations. To avoid
-# people trying to run the unbundled copy, put it in a subdirectory instead of
-# the default top-level location.
+# 리소스가 정해진 상대 위치에 있어야 해서 install이 만든 번들 안의 실행 파일만 제대로 뜸.
+# 번들 밖 사본을 실행하지 않게 기본 위치 대신 하위 폴더에 둠
 set_target_properties(${BINARY_NAME}
   PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/intermediates_do_not_run"
 )
 
 
-# Generated plugin build rules, which manage building the plugins and adding
-# them to the application.
+# 생성된 플러그인 빌드 규칙 (플러그인을 빌드해서 앱에 붙임)
 include(flutter/generated_plugins.cmake)
 
 
-# === Installation ===
-# By default, "installing" just makes a relocatable bundle in the build
-# directory.
+# 설치: 기본은 빌드 폴더 안에 옮길 수 있는 번들을 만드는 것뿐
 set(BUILD_BUNDLE_DIR "${PROJECT_BINARY_DIR}/bundle")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
 endif()
 
-# Start with a clean build bundle directory every time.
+# 번들 폴더는 매번 비우고 시작
 install(CODE "
   file(REMOVE_RECURSE \"${BUILD_BUNDLE_DIR}/\")
   " COMPONENT Runtime)
@@ -106,14 +90,13 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     COMPONENT Runtime)
 endforeach(bundled_library)
 
-# Copy the native assets provided by the build.dart from all packages.
+# 모든 패키지의 build.dart가 낸 네이티브 에셋을 복사
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"
    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
    COMPONENT Runtime)
 
-# Fully re-copy the assets directory on each build to avoid having stale files
-# from a previous install.
+# 지난 설치의 낡은 파일이 안 남게 에셋 폴더는 빌드마다 통째로 다시 복사
 set(FLUTTER_ASSET_DIR_NAME "flutter_assets")
 install(CODE "
   file(REMOVE_RECURSE \"${INSTALL_BUNDLE_DATA_DIR}/${FLUTTER_ASSET_DIR_NAME}\")
@@ -121,15 +104,14 @@ install(CODE "
 install(DIRECTORY "${PROJECT_BUILD_DIR}/${FLUTTER_ASSET_DIR_NAME}"
   DESTINATION "${INSTALL_BUNDLE_DATA_DIR}" COMPONENT Runtime)
 
-# Install the AOT library on non-Debug builds only.
+# AOT 라이브러리는 Debug가 아닐 때만 설치
 if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
 
-# Desktop entry (named after the application ID so Wayland can match the
-# window to it) and hicolor icons. install.sh copies them into the user's
-# ~/.local/share with an absolute Exec path; a package can install them as is.
+# 데스크톱 항목(Wayland가 창과 짝지을 수 있게 앱 ID로 이름 붙임)과 hicolor 아이콘.
+# install.sh가 절대 Exec 경로로 ~/.local/share에 복사하고, 패키지는 그대로 깔아도 됨
 install(FILES "${PROJECT_SOURCE_DIR}/${APPLICATION_ID}.desktop"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications"
   COMPONENT Runtime)

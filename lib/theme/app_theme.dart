@@ -14,7 +14,10 @@ class AppTheme {
     onSurfaceVariant: scheme.onSurface,
   );
 
-  static ThemeData light({bool highContrast = false}) {
+  static ThemeData light({
+    bool highContrast = false,
+    bool reduceTransparency = false,
+  }) {
     final scheme =
         ColorScheme.fromSeed(
           seedColor: AppPalette.accentLight,
@@ -37,12 +40,13 @@ class AppTheme {
           onSurfaceVariant: const Color(0xFF3D495C),
           outlineVariant: const Color(0xFFD6DEE8),
         );
-    return buildComponentThemes(
-      highContrast ? _highContrast(scheme) : scheme,
-    ).copyWith(extensions: const <ThemeExtension<dynamic>>[ChatColors.light]);
+    return _build(scheme, ChatColors.light, highContrast || reduceTransparency);
   }
 
-  static ThemeData dark({bool highContrast = false}) {
+  static ThemeData dark({
+    bool highContrast = false,
+    bool reduceTransparency = false,
+  }) {
     final scheme =
         ColorScheme.fromSeed(
           seedColor: AppPalette.accentDark,
@@ -65,8 +69,21 @@ class AppTheme {
           onSurfaceVariant: const Color(0xFFB6C2D2),
           outlineVariant: const Color(0xFF282E3D),
         );
-    return buildComponentThemes(
-      highContrast ? _highContrast(scheme) : scheme,
-    ).copyWith(extensions: const <ThemeExtension<dynamic>>[ChatColors.dark]);
+    return _build(scheme, ChatColors.dark, highContrast || reduceTransparency);
   }
+
+  static ThemeData _build(ColorScheme scheme, ChatColors chat, bool defined) =>
+      buildComponentThemes(
+        defined ? _highContrast(scheme) : scheme,
+        definedBorders: defined,
+      ).copyWith(
+        extensions: <ThemeExtension<dynamic>>[
+          defined
+              ? chat.copyWith(
+                  bubbleMineEdge: scheme.outline,
+                  bubbleShadow: Colors.transparent,
+                )
+              : chat,
+        ],
+      );
 }

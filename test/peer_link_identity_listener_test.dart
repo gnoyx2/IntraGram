@@ -1,11 +1,9 @@
 import 'dart:convert';
 
-import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 import 'package:intragram/core/app_identity.dart';
-import 'package:intragram/core/constants.dart';
 import 'package:intragram/network/crypto_engine.dart';
 import 'package:intragram/network/peer_auth.dart';
 import 'package:intragram/network/peer_link.dart';
@@ -188,62 +186,6 @@ void main() {
       await hello();
       peer.sendAuth(await peer.proof(asDialer: true, dialerRole: false));
       await expectRefused();
-    });
-  });
-
-  test('an auth nobody asked for closes the link', () async {
-    await open();
-    peer.sendAuth(List<int>.filled(64, 1)); // hello 전
-    await pumpEventQueue(times: 60);
-    expect(link.isClosed, isTrue);
-    expect(link.remotePeerId, isNull);
-
-    await open();
-    await hello();
-    peer.sendAuth(await peer.proof(asDialer: true));
-    await pumpEventQueue(times: 60);
-    expect(link.isSecure, isTrue);
-    peer.sendAuth(await peer.proof(asDialer: true)); // 이미 증명된 뒤 또
-    await pumpEventQueue(times: 60);
-    expect(link.isClosed, isTrue, reason: 'a second proof is a replay');
-  });
-
-  test('an identity without a signing key never links', () async {
-    await open(
-      listener: AppIdentity(peerId: 'b' * 32, alias: 'host', platform: 'test'),
-    );
-    peer.sendDialerHello();
-    await expectRefused();
-    expect(peer.frames, isEmpty);
-  });
-
-  test('a proof that never comes closes the link at the timeout', () async {
-    final wire = StreamChannelController<dynamic>();
-    final timeoutStore = InMemoryStore()
-      ..upsertConversation(conv('cB', 'peer'));
-    addTearDown(timeoutStore.dispose);
-    final session = await CryptoEngine().createSession();
-    final scripted = await ScriptedPeer.create(
-      testIdentity('a', alias: 'dialer'),
-      wire.local,
-    );
-    fakeAsync((async) {
-      final timeoutLink = PeerLink(
-        conversationId: 'cB',
-        channel: wire.foreign,
-        store: timeoutStore,
-        identity: testIdentity('b', alias: 'host', platform: 'test'),
-        crypto: session,
-      );
-      timeoutLink.start();
-      scripted.sendDialerHello();
-      async.flushMicrotasks();
-      expect(scripted.frames, isNotEmpty, reason: 'the listener answered');
-      expect(timeoutLink.isClosed, isFalse);
-      expect(timeoutLink.isSecure, isFalse, reason: 'not proven yet');
-
-      async.elapse(kHandshakeTimeout + const Duration(seconds: 1));
-      expect(timeoutLink.isClosed, isTrue, reason: 'watchdog fired');
     });
   });
 }

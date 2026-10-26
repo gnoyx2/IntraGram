@@ -41,10 +41,8 @@ part 'link_registry/chat.dart';
 part 'link_registry/facade.dart';
 part 'link_registry/test_seams.dart';
 
-// UI는 PeerLink를 직접 안 건드리고 레지스트리를 부름. 화면의 single source of truth는
-// InMemoryStore이고, 파일 전송 메서드는 TransferCoordinator로 가는 얇은 delegate
-// (호출자/테스트가 API 하나만 보게 여기 둠). 상태 필드는 _LinkRegistryState,
-// 동작은 link_registry/의 믹스인
+// UI는 PeerLink 말고 이걸 부름. 화면 상태의 정본은 InMemoryStore고 파일 메서드는 TransferCoordinator로 넘기는 얇은 위임
+// (호출부·테스트가 API 하나만 보게). 상태는 _LinkRegistryState, 동작은 link_registry/ 믹스인
 class LinkRegistry extends _LinkRegistryState
     with
         _LinkRegistryRoom,
@@ -56,9 +54,7 @@ class LinkRegistry extends _LinkRegistryState
         _LinkRegistryFacade,
         _LinkRegistryBlocking,
         _LinkRegistryTestSeams {
-  // chooseDirectory는 수락한 파일의 저장 위치를 고르는 seam
-  // (프로덕션은 null이라 플랫폼 로직이 돌고, 테스트는 임시 디렉토리 주입)
-  // TransferCoordinator로 그대로 넘김
+  // chooseDirectory: 받은 파일 저장 위치를 고르는 seam (프로덕션은 null이라 플랫폼 로직, 테스트는 임시 폴더)
   LinkRegistry({
     required super.store,
     required super.crypto,

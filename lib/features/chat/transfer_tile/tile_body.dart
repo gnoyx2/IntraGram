@@ -122,7 +122,7 @@ extension _TransferTileBody on TransferTile {
             ),
             if (incoming && savedPath != null && NativeOpen.isSupported)
               _ReceivedActions(path: savedPath, color: onBubble)
-            else if (incoming && savedPath != null && _isMobile)
+            else if (incoming && savedPath != null && isMobileTarget)
               _ShareReceived(path: savedPath, color: onBubble),
           ],
         );
@@ -165,13 +165,12 @@ extension _TransferTileBody on TransferTile {
 // 공간 부족은 필요한 크기와 다음 행동(데스크톱은 재시도하면 다른 폴더를 고름)을 붙임
 String _transferErrorText(S s, FileTransfer t) => switch (t.error) {
   'diskFull' => s.t(
-    _isMobile ? 'transfer.errorDiskFull' : 'transfer.errorDiskFullDesktop',
+    isMobileTarget ? 'transfer.errorDiskFull' : 'transfer.errorDiskFullDesktop',
     {'size': formatBytes(t.totalBytes)},
   ),
   'network' => s.t('transfer.errorNetwork'),
   'rejected' => s.t('transfer.errorRejected'),
   'tampered' => s.t('transfer.errorTampered'),
   'cancelled' => s.t('transfer.errorCancelled'),
-  'insecureLink' => s.t('transfer.errorInsecureLink'),
   _ => s.t('transfer.unknownError'),
 };

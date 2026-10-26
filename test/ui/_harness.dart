@@ -111,10 +111,8 @@ class Harness {
         inMemoryStoreProvider.overrideWithValue(store),
         linkRegistryProvider.overrideWithValue(registry),
         appIdentityProvider.overrideWithValue(identity),
-        // 기본 IdentityStore()는 path_provider의 실제 플랫폼
-        // 채널을 타는데 위젯 테스트엔 그 핸들러가 없어서 응답이 진짜 이벤트 루프에서
-        // 오고
-        // FakeAsync 안의 pump만으론 안 끝남: resolveDir seam으로 그 채널 자체를 안 타게 함
+        // 기본 IdentityStore()는 path_provider의 실제 플랫폼 채널을 타는데 위젯 테스트엔 그 핸들러가 없어서 응답이 진짜 이벤트 루프에서 옴.
+        // FakeAsync 안의 pump만으론 안 끝나서 resolveDir seam으로 그 채널을 아예 안 타게 함
         identityStoreProvider.overrideWithValue(
           identityStore ??
               IdentityStore(resolveDir: () async => 'test-identity-dir'),

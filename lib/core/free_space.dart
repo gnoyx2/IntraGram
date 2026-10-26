@@ -4,9 +4,8 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
-// path가 있는 볼륨에서 이 앱이 쓸 수 있는 남은 바이트. dart:io엔 이 API가 없어 OS에 직접 물음
-// 모르는 플랫폼·32비트 빌드·호출 실패면 null (호출부는 확인 없이 진행)
-// iOS는 statvfs가 정리 가능한(purgeable) 공간을 빼고 보여서 실제로 받을 수 있는 파일도 막을 수 있어 묻지 않음
+// path가 있는 볼륨에서 쓸 수 있는 남은 바이트 (dart:io엔 없어서 OS에 직접 물음). 모르면 null이고 호출부는 확인 없이 감.
+// iOS는 statvfs가 정리 가능한 공간을 빼고 줘서 받을 수 있는 파일까지 막을 수 있어 안 물음
 int? freeBytesAt(String path) {
   try {
     if (Platform.isWindows) return _windowsFree(path);
@@ -25,8 +24,7 @@ int? freeBytesAt(String path) {
 typedef _StatvfsC = Int32 Function(Pointer<Utf8> path, Pointer<Uint8> out);
 typedef _StatvfsDart = int Function(Pointer<Utf8> path, Pointer<Uint8> out);
 
-// struct statvfs (64비트): f_bsize, f_frsize(오프셋 8, 8바이트) 다음 블록 수들.
-// Darwin은 fsblkcnt_t가 32비트라 f_bavail이 오프셋 24(4바이트), glibc·bionic은 오프셋 32(8바이트)
+// struct statvfs(64비트): f_frsize는 오프셋 8. f_bavail은 Darwin이 32비트라 오프셋 24, glibc·bionic은 오프셋 32
 const int _statvfsBufferBytes = 256;
 
 int? _statvfsFree(DynamicLibrary libc, String path) {

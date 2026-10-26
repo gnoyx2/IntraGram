@@ -1,10 +1,7 @@
 part of '../message_bubble.dart';
 
-// 말풍선 눌림. 안쪽 링크·버튼과 탭을 겨뤄서 그쪽이 이기면 말풍선은 안 눌림
-// 확정된 탭에만 햅틱을 울림. 롱프레스 햅틱은 _promptActions가 담당함
-// 탭 인식기가 채팅 배경의 키보드 내리기 탭을 이기므로 같은 동작을 여기서도 함
-// 우클릭을 누르는 순간 이김: 글 선택 영역(SelectableRegion)의 우클릭 처리보다 말풍선 동작 메뉴가 먼저 뜸
-// allowed가 false면(선택한 글이 있음) 끼지 않아서 선택 영역의 복사 메뉴가 뜸
+// 우클릭을 누르는 순간 이김: 글 선택 영역의 우클릭보다 말풍선 동작 메뉴가 먼저 뜸.
+// allowed가 false면(선택한 글이 있음) 안 끼어서 선택 영역의 복사 메뉴가 뜸
 class _MenuClick extends TapGestureRecognizer {
   _MenuClick({required this.allowed});
 
@@ -21,6 +18,8 @@ class _MenuClick extends TapGestureRecognizer {
   }
 }
 
+// 말풍선 눌림. 안쪽 링크·버튼이 탭을 이기면 말풍선은 안 눌림. 햅틱은 확정된 탭에만 (롱프레스는 _promptActions가 울림).
+// 탭 인식기가 배경의 키보드 내리기 탭을 이겨서 그 동작도 여기서 함
 class _PressScale extends StatefulWidget {
   const _PressScale({
     required this.onLongPress,

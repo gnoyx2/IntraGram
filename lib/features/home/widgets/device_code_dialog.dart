@@ -21,7 +21,8 @@ Future<void> showDeviceCodeDialog(
       : NetworkGuard.parsePeerEndpoint(host, port);
   return showAdaptiveDialog<void>(
     context: context,
-    builder: (dialogContext) => AlertDialog.adaptive(
+    builder: (dialogContext) => AppAlertDialog(
+      cupertino: isCupertinoDialog(dialogContext),
       title: Text(s.t('deviceCode.title')),
       content: SingleChildScrollView(
         child: Column(

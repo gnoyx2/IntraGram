@@ -6,8 +6,7 @@ final vaultProvider = Provider<Vault>((ref) {
   return vault;
 });
 
-// Home/서버/mDNS 시작/알림 네비게이션은 VaultOpen 이후에만 진행함
-// checking 중 Home이 잠깐 보였다 게이트로 바뀌는 깜빡임, 서버 조기 기동 방지
+// 홈·서버·mDNS 시작·알림 이동은 VaultOpen 뒤에만 함 (확인 중에 홈이 잠깐 보였다 게이트로 바뀌는 깜빡임과 서버가 먼저 뜨는 걸 막음)
 final vaultAccessProvider =
     NotifierProvider<VaultAccessNotifier, VaultAccessState>(
       VaultAccessNotifier.new,

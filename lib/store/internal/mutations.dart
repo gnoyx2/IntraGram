@@ -32,9 +32,6 @@ mixin _StoreMutations on _InMemoryStoreState, _StoreCore {
   void setConversationOnline(String id, {required bool online}) =>
       updateConversation(id, (c) => c.copyWith(online: online));
 
-  void setConversationSecure(String id, {required bool secure}) =>
-      updateConversation(id, (c) => c.copyWith(secure: secure));
-
   void setPeerTyping(String id, {required bool typing}) {
     _typingTimers.remove(id)?.cancel();
     if (typing) {
@@ -69,9 +66,7 @@ mixin _StoreMutations on _InMemoryStoreState, _StoreCore {
   void setConversationAutoAccept(String id, {required bool value}) =>
       updateConversation(id, (c) => c.copyWith(autoAcceptFiles: value));
 
-  // alias만 갱신하고 검증 플래그는 새 세션이라 항상 false로 리셋함. 세션 키가 바뀌었는데
-  // 예전 "검증됨"이 남아있으면 MITM 방어가 뚫림 (Conversation.verified 참고)
-  // sas는 지웠다가 setRoomMemberSas로 다시 채움 (핸드셰이크가 따로 돎)
+  // 새 세션이라 확인은 늘 false로 리셋 (키가 바뀌었는데 '확인됨'이 남으면 중간자 방어가 뚫림). sas는 setRoomMemberSas가 다시 채움
   void upsertRoomMember(
     String id,
     String peerId, {
@@ -111,8 +106,6 @@ mixin _StoreMutations on _InMemoryStoreState, _StoreCore {
         return c.copyWith(members: members);
       });
 
-  // online=false + SAS/검증 전부 초기화 (RoomMember.goOffline 참고)
-  // 재합류하면 upsertRoomMember가 새 인스턴스로 덮어써서 online=true로 돌아옴
   void setRoomMemberOffline(String id, String peerId) =>
       updateConversation(id, (c) {
         final existing = c.members[peerId];
@@ -131,7 +124,7 @@ mixin _StoreMutations on _InMemoryStoreState, _StoreCore {
         return c.copyWith(members: members);
       });
 
-  // 나가면서 "저장 안 함"을 고른 대화. 다음 vault 저장부터 대화와 메시지/전송이 파일에서 빠짐
+  // 나가면서 '저장 안 함'을 고른 대화: 다음 저장부터 파일에서 통째로 빠짐
   void setVaultOptOut(String id, {required bool value}) =>
       updateConversation(id, (c) => c.copyWith(vaultOptOut: value));
 

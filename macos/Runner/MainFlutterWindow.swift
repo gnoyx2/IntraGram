@@ -17,15 +17,14 @@ class MainFlutterWindow: NSWindow {
         ? NSColor(srgbRed: 0x0D / 255, green: 0x0F / 255, blue: 0x14 / 255, alpha: 1)
         : .white
     }
+    self.backgroundColor = flutterViewController.backgroundColor
     self.contentViewController = flutterViewController
 
-    // 420×560은 두 줄 채팅 앱바 타이틀 + 트레일링 액션, 오프라인 배너 +
-    // 버블 3개 + 입력창이 텍스트 스케일 1.0에서 안 찌그러지는 최소치.
+    // 420×560은 두 줄 채팅 앱바 제목과 오른쪽 액션, 오프라인 배너, 말풍선 3개, 입력창이 글자 배율 1.0에서 안 찌그러지는 최소치
     self.minSize = NSSize(width: 420, height: 560)
 
-    // setFrameAutosaveName은 같은 이름으로 저장된 프레임이 있으면 그걸 바로
-    // 복원함 — 그래서 저장된 게 없을 때(첫 실행)만 기본 크기+중앙 정렬을 씀.
-    // 안 그러면 매번 재실행마다 방금 복원한 위치/크기를 기본값으로 덮어씀.
+    // setFrameAutosaveName은 같은 이름으로 저장된 프레임이 있으면 바로 복원해서, 저장된 게 없을 때(첫 실행)만
+    // 기본 크기와 가운데 정렬을 씀 (안 그러면 실행할 때마다 방금 복원한 위치·크기를 기본값으로 덮어씀)
     let autosaveName = "MainWindow"
     let hasSavedFrame =
       UserDefaults.standard.string(forKey: "NSWindow Frame \(autosaveName)") != nil
@@ -48,6 +47,10 @@ class MainFlutterWindow: NSWindow {
       binaryMessenger: flutterViewController.engine.binaryMessenger
     )
     privacyChannel?.setMethodCallHandler(MainFlutterWindow.handlePrivacy)
+    NSWorkspace.shared.notificationCenter.addObserver(
+      self, selector: #selector(accessibilityChanged(_:)),
+      name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil
+    )
     menuChannel = FlutterMethodChannel(
       name: "intragram/menu",
       binaryMessenger: flutterViewController.engine.binaryMessenger
@@ -63,11 +66,48 @@ class MainFlutterWindow: NSWindow {
   }
   @objc func closePage(_ sender: Any?) { menuChannel?.invokeMethod("close", arguments: nil) }
 
+  @objc func findMessages(_ sender: Any?) { menuChannel?.invokeMethod("search", arguments: nil) }
+  @objc func increaseTextSize(_ sender: Any?) {
+    menuChannel?.invokeMethod("textSize", arguments: 1)
+  }
+  @objc func decreaseTextSize(_ sender: Any?) {
+    menuChannel?.invokeMethod("textSize", arguments: -1)
+  }
+  @objc func resetTextSize(_ sender: Any?) {
+    menuChannel?.invokeMethod("textSize", arguments: 0)
+  }
+
+  @objc private func accessibilityChanged(_ notification: Notification) {
+    let workspace = NSWorkspace.shared
+    privacyChannel?.invokeMethod(
+      "onReduceTransparencyChanged", arguments: workspace.accessibilityDisplayShouldReduceTransparency)
+    privacyChannel?.invokeMethod(
+      "onReduceMotionChanged", arguments: workspace.accessibilityDisplayShouldReduceMotion)
+    privacyChannel?.invokeMethod(
+      "onHighContrastChanged", arguments: workspace.accessibilityDisplayShouldIncreaseContrast)
+  }
+
+  override func addChildWindow(_ childWin: NSWindow, ordered place: NSWindow.OrderingMode) {
+    childWin.sharingType = .none
+    super.addChildWindow(childWin, ordered: place)
+  }
+
+  override func beginSheet(_ sheetWindow: NSWindow, completionHandler handler: ((NSApplication.ModalResponse) -> Void)? = nil) {
+    sheetWindow.sharingType = .none
+    super.beginSheet(sheetWindow, completionHandler: handler)
+  }
+
+  deinit {
+    NSWorkspace.shared.notificationCenter.removeObserver(self)
+    NotificationCenter.default.removeObserver(self)
+    screenshotQuery?.stop()
+  }
+
   // 마지막 copySensitive 직후의 changeCount. 내용을 안 읽고 우리 복사본인지 비교함
   private static var sensitiveChangeCount: Int?
 
   // copySensitive: 이 Mac에서만(.currentHostOnly라 Universal Clipboard로 다른 기기에 안 넘어감), 클립보드
-  // 관리자가 기록하지 않게 nspasteboard.org의 Concealed 표식을 같이 둠.
+  // 관리자가 기록하지 않게 nspasteboard.org의 Concealed 표식을 같이 둠
   // clipboardKinds: 붙여넣기 버튼용으로 형식 목록만 봄 (내용을 읽으면 macOS 15.4+ 붙여넣기 경고가 뜰 수 있음)
   private static func handlePrivacy(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     let board = NSPasteboard.general
@@ -110,6 +150,10 @@ class MainFlutterWindow: NSWindow {
       else { return result(nil) }
       _ = url.startAccessingSecurityScopedResource()
       result(url.path)
+    case "reduceTransparency":
+      result(NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency)
+    case "highContrast":
+      result(NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast)
     case "reduceMotion":
       result(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
     case "clipboardKinds":
@@ -123,11 +167,9 @@ class MainFlutterWindow: NSWindow {
     }
   }
 
-  // macOS엔 iOS의 userDidTakeScreenshotNotification 같은 알림이 없음. 대신
-  // screencapture(Cmd+Shift+3/4/5)가 저장하는 파일마다 Spotlight가 붙이는
-  // kMDItemIsScreenCapture 메타데이터를 NSMetadataQuery로 실시간 감시함 —
-  // 샌드박스에서도 되는 표준 macOS 기법(파일 내용을 읽는 게 아니라 메타데이터
-  // 검색이라 files.user-selected 권한이 필요 없음).
+  // macOS엔 iOS의 userDidTakeScreenshotNotification 같은 알림이 없어서, screencapture(Cmd+Shift+3/4/5)가 저장하는
+  // 파일마다 Spotlight가 붙이는 kMDItemIsScreenCapture 메타데이터를 NSMetadataQuery로 실시간 감시함.
+  // 샌드박스에서도 되는 표준 기법 (파일 내용이 아니라 메타데이터 검색이라 files.user-selected 권한이 필요 없음)
   private func startWatchingScreenshots() {
     let query = NSMetadataQuery()
     query.predicate = NSPredicate(format: "kMDItemIsScreenCapture = 1")
@@ -142,9 +184,8 @@ class MainFlutterWindow: NSWindow {
     screenshotQuery = query
   }
 
-  // DidUpdate는 새로 잡힌 파일뿐 아니라 기존에 매칭됐던 파일이 바뀌거나
-  // 지워질 때도 옴 — Added만 걸러서, 앱 실행 중 "방금" 찍힌 스크린샷에만
-  // 반응함(옛날 스크린샷을 지우기만 해도 알림이 뜨는 오탐 방지).
+  // DidUpdate는 새로 잡힌 파일뿐 아니라 전에 잡힌 파일이 바뀌거나 지워질 때도 옴: Added만 걸러서 앱이 도는 중에
+  // 방금 찍힌 스크린샷에만 반응함 (옛 스크린샷을 지우기만 해도 알림이 뜨는 오탐 방지)
   @objc private func onScreenshotQueryUpdate(_ notification: Notification) {
     let added = notification.userInfo?[NSMetadataQueryUpdateAddedItemsKey] as? [NSMetadataItem]
     guard let added, !added.isEmpty else { return }

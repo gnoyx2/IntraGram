@@ -1,15 +1,11 @@
-// 피어 주소 검증
-// 피어가 알려준 주소(그룹 방 멤버의 직접 주소 sh/sp)는 전부 여기 하나로 정규화하고
-// 검증한 뒤에만 URL/fetch에 씀. 앱의 NetworkGuard.parsePeerEndpoint와
-// 같은 정책: **정규 dotted-decimal RFC 1918 IPv4 + 1..65535 포트만** — loopback·
-// APIPA·IPv6·hostname·userinfo·비정규 표기(010.0.0.1 = WHATWG URL에선 octal 8.0.0.1)
-// 전부 거부. 테스트·내부용 loopback 예외는 peer 입력과 분리돼서
-// (이 파일엔 없음) 사용자/wire가 고를 수 없음.
+// 피어가 알려 준 주소(방 멤버의 직접 주소 sh/sp)는 전부 여기서 정규화하고 검증한 뒤에만 URL·fetch에 씀.
+// 앱의 NetworkGuard.parsePeerEndpoint와 같은 정책: 정규 dotted-decimal RFC 1918 IPv4와 1..65535 포트만 받고
+// loopback·APIPA·IPv6·hostname·userinfo·비정규 표기(010.0.0.1은 WHATWG URL에선 8진 8.0.0.1)는 전부 거부.
+// 테스트·내부용 loopback 예외는 이 파일 밖이라 사용자나 wire가 고를 수 없음
 var OCTET = "(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)";
 var IPV4_RE = new RegExp("^" + [OCTET, OCTET, OCTET, OCTET].join("\\.") + "$");
 
-// port는 number 또는 순수 10진 문자열만 — Number("0x1F90") 같은 강제 변환을
-// 애초에 못 통과시킴.
+// port는 number나 순수 10진 문자열만 받음: Number('0x1F90') 같은 강제 변환은 처음부터 못 지나감
 function parseLanEndpoint(host, port) {
   if (typeof host !== "string") return null;
   var m = IPV4_RE.exec(host);
@@ -26,9 +22,8 @@ function parseLanEndpoint(host, port) {
   return isPrivate ? { host: o.join("."), port: p } : null;
 }
 
-// 검증된 endpoint로 URL을 만들고, 브라우저 URL 파서가 host/port를 우리가
-// 검증한 값 그대로 해석했는지 다시 확인함(파서 불일치 방어). userinfo가 붙으면
-// 거부. scheme의 기본 포트(80)는 url.port가 빈 문자열이라 따로 처리.
+// 검증한 endpoint로 URL을 만들고, 브라우저 URL 파서가 host·port를 검증한 값 그대로 읽었는지 다시 봄 (파서 불일치 방어).
+// userinfo가 붙으면 거부. scheme 기본 포트(80)는 url.port가 빈 문자열이라 따로 처리
 function endpointUrl(ep, path, scheme) {
   if (!ep) return null;
   var url;
@@ -38,11 +33,9 @@ function endpointUrl(ep, path, scheme) {
   return url.href;
 }
 
-// peer 대상 요청의 유일한 출구. redirect:"error"(3xx로 토큰·바이트가 다른 곳으로
-// 가지 않게)와 cache:"no-store"를 항상 강제하고, 같은 origin이거나 RFC1918
-// endpoint가 아닌 URL은 요청 자체를 만들지 않음. 새 peer 요청을 추가해도 이
-// 함수를 거치게 함 — fetch를 직접 부르는 코드는 tool/browser_guard_test.js가
-// 정적 검사로 잡음.
+// peer 대상 요청의 유일한 출구. redirect:'error'(3xx로 토큰·바이트가 딴 데로 안 가게)와 cache:'no-store'를 늘 강제하고,
+// 같은 출처나 RFC1918 endpoint가 아닌 URL은 요청을 아예 안 만듦. 새 peer 요청도 이 함수를 거쳐야 함
+// (fetch를 직접 부르는 코드는 tool/browser_guard_test.js가 정적 검사로 잡음)
 function peerFetch(url, init) {
   var target;
   try { target = new URL(url, location.href); } catch (e) { return Promise.reject(new TypeError("bad peer url")); }
@@ -59,11 +52,10 @@ function peerFetch(url, init) {
   return fetch(target.href, opts);
 }
 
-// 파일/음성 내려받기 URL. sh/sp(그룹 방 멤버의 직접
-// 주소)가 명시되면 parseLanEndpoint를 통과한 값으로만 만들고, 실패하면 호스트
-// 릴레이로 몰래 바꾸지 않고 null. 명시 안 됐으면 호스트(같은 origin).
-// 호스트가 사설 IPv4 없이 링크 로컬(169.254)이나 IPv6 ULA로 떠 있으면 sh가 그 주소라 위 검증을 못 넘음:
-// sh/sp가 이 페이지를 내려준 호스트 자신이면 검증 대상이 아니라 같은 출처로 받음
+// 파일·음성 내려받기 URL. sh/sp(방 멤버의 직접 주소)가 있으면 parseLanEndpoint를 통과한 값으로만 만들고,
+// 실패하면 호스트 릴레이로 몰래 안 바꾸고 null. 없으면 호스트(같은 출처).
+// 호스트가 사설 IPv4 없이 링크 로컬(169.254)이나 IPv6 ULA로 떠 있으면 sh가 그 주소라 위 검증을 못 넘어서,
+// sh/sp가 이 페이지를 준 호스트 자신이면 검증 대신 같은 출처로 받음
 function resolveDownloadUrl(id, sh, sp) {
   var path = "/api/download/" + encodeURIComponent(id);
   var self = new URL(path, location.href).href;

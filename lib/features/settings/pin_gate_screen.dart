@@ -10,7 +10,7 @@ import 'package:intragram/features/settings/pin_dialog.dart'
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 맞는 PIN이면 아카이브를 열고 하이드레이트한 뒤 통과. 틀리면 재시도하거나 "새로 시작"(파일은 그대로, 빈 세션)
+// 맞는 PIN이면 아카이브를 열어 RAM에 올린 뒤 통과. 틀리면 다시 하거나 새로 시작 (파일은 그대로 두고 빈 세션)
 class PinGateScreen extends ConsumerStatefulWidget {
   const PinGateScreen({super.key});
 
@@ -65,77 +65,102 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
   Widget build(BuildContext context) {
     final s = S.of(context);
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          // 큰 시스템 폰트에서도 카피가 안 잘리게 320을 텍스트 스케일만큼 넓힘 (1.6배 상한)
-          constraints: BoxConstraints(
-            maxWidth:
-                320 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.6),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(Icons.lock_outline, size: 40),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  s.t('pinGate.title'),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  s.t('pinGate.body'),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                TextField(
-                  enableIMEPersonalizedLearning: false,
-                  controller: _controller,
-                  focusNode: _focus,
-                  // 틀린 PIN 뒤 대기(pinRetryDelay) 중엔 입력도 막음
-                  enabled: !_busy,
-                  autofocus: true,
-                  obscureText: true,
-                  keyboardType: TextInputType.visiblePassword,
-                  inputFormatters: kPinInputFormatters,
-                  textInputAction: TextInputAction.go,
-                  onSubmitted: (_) => _submit(),
-                  decoration: InputDecoration(
-                    labelText: s.t('pin.pinLabel'),
-                    border: const OutlineInputBorder(),
-                    errorText: _readError
-                        ? s.t('pinGate.readError')
-                        : _wrong
-                        ? s.t('pinGate.wrong')
-                        : null,
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: keyboard),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - keyboard).clamp(
+                    0,
+                    double.infinity,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                FilledButton(
-                  onPressed: _busy ? null : _submit,
-                  child: _busy
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(s.t('pinGate.unlock')),
+                child: Center(
+                  child: ConstrainedBox(
+                    // 큰 시스템 폰트에서도 카피가 안 잘리게 320을 텍스트 스케일만큼 넓힘 (1.6배 상한)
+                    constraints: BoxConstraints(
+                      maxWidth:
+                          320 *
+                          MediaQuery.textScalerOf(
+                            context,
+                          ).scale(1).clamp(1.0, 1.6),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Icon(Icons.lock_outline, size: 40),
+                          const SizedBox(height: AppSpacing.lg),
+                          Text(
+                            s.t('pinGate.title'),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            s.t('pinGate.body'),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          TextField(
+                            enableIMEPersonalizedLearning: false,
+                            controller: _controller,
+                            focusNode: _focus,
+                            // 틀린 PIN 뒤 대기(pinRetryDelay) 중엔 입력도 막음
+                            enabled: !_busy,
+                            autofocus: true,
+                            obscureText: true,
+                            keyboardType: TextInputType.visiblePassword,
+                            inputFormatters: kPinInputFormatters,
+                            textInputAction: TextInputAction.go,
+                            onSubmitted: (_) => _submit(),
+                            decoration: InputDecoration(
+                              labelText: s.t('pin.pinLabel'),
+                              border: const OutlineInputBorder(),
+                              errorText: _readError
+                                  ? s.t('pinGate.readError')
+                                  : _wrong
+                                  ? s.t('pinGate.wrong')
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          FilledButton(
+                            onPressed: _busy ? null : _submit,
+                            child: _busy
+                                ? const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(s.t('pinGate.unlock')),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          TextButton(
+                            onPressed: _busy
+                                ? null
+                                : () => ref
+                                      .read(vaultAccessProvider.notifier)
+                                      .startFresh(),
+                            child: Text(s.t('pinGate.startFresh')),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                TextButton(
-                  onPressed: _busy
-                      ? null
-                      : () =>
-                            ref.read(vaultAccessProvider.notifier).startFresh(),
-                  child: Text(s.t('pinGate.startFresh')),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

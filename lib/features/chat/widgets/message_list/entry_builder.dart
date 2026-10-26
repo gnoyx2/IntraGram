@@ -1,8 +1,8 @@
 part of '../message_list.dart';
 
 extension _MessageListEntryBuilder on _MessageListState {
-  // 첫 안 읽은 메시지 id. unreadOnOpen개만큼 뒤에서 세되 시스템/발신 메시지는 건너뜀 (bumpUnread와 같은 기준)
-  // 소각 고스트는 이미 읽고 지나간 메시지라 widget.messages 기준으로만 셈
+  // 첫 안 읽은 메시지 id. 뒤에서 unreadOnOpen개를 세되 시스템·내 메시지는 건너뜀 (bumpUnread와 같은 기준).
+  // 소각 고스트는 이미 읽은 메시지라 widget.messages로만 셈
   String? _firstUnreadId() {
     if (widget.unreadOnOpen <= 0) return null;
     var remaining = widget.unreadOnOpen;
@@ -23,7 +23,7 @@ extension _MessageListEntryBuilder on _MessageListState {
     _SeparatorEntry() => DateTime.fromMillisecondsSinceEpoch(0),
   };
 
-  // widget.messages와 소각 고스트를 시간순으로 섞어서, 사라지는 동안 원래 자리 근처에 계속 보이게 함
+  // 메시지와 소각 고스트를 시간순으로 섞음: 사라지는 동안 원래 자리 근처에 남아 보임
   List<_Entry> _messagesAndGhosts() {
     final combined = <_Entry>[
       for (final m in widget.messages) _Entry.message(m),

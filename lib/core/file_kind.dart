@@ -3,8 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
-// LocalSend(Apache-2.0)의 file_path_helper / file_type_ext에서 가져와 버킷을 확장함
-// 출처와 변경 내용은 THIRD_PARTY_NOTICES.md 참고
+// LocalSend(Apache-2.0) file_path_helper·file_type_ext에서 가져와 종류를 늘림 (출처·변경은 THIRD_PARTY_NOTICES.md)
 enum FileKind {
   image,
   video,
@@ -38,8 +37,7 @@ enum FileKind {
     FileKind.other => Icons.insert_drive_file_outlined,
   };
 
-  // 전송 카드 배지 색. 흰 글리프와 3:1 이상 나오는 600 단계만 씀
-  // 문서·PDF는 레드, 코드는 그린, 미디어는 퍼플 계열, 압축은 오렌지
+  // 배지 색: 흰 글리프와 대비 3:1 이상 나오는 600 단계만 씀
   Color get tint => switch (this) {
     FileKind.image => const Color(0xFF7C3AED),
     FileKind.video => const Color(0xFF9333EA),
@@ -57,24 +55,7 @@ enum FileKind {
     FileKind.other => const Color(0xFF64748B),
   };
 
-  String get label => switch (this) {
-    FileKind.image => 'Image',
-    FileKind.video => 'Video',
-    FileKind.audio => 'Audio',
-    FileKind.pdf => 'PDF',
-    FileKind.document => 'Document',
-    FileKind.spreadsheet => 'Spreadsheet',
-    FileKind.presentation => 'Presentation',
-    FileKind.archive => 'Archive',
-    FileKind.code => 'Code',
-    FileKind.font => 'Font',
-    FileKind.disk => 'Disk image',
-    FileKind.ebook => 'E-book',
-    FileKind.executable => 'Executable',
-    FileKind.other => 'File',
-  };
-
-  // 확장자 우선(MIME 조회보다 커버리지가 넓음), 모르면 MIME 접두사로 폴백
+  // 확장자가 먼저, 모르면 MIME 접두사로 봄
   static FileKind of(String fileName, {String? mimeType}) {
     final ext = p.extension(fileName).replaceFirst('.', '').toLowerCase();
     final byExt = _byExtension[ext];

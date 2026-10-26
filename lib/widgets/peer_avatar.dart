@@ -4,11 +4,8 @@ import 'package:intragram/core/platform_icons.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 프로필 사진이 없는 피어용 이니셜 원형 아바타
-// 색은 이름이 아니라 기기 ID 해시를 따라가서 이름을 바꿔도 그대로임
-// 라이트는 파스텔 듀오톤에 짙은 글자, 다크는 깊은 듀오톤에 밝은 글자
-// 명도 값은 360개 색조 전부에서 글자 대비 7:1 이상이 나오게 맞춘 값
-// platform을 주면 오른쪽 아래에 기기 배지를 달고 스크린 리더에 기기 종류를 읽어줌
+// 사진 없는 피어용 이니셜 아바타. 색은 이름이 아니라 기기 ID 해시를 따라가서 이름을 바꿔도 안 변함.
+// 명도는 360개 색조 전부에서 글자 대비 7:1 이상 나오게 맞춘 값. platform을 주면 기기 배지를 달고 스크린 리더에 기기 종류를 읽어 줌
 class PeerAvatar extends StatelessWidget {
   const PeerAvatar({
     super.key,

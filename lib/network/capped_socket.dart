@@ -14,8 +14,7 @@ const int kHandshakeWireBytes = 64 * 1024;
 // 웹소켓 프레임 머리·마스킹·조각 나눔 몫
 const int _kWireSlackBytes = 64 * 1024;
 
-// 메시지 n개를 받은 뒤 다음 메시지에 허용할 원시 바이트. 첫 메시지는 핸드셰이크라 작게, 그다음은
-// 앱 프레임 상한(_onFrame과 같은 값)에 여유분을 더함
+// 메시지 n개 뒤 다음 메시지에 허용할 원시 바이트. 첫 메시지는 핸드셰이크라 작게, 그다음은 앱 프레임 상한 + 여유
 int wireBudget(int messages, LargeMessageMode mode) {
   if (messages == 0) return kHandshakeWireBytes;
   final frameCap = mode == LargeMessageMode.unlimited
@@ -24,7 +23,7 @@ int wireBudget(int messages, LargeMessageMode mode) {
   return frameCap + _kWireSlackBytes;
 }
 
-// 웹소켓이 메시지를 넘길 때마다 상한을 다시 채우는 채널. capped가 null이면(테스트 다이얼 등) 그대로
+// 웹소켓이 메시지를 넘길 때마다 상한을 다시 채움. capped가 null이면(테스트 다이얼 등) 그대로
 StreamChannel<dynamic> cappedChannel(WebSocket socket, CappedSocket? capped) =>
     StreamChannel<dynamic>(
       capped == null
@@ -36,11 +35,9 @@ StreamChannel<dynamic> cappedChannel(WebSocket socket, CappedSocket? capped) =>
       socket,
     );
 
-// dart:io 웹소켓은 메시지 하나를 끝(FIN)까지 상한 없이 모은 뒤에야 앱에 넘겨서, 앱의 프레임 상한은
-// 메모리를 이미 쓴 뒤에 검사됨. 소켓 바로 위에서 마지막 메시지 뒤로 받은 바이트를 세어 상한을 넘으면
-// 메시지가 다 모이기 전에 소켓을 끊음. 웹소켓이 메시지를 넘길 때마다 messageReceived를 불러야 함
-// 세는 단위는 소켓에서 읽은 덩어리라 여러 메시지가 한 덩어리로 오면 합쳐서 셈. 앱 피어와 브라우저는
-// 핸드셰이크가 끝난 뒤에야 이어 보내서 첫 메시지 예산에 걸리지 않음
+// dart:io 웹소켓은 메시지 하나를 FIN까지 상한 없이 다 모은 뒤 넘겨서 앱 프레임 상한은 메모리를 이미 쓴 뒤에 걸림.
+// 소켓 바로 위에서 마지막 메시지 뒤로 받은 바이트를 세다 넘으면 끊음 (메시지마다 messageReceived를 불러야 함).
+// 읽은 덩어리 단위로 세서 여러 메시지가 한 덩어리로 오면 합쳐 셈: 피어는 핸드셰이크가 끝나야 이어 보내서 첫 예산엔 안 걸림
 class CappedSocket extends Stream<Uint8List> implements Socket {
   CappedSocket(this._socket, this._limit);
 

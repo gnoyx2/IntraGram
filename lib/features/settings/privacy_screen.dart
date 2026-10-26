@@ -14,6 +14,7 @@ class PrivacyScreen extends StatelessWidget {
     'noServer',
     'onDevice',
     'network',
+    'desktopWeb',
     'discovery',
     'permissions',
     'thirdParty',

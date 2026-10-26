@@ -8,7 +8,8 @@ mixin _ChatRoomDialogs on _ChatRoomScreenStateBase {
     final cupertino = isCupertinoDialog(context);
     final ok = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog.adaptive(
+      builder: (dialogContext) => AppAlertDialog(
+        cupertino: cupertino,
         title: Text(s.t('chat.endConversation')),
         content: Text(s.t('chat.endBody')),
         actions: dialogActions(dialogContext, [
@@ -35,7 +36,11 @@ mixin _ChatRoomDialogs on _ChatRoomScreenStateBase {
   Future<void> _showSas(Conversation conversation) async {
     final store = ref.read(inMemoryStoreProvider);
     if (conversation.isRoom) {
-      final peerId = await showRoomMemberListDialog(context, conversation);
+      final peerId = await showRoomMemberListDialog(
+        context,
+        conversation,
+        orgCredentials: _registry.store.orgCredentials,
+      );
       if (peerId == null || !mounted) return;
       // 목록 다이얼로그가 열려 있는 동안 재연결됐을 수 있어 다시 조회함 (캡처해둔 스냅샷을 안 믿음)
       final member = store.conversation(widget.conversationId)?.members[peerId];
@@ -86,7 +91,8 @@ mixin _ChatRoomDialogs on _ChatRoomScreenStateBase {
     final cupertino = isCupertinoDialog(context);
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog.adaptive(
+      builder: (dialogContext) => AppAlertDialog(
+        cupertino: cupertino,
         icon: const Icon(Icons.gpp_bad_outlined),
         title: Text(s.t('sas.mismatchTitle')),
         content: Text(s.t('sys.sasMismatch')),

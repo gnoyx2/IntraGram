@@ -69,25 +69,21 @@ void main() {
     },
   );
 
-  test(
-    'onTimedOut fires when the native side reports an FGS timeout',
-    () async {
-      final service = android();
-      var timedOut = false;
-      service.onTimedOut = () => timedOut = true;
+  test('onTimedOut fires when the native side reports an FGS timeout', () async {
+    final service = android();
+    var timedOut = false;
+    service.onTimedOut = () => timedOut = true;
 
-      // 네이티브(ConnectionService.onTimeout)가 이 채널로 부르는 걸 흉내냄 —
-      // 평소 테스트 mock 방향(Dart→플랫폼)과 반대라 binaryMessenger로 직접 주입
-      final message = channel.codec.encodeMethodCall(
-        const MethodCall('onTimeout'),
-      );
-      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .handlePlatformMessage(channel.name, message, (_) {});
+    // 네이티브(ConnectionService.onTimeout)가 이 채널로 부르는 걸 흉내냄. 평소 mock 방향(Dart→플랫폼)과 반대라 binaryMessenger로 직접 넣음
+    final message = channel.codec.encodeMethodCall(
+      const MethodCall('onTimeout'),
+    );
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .handlePlatformMessage(channel.name, message, (_) {});
 
-      expect(timedOut, isTrue);
-      expect(service.stoppedBySystem.value, isTrue);
-    },
-  );
+    expect(timedOut, isTrue);
+    expect(service.stoppedBySystem.value, isTrue);
+  });
 
   // 설정이 저절로 꺼진 이유를 설정 화면이 보여 줄 수 있게 표시가 남음
   test('a refused start marks the service as stopped by the system', () async {

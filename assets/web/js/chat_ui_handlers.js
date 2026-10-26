@@ -1,4 +1,4 @@
-// ---- inbound frame handlers (routed here from app.js) ----------------
+// 받은 프레임 처리 (app.js가 넘겨 줌)
 function handleMsg(inner) {
   vibrate(15);
   countHiddenUnread();
@@ -13,7 +13,7 @@ function seen(id) {
   beginBurn(id);
 }
 function flushUnseen() {
-  if (document.hidden) return;
+  if (document.hidden || !isReady()) return;
   var ids = unseen;
   unseen = [];
   ids.forEach(seen);
@@ -52,16 +52,18 @@ function handleTyping(inner) {
 
 // iOS Safari는 키보드가 떠도 레이아웃 높이를 안 줄여서 헤더가 밀려 사라짐: 보이는 높이에 몸통을 맞춤
 // (Chrome은 viewport의 interactive-widget=resizes-content로 처리). 확대 중이면 건드리지 않음
+// CSS의 세그먼트 높이를 유지하면서 키보드가 가린 부분만 상한으로 잘라냄
 function fitToVisibleViewport() {
   var vv = window.visualViewport;
   if (!vv) return;
   var fit = function () {
-    document.body.style.height = vv.scale > 1.01 ? "" : vv.height + "px";
+    document.body.style.maxHeight = vv.scale > 1.01 ? "" : vv.height + "px";
   };
   vv.addEventListener("resize", fit);
+  fit();
 }
 
-// ---- compose & send ---------------------------------------------
+// 입력과 전송
 function sendText() {
   var text = inputEl.value.trim();
   if (!text || !isReady()) return;
@@ -97,6 +99,13 @@ function applyChatLocale() {
 }
 
 function initChatUi() {
+  document.addEventListener("keydown", function (e) {
+    var target = e.target;
+    if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey || e.isComposing ||
+        (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)))) return;
+    e.preventDefault();
+    inputEl.focus();
+  });
   sendEl.onclick = sendText;
   sendEl.disabled = true;
   // 보내기를 눌러도 입력창 초점을 안 뺏음: Android에서 키보드가 매번 닫히지 않게
@@ -110,7 +119,7 @@ function initChatUi() {
   jumpEl.onclick = function () {
     unread = 0;
     updateJump();
-    // 직접 누른 이동만 부드럽게 스크롤함. 새 메시지 자동 이동에는 애니메이션을 안 씀.
+    // 직접 누른 이동만 부드럽게 스크롤함 (새 메시지 자동 이동엔 애니메이션을 안 씀)
     var reduceMotion = window.matchMedia &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) {
@@ -131,7 +140,7 @@ function initChatUi() {
     if (has !== typingSent) { typingSent = has; sendInner({ k: "typing", on: has }); }
   });
   inputEl.addEventListener("keydown", function (e) {
-    // IME 조합 중 Enter는 글자 확정용이라 메시지를 보내면 안 됨.
+    // IME 조합 중 Enter는 글자 확정용이라 메시지를 보내면 안 됨
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
       e.preventDefault();
       sendText();

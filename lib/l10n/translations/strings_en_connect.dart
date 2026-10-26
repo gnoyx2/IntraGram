@@ -38,6 +38,10 @@ const Map<String, String> kStringsEnConnect = {
       'IntraGram only talks over private Wi-Fi addresses. Turn on a phone '
       'hotspot and join it with both devices.',
   'server.failedTitle': 'The local server could not start',
+  'server.localNetworkDeniedTitle': 'Local Network access is off',
+  'server.localNetworkDenied':
+      'IntraGram needs Local Network access to find and connect to devices '
+      'on this Wi-Fi. Allow it in app settings, then return to retry.',
   'server.failed': 'Retry, and restart the app if it keeps failing.',
   'discoveryHelp.title': "Can't find the other device?",
   'discoveryHelp.sameWifi':

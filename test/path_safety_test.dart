@@ -17,6 +17,15 @@ void main() {
       expect(safeBasename('../../../etc/passwd'), 'passwd');
     });
 
+    // 받는 쪽은 제안 때 한 번, 저장할 때 또 한 번 거름: 두 번째에 이름이 바뀌면 카드엔 .e로 뜨고 .exe로 저장됨
+    test('cleaning an already clean name changes nothing', () {
+      for (final raw in ['${'A' * 187}invoice.ex.ZZZZ.e', '.${'A' * 250}']) {
+        final once = safeBasename(raw);
+        expect(safeBasename(once), once, reason: raw);
+        expect(_utf8Length(once), lessThanOrEqualTo(kMaxBasenameBytes));
+      }
+    });
+
     test('drops NUL and control bytes (the invoice.pdf\\x00.exe trick)', () {
       expect(safeBasename('invoice.pdf\x00.exe'), 'invoice.pdf.exe');
     });

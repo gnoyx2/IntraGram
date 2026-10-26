@@ -19,8 +19,7 @@ mixin _ChatInputClipboard on _ChatInputStateBase {
     unawaited(_refreshClipboardKinds());
   }
 
-  // 데스크톱만: Pasteboard.files()가 Android에선 content
-  // URI(콘텐츠 리졸버 필요, 아직 없음)를 주고 데스크톱에선 진짜 파일시스템 경로를 줌
+  // 데스크톱만: Pasteboard.files()가 Android에선 content URI를 줘서 못 씀 (데스크톱은 진짜 경로)
   bool get _isDesktop =>
       defaultTargetPlatform == TargetPlatform.macOS ||
       defaultTargetPlatform == TargetPlatform.windows ||

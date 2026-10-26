@@ -3,18 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 포인터 투명(IgnorePointer)이라 드롭 이벤트를 안 먹고 desktop_drop이 밑의 DropTarget에 그대로 전달함
-// 웹 게스트 포털의 드래그 하이라이트와 같은 언어: 화면 안쪽 액센트 링 + 바깥 글로우
+// IgnorePointer라 드롭 이벤트를 안 먹고 밑의 DropTarget으로 그대로 감. 모양은 웹 포털의 드래그 강조와 맞춤
 class DropOverlay extends StatelessWidget {
   const DropOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // Positioned.fill을 여기 안 둠: 호출부가 AnimatedOpacity/FadeTransition으로 감싸는데
-    // Positioned는 Stack의 direct child여야 해서 ("Incorrect use of
-    // ParentDataWidget") 호출부가
-    // 위젯 전체를 Positioned.fill로 감쌈
+    // Positioned.fill은 호출부가 씌움: 호출부가 페이드로 감싸서 여기 두면 Stack의 직계 자식이 아니게 됨
+    // (Incorrect use of ParentDataWidget)
     return IgnorePointer(
       child: Container(
         margin: const EdgeInsets.all(AppSpacing.md),

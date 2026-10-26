@@ -32,6 +32,26 @@ void main() {
     expect(parsed.signature, isNull, reason: 'a dialer hello has no proof yet');
   });
 
+  // platform은 상대가 정한 값인데 목록 부제·스크린 리더·보관소로 그대로 감: 앱이 쓰는 이름만 받음
+  test('a hello platform outside the app names reads as Unknown', () {
+    String platformOf(String platform) =>
+        (InboundOuter.parse(
+                  OuterFrame.hello(
+                    peerId: 'p1',
+                    alias: 'a',
+                    platform: platform,
+                    commitmentB64: cmt,
+                    identityKeyB64: key,
+                  ),
+                )
+                as HelloOuter)
+            .platform;
+    expect(platformOf('iPadOS'), 'iPadOS');
+    expect(platformOf('Windows'), 'Windows');
+    expect(platformOf('x' * 60000), 'Unknown');
+    expect(platformOf('Linux\u202e'), 'Unknown');
+  });
+
   test('a listener hello carries its key and signature', () {
     final parsed =
         InboundOuter.parse(

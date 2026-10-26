@@ -104,14 +104,14 @@ body.drag-over #log-wrap::before {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--on-surface-variant) 50%, transparent) transparent;
   overscroll-behavior: contain;
-  padding: var(--sp-md) max(var(--sp-md), env(safe-area-inset-right), calc((100% - 960px) / 2))
-    var(--sp-md) max(var(--sp-md), env(safe-area-inset-left), calc((100% - 960px) / 2));
+  padding: var(--sp-md) max(var(--sp-md), env(safe-area-inset-right), calc((100% - var(--chat-width)) / 2))
+    var(--sp-md) max(var(--sp-md), env(safe-area-inset-left), calc((100% - var(--chat-width)) / 2));
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
 }
-.row { display: flex; }
+.row { display: flex; align-items: flex-end; gap: var(--sp-xs); }
 .row.mine { justify-content: flex-end; }
 @media (prefers-reduced-motion: no-preference) {
   .row { animation: msg-in 220ms var(--ease-out); }
@@ -129,6 +129,7 @@ body.drag-over #log-wrap::before {
   .btn:active, .btn-icon:active, .jump:active { transform: scale(0.97); }
 }
 .bubble {
+  min-width: 0;
   max-width: 78%;
   padding: var(--sp-sm) var(--sp-md);
   border-radius: var(--r-lg);
@@ -147,6 +148,19 @@ body.drag-over #log-wrap::before {
   border-color: var(--bubble-mine-edge);
   box-shadow: 0 2px 6px var(--bubble-shadow);
   border-bottom-right-radius: var(--r-tail);
+}
+.reaction-action {
+  flex: none;
+  display: none;
+  min-width: 44px;
+  padding: 0 var(--sp-sm);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--r-pill);
+}
+.row:focus-within .reaction-action { display: inline-flex; visibility: visible; }
+@media (hover: hover) and (pointer: fine) {
+  .reaction-action { display: inline-flex; visibility: hidden; }
+  .row:hover .reaction-action { visibility: visible; }
 }
 .row.theirs .bubble { border-bottom-left-radius: var(--r-tail); }
 .bubble .sender { font-size: 0.75rem; font-weight: 600; color: var(--sender); margin-bottom: var(--sp-xxs); }
@@ -253,6 +267,7 @@ body.drag-over #log-wrap::before {
 .xfer-thumb { display: block; max-width: min(180px, 100%); max-height: 180px; border-radius: var(--r-sm); margin: var(--sp-sm) 0; }
 .xfer-audio { display: block; max-width: min(240px, 100%); margin-top: var(--sp-sm); }
 .xfer-label { flex: 1; min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.xfer-progress { font-variant-numeric: tabular-nums; margin-top: var(--sp-xs); }
 .xfer-note { font-size: 0.75rem; color: var(--on-surface-variant); margin-top: var(--sp-xs); }
 
 footer {
@@ -261,13 +276,14 @@ footer {
   gap: var(--sp-sm);
   align-items: flex-end;
   border-top: 1px solid var(--glass-edge);
-  padding: var(--sp-sm) max(var(--sp-md), env(safe-area-inset-right)) max(var(--sp-sm), env(safe-area-inset-bottom))
-    max(var(--sp-md), env(safe-area-inset-left));
+  padding: var(--sp-sm) max(var(--sp-md), env(safe-area-inset-right), calc((100% - var(--chat-width)) / 2)) max(var(--sp-sm), env(safe-area-inset-bottom))
+    max(var(--sp-md), env(safe-area-inset-left), calc((100% - var(--chat-width)) / 2));
 }
 footer textarea {
   flex: 1;
   min-width: 0;
   resize: none;
+  field-sizing: content;
   background: var(--surface-2);
   color: var(--on-surface);
   border: 1px solid var(--outline-variant);
@@ -293,6 +309,47 @@ footer textarea:focus-visible { border-color: var(--accent); }
 /* 강제 색상(Windows 고대비 등): 배경이 시스템 색으로 바뀌어도 버튼 경계가 보이게 */
 @media (forced-colors: active) {
   .btn, .btn-icon, .jump { border: 1px solid ButtonText; }
+  .bubble, header, footer, .plain-notice, textarea, select, .system, .date-sep {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+  .row.mine .bubble { background: Canvas; color: CanvasText; border-color: CanvasText; }
+  :focus-visible { outline: 2px solid Highlight; }
+  .reaction-action[aria-pressed="true"] { border-color: Highlight; }
+  body.drag-over #log-wrap::before { border-color: Highlight; }
+}
+
+/* 시스템 투명도·대비 설정을 헤더, 입력창, 말풍선에도 즉시 반영함 */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  body {
+    --glass: var(--surface);
+    --glass-edge: var(--defined-edge);
+    --outline-variant: var(--defined-edge);
+    --bubble-mine-edge: var(--defined-edge);
+    background: var(--bg);
+  }
+  header, footer, .date-sep {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--surface);
+  }
+  .bubble { border-width: 1px; box-shadow: none; }
+}
+
+/* 게스트 본문과 작성창을 한 물리 화면 안에 유지해 힌지를 피함 */
+@media (horizontal-viewport-segments: 2) {
+  body {
+    width: env(viewport-segment-width 0 0);
+    margin-left: env(viewport-segment-left 0 0);
+  }
+  header { grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-sm); }
+  .xfer { flex-wrap: wrap; }
+  .xfer-label { flex-basis: 100%; }
+}
+@media (vertical-viewport-segments: 2) {
+  body { height: env(viewport-segment-height 0 0); }
 }
 
 /* 가로 폰 + 큰 확대처럼 높이가 낮으면 헤더를 한 줄로 줄여 메시지 칸을 남김 (평문 고지는 그대로) */

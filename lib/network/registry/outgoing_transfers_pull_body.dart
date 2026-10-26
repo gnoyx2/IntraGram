@@ -1,11 +1,8 @@
 part of 'outgoing_transfers.dart';
 
 extension OutgoingTransfersPullBody on OutgoingTransfers {
-  // GET 응답 body: wire를 그대로 흘리되 수명을 여기서 전부 관리함. 끝까지 흘렀으면
-  // wire EOF로 기록(_onWireEof), 중간에 구독이 취소되거나 오류가 나면 실패로
-  // 기록
-  // 어떤 경로로 끝나든 게이트 슬롯/active 작업을 정확히 한 번 돌려줌 (구독이 아예 안 시작돼도
-  // 워치독이 정리). cancelToken이 취소되면(사용자 취소/패닉) 스트림을 오류로 끊음
+  // GET 응답 body: wire를 흘리고 수명을 여기서 다 관리함. 끝까지 가면 EOF, 끊기거나 오류면 실패.
+  // 어떻게 끝나든 게이트 슬롯과 active는 한 번만 돌려줌 (아무도 안 받아 가도 워치독이 정리). 취소되면 오류로 끊음
   Stream<List<int>> _pullBody({
     required String transferId,
     required OutgoingFileSource source,
@@ -27,8 +24,7 @@ extension OutgoingTransfersPullBody on OutgoingTransfers {
       if (!done.isCompleted) done.complete();
     }
 
-    // upstreamCancel이 있으면 소스 구독의 취소(= reader close)가 끝난 뒤에 done/active를 풀어줌:
-    // 정리하는 쪽(_removeSource/discard)이 reader가 닫히기 전에 native 자원을 release하지 않게
+    // upstreamCancel이 있으면 reader가 닫힌 뒤에 done을 풂 (정리하는 쪽이 그 전에 네이티브 자원을 놓지 않게)
     void finish({required bool eof, Future<void>? upstreamCancel}) {
       if (closed) return;
       closed = true;

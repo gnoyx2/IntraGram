@@ -1,23 +1,20 @@
 part of '../crypto_engine.dart';
 
-// 메시지 채널과 별도 키 + 독립 카운터. AAD는 호출부(file_transfer_crypto.dart)가
-// transferId/attemptId/
-// chunkIndex/totalBytes로 만들어 넘기고, 이 파일은 그 바이트를 그대로 AEAD에 전달할 뿐 내용을 모름
+// 메시지와 다른 키·카운터. AAD는 호출부(file_transfer_crypto.dart)가 전송·시도·청크 번호·전체 크기로 만들어 넘김
 extension CryptoSessionFileRecords on CryptoSession {
-  // base64를 안 거침 (벌크 바이너리에 33% 부풀리는 건 낭비). nonce/cipher/mac을 raw 바이트로 리턴
+  // 벌크라 base64 안 거치고 raw 바이트로 돌려줌
   Future<({Uint8List nonce, Uint8List cipher, Uint8List mac})> sealBytes(
     Uint8List plaintext, {
     required Uint8List aad,
   }) async {
     final key = _requireFileSendKey();
-    // 증가 전에 상한 검사: 2^53개 청크는 사실상 불가능하지만 닿기 직전에 던져서 nonce가 감겨
-    // 같은 키로 재사용되는 걸 원천 차단함. 호출부는 다른 seal 실패와 똑같이 전송 실패로 처리
+    // 올리기 전에 상한 검사: 2^53 청크는 사실상 불가능해도 닿기 전에 던져서 nonce가 감기는 일은 원천 차단
     if (_fileSendCounter >= kMaxCryptoSequence) {
       throw SecurityException(
         'rejected sealBytes: file crypto sequence exhausted',
       );
     }
-    // await 전에 카운터를 예약해서 동시에 여러 청크를 seal해도 같은 seq를 두 번 안 씀
+    // await 전에 카운터를 잡아서 여러 청크를 동시에 seal해도 seq가 안 겹침
     final seq = _fileSendCounter++;
     final box = await _engine._aead.encrypt(
       plaintext,
@@ -32,8 +29,7 @@ extension CryptoSessionFileRecords on CryptoSession {
     );
   }
 
-  // tag가 틀리면(변조/키 불일치/다른 전송·attempt·청크 순번의 AAD) 던짐
-  // 쓰레기를 파일 바이트인 척 디스크에 흘리지 않게 함
+  // tag가 틀리면(변조, 키 불일치, 다른 전송·시도·청크의 AAD) 던짐: 쓰레기가 파일 바이트인 척 디스크에 안 감
   Future<Uint8List> openBytes({
     required Uint8List nonce,
     required Uint8List cipher,
@@ -47,7 +43,7 @@ extension CryptoSessionFileRecords on CryptoSession {
       secretKey: key,
       aad: aad,
     );
-    // 반환값은 새 복사본이라 원본 decrypt 버퍼(패키지 내부 표현)는 호출부에 안 넘어가고 여기서 바로 wipe함
+    // 패키지 내부 버퍼는 안 넘기고 사본을 준 뒤 바로 지움
     try {
       return Uint8List.fromList(plaintext);
     } finally {

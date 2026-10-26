@@ -1,16 +1,14 @@
 part of '../link_registry.dart';
 
-// 호스트 중계 방(그룹): 링크를 1:1에서 공유 방으로 옮기기, 방 대화 만들기/재사용, 멤버 프레임 중계, 방 상태 브로드캐스트
-// 브라우저 게스트도 앱 피어도 서버를 직접 못 써서 이 호스트 앱이 LAN 허브 역할. 웹 게스트 방(_webGuestRoomId)과
-// 앱 그룹 방(_appRoomId)은 다른 대화 (웹 게스트가 앱 전용 방을 자동으로 보지 않게 분리)
-// 호스트가 중계하려고 복호화하므로 호스트 기기는 방 평문을 봄. 멤버<->호스트 SAS로만 검증하고 방 전체 SAS는 없음
+// 호스트 중계 방: 이 앱이 LAN 허브라 멤버 프레임을 다른 멤버에게 넘김. 중계하려고 풀어서 호스트는 방 평문을 봄.
+// 확인은 멤버↔호스트 SAS뿐이고 방 전체 SAS는 없음. 웹 게스트 방과 앱 그룹 방은 다른 대화
 mixin _LinkRegistryRoom on _LinkRegistryState {
-  // 웹 게스트 링크(토큰 검증 통과)를 임시 1:1 대화에서 공유 웹 게스트 방으로 옮김 (앱 피어는 _joinAppRoom)
+  // 토큰을 통과한 웹 게스트 링크를 임시 대화에서 웹 게스트 방으로 옮김
   void _joinRoom(PeerLink link) {
     final roomId = _ensureWebGuestRoom();
     final guests = _roomLinks.where((l) => l.conversationId == roomId).length;
     if (guests >= kMaxWebGuests) {
-      // 토큰 거절 경로처럼 임시 대화를 지우고 닫음. 브라우저는 room_full을 보고 재시도 대신 '방이 꽉 찼어요'를 띄움
+      // 임시 대화를 지우고 닫음. 브라우저는 room_full을 보고 재시도 대신 '방이 꽉 찼어요'를 띄움
       store.wipeConversation(link.conversationId);
       unawaited(
         link.deliverRawInner(InnerFrame.roomFull()).whenComplete(link.close),
@@ -25,8 +23,7 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
     }
     if (!_roomLinks.contains(link)) _roomLinks.add(link);
     link.onRoomFrame = (innerJson) => _relayRoomFrame(link, innerJson);
-    // 이 링크는 이제 내가 호스팅하는 웹 게스트 방의 멤버: 이후 이 링크에서 오는 room_join/room_state는 전부 거부됨
-    // (호스트인 나 자신을 멤버로 뒤집으려는 시도 포함)
+    // 이제 이 링크의 room_join·room_state는 다 거부됨 (호스트인 나를 멤버로 뒤집으려는 것 포함)
     link.markWebGuest();
     final joiner = link.peerAlias;
     final count = _roomMemberCount(roomId);
@@ -46,13 +43,11 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
       );
     }
     _broadcastRoomState(roomId, except: link, joined: joiner);
-    // 들어온 게스트에게도 지금 인원을 보냄: 브라우저는 이 첫 프레임을 입장 승인으로 보고 '온라인'을 띄움
-    // (토큰이 틀리면 아무것도 안 받고 닫혀서 재시도 대신 'QR 다시 스캔'을 띄움)
+    // 게스트에게도 인원을 보냄: 브라우저는 이 첫 프레임을 입장 승인으로 봄 (토큰이 틀리면 아무것도 못 받고 닫혀서 'QR 다시 스캔'을 띄움)
     unawaited(link.sendRawInner(InnerFrame.roomState(count: count)));
   }
 
-  // 이미 시큐어 세션이 있는 앱 피어 링크를 공유 앱 그룹 방으로 옮김.
-  // 이전 1:1의 SAS/검증 상태를 이어감 (재연결이면 새 세션이라 없음)
+  // 증명된 앱 링크를 앱 그룹 방으로 옮김. 1:1에서 맞춘 확인은 같은 세션이라 이어 감
   void _joinAppRoom(PeerLink link) {
     final roomId = _ensureAppRoom();
     final provisional = link.conversationId;
@@ -64,7 +59,6 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
     }
     if (!_roomLinks.contains(link)) _roomLinks.add(link);
     link.onRoomFrame = (innerJson) => _relayRoomFrame(link, innerJson);
-    // 이 링크는 이제 내가 호스팅하는 앱 그룹 방의 멤버
     link.markHostedMember();
     _supersedeMemberLinks(link);
     final peerId = link.remotePeerId;
@@ -112,7 +106,6 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
     _links.remove(id);
     if (!_roomLinks.contains(link)) _roomLinks.add(link);
     link.onRoomFrame = (innerJson) => _relayRoomFrame(link, innerJson);
-    // 이 링크는 이제 내가 호스팅하는 앱 그룹 방의 멤버
     link.markHostedMember();
     final peerId = link.remotePeerId;
     if (peerId != null) {
@@ -122,9 +115,7 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
         alias: link.peerAlias,
         platform: link.peerPlatform,
       );
-      // 승격은 새 크립토 세션이 아니라 같은 링크를 그대로 씀(재연결과
-      // 다름): 승격 전 1:1에서 이미 검증됐으면 신뢰를 초기화할 이유가
-      // 없음
+      // 승격은 같은 링크·같은 세션이라 1:1에서 맞춘 확인을 그대로 이어 감
       if (priorTrust?.localVerified ?? false) {
         store.setRoomMemberLocalVerified(id, peerId);
       }
@@ -193,8 +184,7 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
     return id;
   }
 
-  // 한 멤버가 보낸 프레임을 같은 방의 다른 멤버 전원에게 중계: 텍스트 등은 방 전체에, 파일 협상은 대상별 등록 경로로만 보냄
-  // (바이트는 호스트를 안 거치고 수신자가 원본 멤버에게 직접 당김)
+  // 멤버 프레임 중계: 텍스트 등은 방 전체로, 파일 협상은 대상별 경로로만 (바이트는 수신자가 보낸 멤버한테서 직접 당김)
   void _relayRoomFrame(PeerLink from, Map<String, dynamic> innerJson) {
     final kind = innerJson['k'];
     if (kind is String && kind.startsWith('file_')) {
@@ -211,6 +201,9 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
       'rename',
     };
     if (!relayable.contains(kind)) return;
+    if (kind == 'msg' && from.transport == PeerTransport.app) {
+      _broadcastRoomState(from.conversationId);
+    }
     unawaited(
       _broadcastToRoom(
         from.conversationId,

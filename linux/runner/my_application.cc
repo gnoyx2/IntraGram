@@ -6,6 +6,11 @@
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
+#include "desktop_environment.h"
+#include "native_privacy.h"
+#ifdef GDK_WINDOWING_WAYLAND
+#include <gdk/gdkwayland.h>
+#endif
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -14,34 +19,28 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
-// Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
-// Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
-  // Use a header bar when running in GNOME as this is the common style used
-  // by applications and is the setup most users will be using (e.g. Ubuntu
-  // desktop).
-  // If running on X and not using GNOME then just use a traditional title bar
-  // in case the window manager does more exotic layout, e.g. tiling.
-  // If running on Wayland assume the header bar will work (may need changing
-  // if future cases occur).
-  gboolean use_header_bar = TRUE;
+  const gchar* wm_name = nullptr;
+  gboolean wayland = FALSE;
+#ifdef GDK_WINDOWING_WAYLAND
+  wayland = GDK_IS_WAYLAND_DISPLAY(gtk_widget_get_display(GTK_WIDGET(window)));
+#endif
 #ifdef GDK_WINDOWING_X11
   GdkScreen* screen = gtk_window_get_screen(window);
   if (GDK_IS_X11_SCREEN(screen)) {
-    const gchar* wm_name = gdk_x11_screen_get_window_manager_name(screen);
-    if (g_strcmp0(wm_name, "GNOME Shell") != 0) {
-      use_header_bar = FALSE;
-    }
+    wm_name = gdk_x11_screen_get_window_manager_name(screen);
   }
 #endif
+  const gboolean use_header_bar = intragram_uses_header_bar(
+      g_getenv("XDG_CURRENT_DESKTOP"), wayland, wm_name);
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
@@ -52,13 +51,13 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_title(window, "IntraGram");
   }
 
-  // com.yonghun0310.intragram.desktop의 Icon= 값과 같은 이름 — install.sh가
-  // ~/.local/share/icons/hicolor/<크기>/apps/intragram.png로 깐 아이콘과 이걸로 연결됨.
+  // com.yonghun0310.intragram.desktop의 Icon= 값과 같은 이름이라 install.sh가
+  // ~/.local/share/icons/hicolor/<크기>/apps/intragram.png로 깐 아이콘과 이어짐
   gtk_window_set_icon_name(window, "intragram");
 
   gtk_window_set_default_size(window, 1100, 760);
-  // 420x560 논리 픽셀 최소 — 두 줄 채팅 앱바 타이틀 + 트레일링 액션, 오프라인
-  // 배너 + 버블 3개 + 입력창이 텍스트 스케일 1.0에서 안 찌그러지는 최소치.
+  // 최소 420x560 논리 픽셀: 두 줄 채팅 앱바 제목과 오른쪽 액션, 오프라인 배너, 말풍선 3개, 입력창이
+  // 글자 배율 1.0에서 안 찌그러지는 최소치
   GdkGeometry geometry;
   geometry.min_width = 420;
   geometry.min_height = 560;
@@ -69,16 +68,11 @@ static void my_application_activate(GApplication* application) {
       project, self->dart_entrypoint_arguments);
 
   FlView* view = fl_view_new(project);
-  GdkRGBA background_color;
-  // 다크 테마 캔버스(#0D0F13)에 맞춰서 콜드 스타트가 순정 검정 대신 앱과
-  // 이어지게 함.
-  gdk_rgba_parse(&background_color, "#0D0F13");
-  fl_view_set_background_color(view, &background_color);
+  intragram_privacy_attach(view);
   gtk_widget_show(GTK_WIDGET(view));
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
-  // Show the window when Flutter renders.
-  // Requires the view to be realized so we can start rendering.
+  // Flutter가 첫 프레임을 그리면 창을 보여 줌 (그리려면 뷰가 realize돼 있어야 함)
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);
   gtk_widget_realize(GTK_WIDGET(view));
@@ -88,12 +82,11 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
 
-// Implements GApplication::local_command_line.
 static gboolean my_application_local_command_line(GApplication* application,
                                                   gchar*** arguments,
                                                   int* exit_status) {
   MyApplication* self = MY_APPLICATION(application);
-  // Strip out the first argument as it is the binary name.
+  // 첫 인자는 실행 파일 이름이라 뺌
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
   g_autoptr(GError) error = nullptr;
@@ -109,25 +102,14 @@ static gboolean my_application_local_command_line(GApplication* application,
   return TRUE;
 }
 
-// Implements GApplication::startup.
 static void my_application_startup(GApplication* application) {
-  // MyApplication* self = MY_APPLICATION(object);
-
-  // Perform any actions required at application startup.
-
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
 }
 
-// Implements GApplication::shutdown.
 static void my_application_shutdown(GApplication* application) {
-  // MyApplication* self = MY_APPLICATION(object);
-
-  // Perform any actions required at application shutdown.
-
   G_APPLICATION_CLASS(my_application_parent_class)->shutdown(application);
 }
 
-// Implements GObject::dispose.
 static void my_application_dispose(GObject* object) {
   MyApplication* self = MY_APPLICATION(object);
   g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
@@ -146,10 +128,7 @@ static void my_application_class_init(MyApplicationClass* klass) {
 static void my_application_init(MyApplication* self) {}
 
 MyApplication* my_application_new() {
-  // Set the program name to the application ID, which helps various systems
-  // like GTK and desktop environments map this running application to its
-  // corresponding .desktop file. This ensures better integration by allowing
-  // the application to be recognized beyond its binary name.
+  // 프로그램 이름을 앱 ID로 둬서 GTK와 데스크톱 환경이 이 프로세스를 .desktop 파일과 짝지음
   g_set_prgname(APPLICATION_ID);
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),

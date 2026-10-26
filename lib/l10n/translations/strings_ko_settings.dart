@@ -11,7 +11,7 @@ const Map<String, String> kStringsKoSettings = {
   'settings.textSizeKeys': '단축키: {keys}',
   'settings.keepChats': '이 기기에 대화 보관',
   'settings.keepChatsSub':
-      '기본은 꺼짐이에요 — 모든 게 메모리에만 있다가 앱을 닫으면 사라져요. 켜면 '
+      '기본은 꺼져 있어요. 모든 게 메모리에만 있다가 앱을 닫으면 사라져요. 켜면 '
       '아래 범위를 이 앱 폴더의 파일에 저장해요. 상대가 지운 메시지는 여기서도 '
       '사라지고, 긴급 소거는 그 파일까지 전부 지워요. 켜두면 재시작 후에도 '
       '예전 메시지를 검색할 수 있어요. 대화 하나만 빼려면 그 대화 메뉴에서 '
@@ -21,10 +21,10 @@ const Map<String, String> kStringsKoSettings = {
   'settings.fileHistory': '파일 전송 기록',
   'settings.fileHistorySub': '완료된 전송 기록이에요. 파일 자체는 이미 저장한 위치에 있어요.',
   'settings.pinProtect': '보관소 PIN 보호',
-  'settings.pinProtectOnSub': '켬 — PIN 없이는 파일을 읽을 수 없어요. 실행할 때 물어볼게요.',
+  'settings.pinProtectOnSub': '켜져 있어서 PIN 없이는 파일을 읽을 수 없어요. 실행할 때 물어볼게요.',
   'settings.pinProtectOffSub':
-      '끔 — 이 기기의 파일을 읽을 수 있는 프로그램이면 뭐든 저장된 대화를 볼 수 '
-      '있어요.',
+      '꺼져 있어서 이 기기의 파일을 읽을 수 있는 프로그램이면 뭐든 저장된 대화를 '
+      '볼 수 있어요.',
   'settings.set': '설정',
   'settings.restoredNote':
       '복원된 대화는 읽기 전용 아카이브예요. 고정된 피어 신원이 없어서 같은 '
@@ -40,8 +40,8 @@ const Map<String, String> kStringsKoSettings = {
       '기본이에요. 약 1 MB(책 한 권 분량)까지 다른 메시지처럼 메모리에 실려요. '
       '그보다 크면 차단돼요.',
   'settings.large.unlimitedDesc':
-      '크기 제한이 없어요. 피어가 아주 큰 메시지를 이 기기 메모리에 바로 밀어넣을 '
-      '수 있어요 — 신뢰하는 네트워크에서만 쓰세요.',
+      '크기 제한이 없어요. 피어가 아주 큰 메시지를 이 기기 메모리에 바로 밀어 넣을 '
+      '수 있으니 신뢰하는 네트워크에서만 쓰세요.',
   'settings.large.fileDesc':
       '64 KB가 넘는 메시지는 저장·열람하는 "Long message.txt" 파일로 전송돼요. '
       '메모리를 작게 유지해요.',
@@ -51,8 +51,8 @@ const Map<String, String> kStringsKoSettings = {
   'settings.stayConnected': '백그라운드에서 연결 유지',
   'settings.stayConnectedSub':
       'Android 전용이에요. 앱이 백그라운드에 있는 동안 지속 알림과 함께 피어 '
-      '링크를 열어둬요. 배터리를 더 쓰고, 메모리 압박 시 OS가 앱을 닫을 수 있어요 '
-      '— 그러면 메모리의 모든 게 평소처럼 지워져요.',
+      '링크를 열어 둬요. 배터리를 더 쓰고, 메모리가 모자라면 OS가 앱을 닫을 수 있어요. '
+      '그러면 메모리의 모든 게 평소처럼 지워져요.',
   'settings.language': '언어',
   'settings.langSystem': '시스템',
   'settings.langKorean': '한국어',

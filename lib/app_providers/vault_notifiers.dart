@@ -1,6 +1,6 @@
 part of '../app_providers.dart';
 
-// "아직 모름"과 "잠금 없음"을 구분하려는 sealed 타입
+// '아직 모름'과 '잠금 없음'을 구분하려는 sealed 타입
 // 뭉뚱그리면 로딩 중 Home이 한 프레임 잘못 뜸
 sealed class VaultAccessState {
   const VaultAccessState();
@@ -14,8 +14,7 @@ final class VaultLocked extends VaultAccessState {
   const VaultLocked();
 }
 
-// 메시지/대화 내용은 안 들고 있음 (비내용 gate metadata뿐)
-// 스냅샷은 takeSnapshot으로 한 번만 소비함
+// 내용은 안 들고 게이트 메타데이터만 (스냅샷은 takeSnapshot으로 한 번만 씀)
 final class VaultOpen extends VaultAccessState {
   const VaultOpen({required this.settings, required this.archivePreserved});
 

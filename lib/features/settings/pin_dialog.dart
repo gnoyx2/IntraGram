@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:intragram/core/haptics.dart';
@@ -9,12 +7,12 @@ import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/widgets/adaptive_dialog_action.dart';
 
+import 'pin_field.dart';
+
+export 'pin_field.dart' show kPinInputFormatters;
+
 // 새 PIN은 6자 이상, 영숫자 혼합 가능. 예전 4~5자리 숫자 PIN도 게이트에선 그대로 열림
 const int kMinPinLength = 6;
-
-final List<TextInputFormatter> kPinInputFormatters = [
-  FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
-];
 
 // PIN을 걸면 다음 저장부터 vault.json이 봉인되고, 떼면 평문으로 돌아감. 보관소가 꺼져 있으면 안 열림
 // duress면 협박 대비 PIN을 설정함: 이걸로 열면 빈 세션이 뜨고 변경은 저장 안 됨
@@ -104,48 +102,20 @@ class _PinDialogState extends ConsumerState<PinDialog> {
     final s = S.of(context);
     final cupertino = isCupertinoDialog(context);
 
-    final pinField = cupertino
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                s.t('pin.pinLabel'),
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              _cupertinoPinField(_pin, autofocus: true),
-            ],
-          )
-        : TextField(
-            enableIMEPersonalizedLearning: false,
-            controller: _pin,
-            autofocus: true,
-            obscureText: true,
-            keyboardType: TextInputType.visiblePassword,
-            inputFormatters: kPinInputFormatters,
-            decoration: InputDecoration(labelText: s.t('pin.pinLabel')),
-          );
-    final confirmField = cupertino
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                s.t('pin.confirmLabel'),
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              _cupertinoPinField(_confirm, onSubmitted: (_) => _save()),
-            ],
-          )
-        : TextField(
-            enableIMEPersonalizedLearning: false,
-            controller: _confirm,
-            obscureText: true,
-            keyboardType: TextInputType.visiblePassword,
-            inputFormatters: kPinInputFormatters,
-            onSubmitted: (_) => _save(),
-            decoration: InputDecoration(labelText: s.t('pin.confirmLabel')),
-          );
+    final pin = pinField(
+      context,
+      cupertino: cupertino,
+      controller: _pin,
+      label: s.t('pin.pinLabel'),
+      autofocus: true,
+    );
+    final confirm = pinField(
+      context,
+      cupertino: cupertino,
+      controller: _confirm,
+      label: s.t('pin.confirmLabel'),
+      onSubmitted: (_) => _save(),
+    );
 
     final fields = Column(
       mainAxisSize: MainAxisSize.min,
@@ -156,9 +126,9 @@ class _PinDialogState extends ConsumerState<PinDialog> {
           style: Theme.of(context).textTheme.labelSmall,
         ),
         const SizedBox(height: AppSpacing.md),
-        pinField,
+        pin,
         const SizedBox(height: AppSpacing.md),
-        confirmField,
+        confirm,
         if (_error != null) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -186,7 +156,8 @@ class _PinDialogState extends ConsumerState<PinDialog> {
 
     return PopScope(
       canPop: !_busy,
-      child: AlertDialog.adaptive(
+      child: AppAlertDialog(
+        cupertino: cupertino,
         title: Text(
           widget.duress
               ? s.t('pin.duressTitle')
@@ -194,9 +165,7 @@ class _PinDialogState extends ConsumerState<PinDialog> {
               ? s.t('pin.changeTitle')
               : s.t('pin.setTitle'),
         ),
-        // Cupertino 경로는 Material 조상이 필요 없고 Material 경로의 TextField만
-        // debugCheckHasMaterial에 걸림
-        // (manual_connect_dialog.dart 참고)
+        // Material 경로의 TextField만 Material 조상이 필요함 (manual_connect_dialog.dart 참고)
         content: cupertino
             ? fields
             : Material(type: MaterialType.transparency, child: fields),
@@ -229,22 +198,3 @@ class _PinDialogState extends ConsumerState<PinDialog> {
     );
   }
 }
-
-Widget _cupertinoPinField(
-  TextEditingController controller, {
-  bool autofocus = false,
-  ValueChanged<String>? onSubmitted,
-}) => CupertinoTextField(
-  enableIMEPersonalizedLearning: false,
-  controller: controller,
-  autofocus: autofocus,
-  obscureText: true,
-  keyboardType: TextInputType.visiblePassword,
-  inputFormatters: kPinInputFormatters,
-  onSubmitted: onSubmitted,
-  padding: const EdgeInsets.all(AppSpacing.md),
-  decoration: BoxDecoration(
-    border: Border.all(color: CupertinoColors.separator),
-    borderRadius: BorderRadius.circular(AppRadius.xs),
-  ),
-);

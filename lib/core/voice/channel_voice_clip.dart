@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'voice_clip.dart';
 import 'voice_wav.dart';
 
-// iOS·macOS(AVAudioPlayer(data:))와 Android(MediaPlayer + 메모리 MediaDataSource)의 네이티브 재생기
-// WAV 바이트는 채널로 넘어가 네이티브 메모리에만 있고 dispose 때 놓아 줌
+// iOS·macOS(AVAudioPlayer(data:))와 Android(MediaPlayer + 메모리 MediaDataSource) 네이티브 재생기.
+// WAV 바이트는 네이티브 메모리에만 있고 dispose 때 놓음
 class ChannelVoiceClip extends PolledVoiceClip {
   ChannelVoiceClip._(this._id, super.duration);
 
@@ -38,7 +38,7 @@ class ChannelVoiceClip extends PolledVoiceClip {
     return clip;
   }
 
-  // 네이티브가 끝났다고 알려 줌 (completed 이벤트, 인자는 id)
+  // 네이티브가 끝났다고 알려 줌 (completed, 인자는 id)
   static void _listen() {
     if (_listening) return;
     _listening = true;
@@ -71,7 +71,7 @@ class ChannelVoiceClip extends PolledVoiceClip {
   }
 }
 
-// 검사를 통과한 표준 44바이트 머리로 다시 감싸서 원본의 다른 청크(LIST 등)가 디코더에 닿지 않게 함
+// 검사 통과한 표준 44바이트 머리로 다시 감싸서 원본의 다른 청크(LIST 등)가 디코더에 안 닿게 함
 Uint8List _wavBytes(PcmWav wav) {
   final pcm = wav.pcm;
   final out = Uint8List(44 + pcm.length);

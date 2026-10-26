@@ -1,6 +1,6 @@
 part of '../voice_recorder.dart';
 
-// 테스트 환경엔 record 플랫폼 채널이 없어서 헤더 합성(순수 함수)만 이 창으로 직접 검증
+// 테스트엔 record 플랫폼 채널이 없어서 헤더 합성(순수 함수)만 따로 떼어 검증함
 @visibleForTesting
 Uint8List encodePcm16WavForTesting(
   Uint8List pcm, {

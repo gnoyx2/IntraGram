@@ -8,6 +8,8 @@ import 'package:intragram/network/file_streamer.dart'
     show TransferCleanupException;
 import 'package:intragram/network/registry/incoming_path_resolver.dart';
 
+import 'support/chmod_injection.dart';
+
 // 로컬 저장(음성 수동 저장)과 커밋의 실패 정리: 커밋 못 한 파셜은 어떤 실패/중단에서도
 // 지워지고, 사용자 파일은 절대 안 건드리며, 정리 자체가 실패하면 삼키지 않고 드러남
 
@@ -127,7 +129,7 @@ void main() {
         reason: 'still there — reported, not silently forgotten',
       );
     },
-    skip: Platform.isWindows ? 'chmod-based failure injection' : false,
+    skip: chmodInjectionSkip,
   );
 
   group('commitDestination rename failure', () {

@@ -39,8 +39,7 @@ mixin _ChatRoomDragDrop on _ChatRoomScreenStateBase {
     await _registry.offerFiles(widget.conversationId, files);
   }
 
-  // 모바일 전용 zero-disk 첨부: file_picker의 앱 캐시
-  // 복사 대신 네이티브 MobileFileSource로 바로 스트리밍함
+  // 모바일 첨부: file_picker 캐시 사본 대신 네이티브 스트림을 바로 씀 (디스크에 안 남김)
   Future<void> _pickMobileAndOffer({required bool imagesOnly}) async {
     final List<MobileFileSource> sources;
     try {

@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- IntraGram only ever dials RFC 1918 / link-local addresses over plain
-     HTTP/WebSocket - TLS would require per-device certificates, which
-     defeats the zero-setup LAN pairing this app promises.
-
-     Android's network security config has no CIDR/IP-range primitive
-     (<domain> only matches hostnames or single IP literals), so it cannot
-     itself narrow cleartext to "RFC 1918 only" the way
-     lib/core/network_guard.dart does at the socket layer. This file is
-     therefore intentionally as broad as the old usesCleartextTraffic
-     flag it replaces - the real boundary is enforced in Dart, on every
-     connection attempt, by NetworkGuard.isLinkLocalOrPrivate, before a
-     socket is ever opened. -->
+<!-- IntraGram은 RFC 1918·링크로컬 주소에만 평문 HTTP/WebSocket으로 붙음 (TLS면 기기마다 인증서가 필요해서
+     설정 없는 LAN 페어링이 깨짐). 이 설정엔 CIDR·IP 범위 표현이 없어서(<domain>은 호스트 이름이나 IP 하나만 맞춤)
+     lib/core/network_guard.dart처럼 RFC 1918만으로 좁힐 수가 없음. 그래서 예전 usesCleartextTraffic만큼 일부러
+     넓게 두고, 진짜 경계는 Dart의 NetworkGuard.isLinkLocalOrPrivate가 소켓을 열기 전에 연결마다 지킴 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true"/>
 </network-security-config>

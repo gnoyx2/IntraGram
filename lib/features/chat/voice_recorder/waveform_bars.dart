@@ -1,8 +1,6 @@
 part of '../voice_recorder.dart';
 
-// 한계: 진짜 파형(샘플별 진폭)은 파형 추출 패키지가 필요해서 녹음 스트림의 실제 dB 레벨을 쓰는 근사치
-// jitter를 elapsed에서 뽑으면 1초에 한 번만 바뀌어 끊겨 보여서(부모가 1초 주기로만 갱신)
-// 자체 ticker 애니메이션으로 amplitude 이벤트 빈도와 무관하게 부드럽게 흐르게 함
+// 진짜 파형 대신 녹음 스트림의 dB 레벨로 그린 근사치. 지터를 자체 ticker로 돌려서 부모의 1초 갱신과 상관없이 부드럽게 흐름
 class _WaveformBars extends StatefulWidget {
   const _WaveformBars({
     required this.level,

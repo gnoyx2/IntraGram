@@ -5,8 +5,7 @@ import 'package:ffi/ffi.dart';
 import 'voice_clip.dart';
 import 'voice_wav.dart';
 
-// Windows: winmm waveOut에 네이티브 메모리의 PCM 버퍼를 그대로 넘김 (파일·mpv 캐시 없음)
-// 콜백 없이(CALLBACK_NULL) 헤더의 WHDR_DONE 플래그를 폴링해서 끝을 앎
+// Windows: winmm waveOut에 네이티브 메모리 PCM 버퍼를 그대로 넘김 (파일·캐시 없음). 콜백 없이 헤더의 WHDR_DONE을 폴링해서 끝을 앎
 class WaveOutVoiceClip extends PolledVoiceClip {
   WaveOutVoiceClip._(
     this._api,
@@ -78,7 +77,7 @@ class WaveOutVoiceClip extends PolledVoiceClip {
       _queued = false;
     }
     _header.ref.dwFlags = 0;
-    // 실패를 삼키면 WHDR_DONE이 영영 안 서서 화면이 계속 '재생 중'으로 남음 (장치가 빠진 경우 등)
+    // 실패를 삼키면 WHDR_DONE이 영영 안 서서 계속 '재생 중'으로 남음 (장치가 빠진 경우 등)
     final prepared = _api.prepare(_device, _header, sizeOf<_WaveHdr>());
     if (prepared != 0) {
       throw StateError('waveOutPrepareHeader failed: $prepared');
@@ -124,7 +123,7 @@ class WaveOutVoiceClip extends PolledVoiceClip {
   }
 }
 
-// mmsystem.h는 바이트 정렬(pshpack1)이라 WAVEFORMATEX(18바이트)와 MMTIME(12바이트)을 packed로 둠
+// mmsystem.h가 바이트 정렬(pshpack1)이라 WAVEFORMATEX(18바이트)·MMTIME(12바이트)은 packed
 @Packed(1)
 final class _WaveFormatEx extends Struct {
   @Uint16()

@@ -1,13 +1,11 @@
 part of '../vault.dart';
 
 extension _VaultIo on Vault {
-  // private 확장이라 공개 진입점은 Vault.save의 한 줄 위임. .tmp에 쓰고 rename해서
-  // 중간에 죽어도 기존 파일이 안 깨지고, 디스크를 못 쓰면 조용히 포기함 (RAM 상태는 그대로)
-  // 보관 + PIN 보호 + 세션 PIN이 있으면 봉인해서 씀. 보호 모드인데 세션 PIN이 없으면 평문으로 자동 전환하지
-  // 않고 VaultLockedException. _ioTail에 줄을 서서 앞선 저장/삭제가 끝난 뒤에만 파일을 건드림
+  // .tmp에 쓰고 rename해서 중간에 죽어도 기존 파일이 안 깨짐. PIN 보호면 봉인해서 쓰고, 세션 PIN이 없으면 평문으로 안 바꾸고
+  // VaultLockedException. 큐에 줄 서서 앞선 저장·삭제가 끝난 뒤에만 파일을 건드림
   Future<void> _save(VaultSnapshot snapshot) {
     if (_transitioning) {
-      // load/unlock이 진짜/duress/실패 중 뭐가 될지 확정 전이라 이 동안의 저장은 안전하게 처리 못 해서 거부
+      // 전이가 안 끝났으니 거부
       return Future<void>.error(
         const VaultLockedException(
           'vault session is transitioning (load/unlock in progress)',
@@ -33,13 +31,10 @@ extension _VaultIo on Vault {
     required int epoch,
     required Future<void>? ready,
   }) async {
-    // epoch 불일치뿐 아니라 decoy/transitioning도 매 체크포인트마다 다시 봄. epoch만으로 충분하지만
-    // "decoy 세션은 절대 안 씀"이 epoch 부기의 부작용이 아니라 이 함수의 불변식으로 보이게 함
+    // epoch만으로 충분하지만 'duress 세션은 절대 안 씀'이 이 함수의 불변식으로 보이게 다 같이 봄
     bool stale() => epoch != _epoch || _decoyMode || _transitioning;
     if (stale()) return;
-    // 이 저장이 만든 임시 파일. 이름은 고정이지만 큐가 직렬화해서 한 번에 한 저장만 쥠
-    // rename으로 못 넘기고 끝나면(실패든 늦게 온 stale이든) finally가 이 저장 소유분을 치움
-    // (실패 시 봉인된 내용이 든 .tmp가 남지 않게)
+    // 이 저장의 .tmp (큐가 한 번에 하나만 돌려서 이름은 고정). rename을 못 하고 끝나면 finally가 치움
     File? tmp;
     var renamed = false;
     Object? failure;
@@ -68,8 +63,7 @@ extension _VaultIo on Vault {
       if (stale()) return; // 봉인(await)하는 동안 늦게 옴
       await tmp.writeAsString(payload, flush: true);
       await debugStageHook?.call('tmp');
-      // rename 직전에 stale이면 방금 쓴 임시 파일은 finally가
-      // 치우고 rename은 절대 안 함 (지운 뒤 되살아난 것처럼 보이면 안 됨)
+      // rename 직전에 늦었으면 rename은 절대 안 함 (지운 뒤 되살아나면 안 됨)
       if (stale()) return;
       await tmp.rename(file.path);
       renamed = true;
@@ -86,8 +80,7 @@ extension _VaultIo on Vault {
         try {
           await _deleteIfExists(leftover);
         } on FileSystemException {
-          // 원래 실패가 이미 전파 중이면 그쪽이 우선. 저장 자체는 성공적으로 건너뛴(stale) 경우엔
-          // 치우지 못한 임시 파일을 그대로 드러냄
+          // 원래 실패가 우선. 늦어서 건너뛴 저장이면 못 치운 .tmp를 드러냄
           if (failure == null) rethrow;
         }
       }
@@ -101,9 +94,7 @@ extension _VaultIo on Vault {
     return _enqueue(_eraseLocked);
   }
 
-  // 파일과 임시 파일을 둘 다 지워 봄 (하나가 실패해도 나머지는 시도). 이미 없는 건 무해하고,
-  // 권한 거부/디스크 오류는 VaultIoException으로 모아 던짐
-  // (패닉/보관 끄기가 "지웠다"고 믿는데 파일이 남아 있으면 안 됨)
+  // 파일과 .tmp를 둘 다 지워 봄. 진짜 실패는 모아서 던짐 (패닉이 지웠다고 믿는데 남아 있으면 안 됨)
   Future<void> _eraseLocked() async {
     final failures = <Object>[];
     try {
@@ -123,8 +114,7 @@ extension _VaultIo on Vault {
     }
   }
 
-  // action을 내부 꼬리 뒤에 붙여 앞선 저장/삭제/판독이 끝난 뒤에만 실행되게 함. 반환값은 action의 결과 그대로이고,
-  // 그 오류가 _ioTail을 끊어 다음 큐 항목이 영원히 안 도는 일이 없게 별도 브랜치에서 삼킴
+  // 꼬리 뒤에 붙여 차례로 돌림. 결과는 그대로 돌려주고 오류는 꼬리 쪽에서만 삼켜서 큐가 안 끊김
   Future<T> _enqueue<T>(Future<T> Function() action) {
     final result = _ioTail.then((_) => action());
     _ioTail = result.then((_) {}, onError: (_) {});
@@ -132,8 +122,7 @@ extension _VaultIo on Vault {
   }
 }
 
-// 이미 없으면(다른 작업이 먼저 지웠거나 애초에 없음) 성공 처리하고,
-// 권한 거부/디스크 오류 등 진짜 실패는 던져서 호출부가 삼키지 않게 함
+// 이미 없으면 성공, 진짜 실패는 던짐
 Future<void> _deleteIfExists(File file) async {
   try {
     await file.delete();

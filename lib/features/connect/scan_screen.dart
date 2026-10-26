@@ -6,8 +6,7 @@ import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/widgets/scanner_view.dart';
 
-// 모바일 전용. parsePeerCode가 WAN/호스트명/형식이 틀린 코드를 걸러 스캔을 계속하고, 첫 유효 코드에서
-// PeerCode(host, port, 실려 있으면 peerId)를 들고 pop함 (호출부가 LinkRegistry.connectManual로 넘김)
+// 모바일만. parsePeerCode가 WAN·호스트명·형식이 틀린 코드를 걸러서 계속 스캔하고, 첫 유효 코드에서 PeerCode를 들고 pop함
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
 
@@ -26,7 +25,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 짧은 변의 62%를 180~280으로 clamp (작은 폰에서도 안 넘치고 태블릿/폴더블에서도 과하게 안 커짐)
+    // 짧은 변의 62%를 180~280으로 묶음 (작은 폰에서 안 넘치고 태블릿·폴더블에서 너무 안 커짐)
     final reticleSide = (MediaQuery.sizeOf(context).shortestSide * 0.62)
         .clamp(180, 280)
         .toDouble();

@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:intragram/widgets/keyboard_access.dart';
 import 'package:flutter/services.dart';
 
+import 'features/chat/open_chat.dart';
 import 'features/search/search_screen.dart';
 import 'features/settings/settings_screen.dart';
 
@@ -45,6 +47,11 @@ class _AppCommandsState extends State<AppCommands> {
       switch (call.method) {
         case 'settings':
           _open(SettingsScreen.route);
+        case 'search':
+          _search();
+        case 'textSize' when call.arguments is int:
+          final step = call.arguments as int;
+          if (step >= -1 && step <= 1) widget.onTextSize?.call(step);
         case 'newConnection':
           _newConnection();
         case 'close':
@@ -80,15 +87,31 @@ class _AppCommandsState extends State<AppCommands> {
     unawaited(navigator.push(route));
   }
 
+  void _search() {
+    if (!_canOpen) return;
+    final context = primaryFocus?.context;
+    if (context != null &&
+        Actions.maybeFind<SearchMessagesIntent>(context) != null) {
+      Actions.invoke(context, const SearchMessagesIntent());
+    } else {
+      _open(SearchScreen.route);
+    }
+  }
+
   void _newConnection() {
     final context = widget.navigatorKey.currentContext;
     if (_canOpen && context != null) widget.onNewConnection(context);
   }
 
-  // 초점이 있는 쪽 Navigator(2단의 대화 창 포함)에서 닫음
+  // 초점이 있는 쪽 Navigator(2단의 대화 창 포함)에서 닫음. 거기 닫을 게 없으면(2단 목록에 초점 등) 열린 대화를 닫음
   void _close() {
     final context = primaryFocus?.context ?? widget.navigatorKey.currentContext;
-    if (context != null) unawaited(Navigator.maybePop(context));
+    if (context == null) return;
+    unawaited(
+      Navigator.maybePop(context).then((popped) async {
+        if (!popped) await closePaneChat?.call();
+      }),
+    );
   }
 
   @override
@@ -148,6 +171,13 @@ class _AppCommandsState extends State<AppCommands> {
       },
       const SingleActivator(LogicalKeyboardKey.escape): _close,
     },
-    child: widget.child,
+    child: Actions(
+      actions: {
+        SearchMessagesIntent: CallbackAction<SearchMessagesIntent>(
+          onInvoke: (_) => _open(SearchScreen.route),
+        ),
+      },
+      child: widget.child,
+    ),
   );
 }

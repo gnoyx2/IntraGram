@@ -2,7 +2,7 @@ import 'dart:convert';
 
 const int kMaxBasenameBytes = 200;
 
-// 공격자가 확장자를 길게 만들어 stem 예산을 다 먹는 걸 막음
+// 확장자를 길게 만들어 이름 예산을 다 먹는 걸 막음
 const int kMaxExtensionBytes = 32;
 
 const Set<String> _kWindowsReservedStems = <String>{
@@ -40,11 +40,11 @@ const Set<String> _kWindowsReservedStems = <String>{
   'LPT9',
 };
 
-// 확장자가 붙어도(CON.txt) 장치가 열리므로 첫 '.' 앞만 떼어 비교 (호출부가 뗌)
+// 호출부가 첫 '.' 앞만 떼서 넘김 (CON.txt도 장치로 열림)
 bool isWindowsReservedStem(String stem) =>
     _kWindowsReservedStems.contains(stem.toUpperCase());
 
-// rune 단위로 잘라서 서로게이트 페어/멀티바이트/한글 음절이 반으로 안 잘리게 함
+// rune 단위로 잘라서 멀티바이트 글자가 반으로 안 잘림
 String truncateUtf8(String value, int maxBytes) {
   if (maxBytes <= 0) return '';
   if (utf8.encode(value).length <= maxBytes) return value;
@@ -59,9 +59,7 @@ String truncateUtf8(String value, int maxBytes) {
   return buffer.toString();
 }
 
-// 현대 한글 음절 합성(초성 + 중성 [+ 종성]). 완전한 NFC가 아니라 한글 자모 조합만 구현함
-// macOS 파일시스템이 한글을 NFD로 돌려줘서, 그대로 보내면 다른 OS에서 깨져 보이거나
-// 같은 이름이 바이트로 달라 보임
+// 한글 자모만 음절로 합침 (전체 NFC 아님). macOS가 한글 파일 이름을 NFD로 줘서 그대로 보내면 다른 OS에서 자모가 풀려 보임
 const int _sBase = 0xAC00;
 const int _lBase = 0x1100;
 const int _vBase = 0x1161;
@@ -69,17 +67,16 @@ const int _tBase = 0x11A7;
 const int _lCount = 19;
 const int _vCount = 21;
 const int _tCount = 28;
-const int _nCount = _vCount * _tCount; // 588
-const int _sCount = _lCount * _nCount; // 11172
+const int _nCount = _vCount * _tCount;
+const int _sCount = _lCount * _nCount;
 
 bool _isL(int c) => c >= _lBase && c < _lBase + _lCount;
 bool _isV(int c) => c >= _vBase && c < _vBase + _vCount;
-// 종성 인덱스 0(_tBase 자체)은 "종성 없음" 채움값이라 합성 대상에서 제외
+// _tBase 자체는 '종성 없음' 자리라 뺌
 bool _isT(int c) => c > _tBase && c < _tBase + _tCount;
 bool _isS(int c) => c >= _sBase && c < _sBase + _sCount;
 
-// 전송/표시용 basename에만 적용. 원본 경로, security-scoped URL, 파일 handle에는
-// 쓰면 안 됨 (OS가 준 그대로 열어야 함)
+// 전송·표시용 이름에만 씀. 원본 경로·파일 핸들엔 쓰면 안 됨 (OS가 준 그대로 열어야 함)
 String normalizeHangulNfc(String value) {
   final runes = value.runes.toList();
   final out = <int>[];

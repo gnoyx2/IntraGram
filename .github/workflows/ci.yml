@@ -35,12 +35,10 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed .
       - run: python3 tool/check_loc.py
       - run: flutter analyze
-      # 'large' 태그(1GiB/4GiB 전송 회귀, test/large_transfer_test.dart)는
-      # 느리고 디스크를 몇 GiB 씀 — 공유 러너의 기본 검사엔 안 낌.
+      # 'large' 태그(1GiB·4GiB 전송 회귀, test/large_transfer_test.dart)는 느리고 디스크를 몇 GiB 써서 공유 러너의 기본 검사엔 안 낌
       - run: flutter test --exclude-tags large
-      # Dart analyze는 브라우저 JS 자산을 안 봄 — LAN 주소 정규화 우회 같은
-      # 결함은 Node로 실제 JS를 실행해 별도로 잡음 (web_design_test.js도 안에서 같이 돎).
-      # 러너에 Node가 이미 있어 별도 setup 액션 불필요.
+      # Dart analyze는 브라우저 JS를 안 봐서 LAN 주소 정규화 우회 같은 결함은 Node로 실제 JS를 돌려 따로 잡음
+      # (러너에 Node가 이미 있어서 setup 액션은 필요 없음)
       - run: node tool/browser_guard_test.js
       - run: node tool/web_design_test.js
       - name: Whitespace errors in this change
@@ -49,9 +47,8 @@ jobs:
             git diff --check HEAD~1 HEAD
           fi
 
-  # Dart analyze/test는 android/ 네이티브 소스·Gradle 설정을 전혀 안 봄 —
-  # core library desugaring 누락(:app:checkDebugAarMetadata 중단)이나 Kotlin
-  # 컴파일 결함은 실제 debug APK 빌드로만 잡힘.
+  # Dart analyze·test는 android/ 네이티브 소스와 Gradle 설정을 전혀 안 봐서 core library desugaring 누락
+  # (:app:checkDebugAarMetadata 중단)이나 Kotlin 컴파일 결함은 실제 debug APK 빌드로만 잡힘
   android:
     runs-on: ubuntu-24.04
     timeout-minutes: 45

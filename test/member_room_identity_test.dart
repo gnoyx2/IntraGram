@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 import 'package:intragram/network/peer_link.dart';
+import 'package:intragram/store/in_memory_store.dart';
 
 import 'support/member_room_rig.dart';
 import 'support/scripted_peer.dart';
@@ -91,5 +94,43 @@ void main() {
     await again.link.sendFileAccept(t.id, attemptId: attempt, pushToken: 'x');
     await pumpEventQueue(times: 60);
     expect(r.senderEvents, ['accept:c:$attempt']);
+  });
+
+  // 재접속 직후 옛 링크는 소켓 종료를 기다리는 동안(최대 2초) 닫힌 채 목록에 남음. 화면의 코드는 새 링크 것이라
+  // 맞다·다르다 둘 다 새 링크로 가야 함
+  group('right after a member reconnects', () {
+    late Completer<void> gate;
+    late InMemoryStore memberStore;
+    late PeerLink live;
+
+    setUp(() async {
+      gate = r.faults.hostChannels[1].closeGate = Completer<void>();
+      addTearDown(() {
+        if (!gate.isCompleted) gate.complete();
+      });
+      final old = r.hostLinkOf(1);
+      memberStore = (await r.reconnect(1, host: '192.168.1.99')).store;
+      live = r.hostLinkOf(1);
+      expect(old.isClosed, isTrue, reason: 'still waiting on its socket');
+      expect(identical(live, old), isFalse);
+    });
+
+    test('a mismatch closes the link whose code was compared', () async {
+      final roomId = r.rig.registry.appRoomId!;
+      unawaited(r.rig.registry.reportSasMismatch(roomId, memberPeerId: m2));
+      await pumpEventQueue(times: 60);
+      expect(live.isClosed, isTrue);
+    });
+
+    test('a match reaches the member over the new link', () async {
+      final roomId = r.rig.registry.appRoomId!;
+      final sas = r.rig.store.conversation(roomId)!.members[m2]!.sas;
+      r.rig.registry.markRoomMemberVerified(roomId, m2, expectedSas: sas);
+      await pumpEventQueue(times: 60);
+      expect(
+        memberStore.conversation('again1')!.members[r.hostId]?.peerVerified,
+        isTrue,
+      );
+    });
   });
 }

@@ -42,10 +42,8 @@ void main() {
 
       expect(ok, isTrue);
       expect(capturedMode, LaunchMode.externalApplication);
-      // Uri 값 자체를 비교: POSIX 테스트 호스트에서 만든 경로를 Windows
-      // 모드로 왕복 변환한 문자열과 원본 문자열을 직접 비교하면 구분자 표현 차이로
-      // 어긋남
-      // 핵심은 셸 메타문자가 문자열 이스케이프나 셸 재해석 없이 Uri에 그대로 실렸는지라 Uri 동등성이 정확한 증거
+      // Uri 값끼리 비교함: POSIX 테스트 호스트에서 만든 경로를 Windows 모드로 왕복 변환한 문자열은 구분자 표현이 달라서 원본 문자열과 안 맞음.
+      // 핵심은 셸 메타문자가 이스케이프나 셸 재해석 없이 Uri에 그대로 실렸는지라 Uri 동등성이 정확한 증거
       expect(capturedUri, Uri.file(path, windows: true));
     });
 

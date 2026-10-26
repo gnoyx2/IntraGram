@@ -9,6 +9,7 @@ import 'package:intragram/network/crypto_engine.dart';
 import 'package:intragram/network/file_streamer.dart';
 import 'package:intragram/network/file_transfer_crypto.dart';
 
+import 'support/chmod_injection.dart';
 import 'support/file_transfer_crypto_pair.dart';
 
 // FileStreamer.receive가 어떤 이유로 중단돼도(크기 초과, 짧은 EOF,
@@ -173,6 +174,6 @@ void main() {
       expect(cleanup.failures.single, isA<FileSystemException>());
       expect(File(dest).existsSync(), isTrue, reason: 'still there, reported');
     },
-    skip: Platform.isWindows ? 'chmod-based failure injection' : false,
+    skip: chmodInjectionSkip,
   );
 }

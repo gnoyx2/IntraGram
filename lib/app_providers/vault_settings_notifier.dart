@@ -3,8 +3,7 @@ part of '../app_providers.dart';
 class VaultSettingsNotifier extends Notifier<VaultSettings> {
   @override
   VaultSettings build() {
-    // watch 대신 listen: watch하면 게이트가 열리는 순간
-    // notifier가 dispose+rebuild돼 호출자가 쥔 핸들도 무효화됨
+    // watch 대신 listen: watch면 게이트가 열리는 순간 notifier가 다시 만들어져서 호출자가 쥔 핸들이 죽음
     ref.listen<VaultAccessState>(vaultAccessProvider, (_, next) {
       // settings만 읽고 snapshot 내용은 안 건드림
       if (next is VaultOpen) state = next.settings;
@@ -39,8 +38,7 @@ class VaultSettingsNotifier extends Notifier<VaultSettings> {
         : state.copyWith(enabled: false, pinProtected: false),
   );
 
-  // enabled와 무관하게 기존 파일을 지움. startFresh로 잠긴 아카이브를 보존한 세션에서도
-  // 소각은 duress 여부와 무관하게 실제 파일을 지움
+  // enabled와 상관없이 파일을 지움: startFresh로 잠긴 아카이브를 남겨 둔 세션이나 duress 세션에서도 진짜 파일까지 지움
   Future<void> eraseForPanic() async {
     state = state.copyWith(enabled: false, pinProtected: false);
     await ref.read(vaultProvider).erase();

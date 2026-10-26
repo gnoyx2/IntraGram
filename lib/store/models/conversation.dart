@@ -38,10 +38,9 @@ class Conversation {
   final String? peerHost;
   final int? peerPort;
 
-  // 상대의 안정적 기기 식별자(hello의 peerId). 방이면 항상 null (RoomMember가 멤버별로 보유)
-  // 탐지된 피어를 다이얼한 대화는 만들 때부터 광고된 값을 기대 peerId로 갖고(증명은 링크가 함),
-  // 수동 IP/인바운드 대화는 핸드셰이크에서 증명된 값이 채워짐
-  // 재연결/인바운드 중복 합치기가 "그 IP의 상대가 진짜 같은 피어인지" 확인하는 데 씀 (IP는 DHCP로 재할당될 수 있음)
+  // 상대의 안정적인 기기 식별자(hello의 peerId). 방이면 늘 null (멤버별 값은 RoomMember가 가짐).
+  // 탐지된 피어로 다이얼한 대화는 광고된 값을 기대값으로 들고 시작하고(증명은 링크가 함), 수동 IP·인바운드 대화는 핸드셰이크가 증명한 값으로 채움.
+  // 재연결·인바운드 중복 합치기가 그 IP의 상대가 진짜 같은 피어인지 볼 때 씀 (IP는 DHCP로 바뀔 수 있음)
   final String? peerId;
 
   // 이번 실행 동안 차단한 상대 (LinkRegistry.blockPeer). 신원 키가 실행마다 바뀌어서 저장하지 않음
@@ -49,8 +48,7 @@ class Conversation {
 
   final bool online;
 
-  // X25519/ChaCha20 세션 키가 수립되면 true.
-  // PeerTransport.web 게스트는 항상 false (사설 LAN 브라우저 평문)
+  // X25519·ChaCha20 세션 키가 서면 true. 웹 게스트는 늘 false (LAN 구간이 브라우저 평문)
   final bool secure;
 
   final int outgoingTtlSeconds;
@@ -64,35 +62,33 @@ class Conversation {
 
   final bool peerVerified;
 
-  // 양쪽 다 SAS 일치를 확인했을 때만 true: active MITM에 대한 유일한 방어
-  // 한쪽만 눌렀으면 localVerified만 켜져 UI가 "대기중"으로 보임 (둘 중 한쪽이 공격자면 영원히 대기중에 갇힘)
+  // 양쪽 다 SAS 일치를 확인해야 true: 능동적 중간자를 막는 유일한 수단.
+  // 한쪽만 눌렀으면 localVerified만 켜져 UI가 대기 중으로 보임 (한쪽이 공격자면 영원히 대기 중에 갇힘)
   bool get verified => localVerified && peerVerified;
 
-  // true면 인커밍 file_offer를 프롬프트 없이 수락함. UI는 verified된 대화에서만 켜게 함. RAM 전용
+  // true면 들어온 file_offer를 묻지 않고 수락함. 검증된 1:1에서만 켜짐 (방은 늘 물어봄). RAM 전용
   final bool autoAcceptFiles;
 
-  // 호스트 중계 그룹 방. 고정 호스트 신원이 없어서 아카이브해도 되살릴 수 없으니 vault에 안 담김
+  // 호스트 중계 그룹 방. 고정 호스트 신원이 없어서 보관해도 되살릴 수 없으니 vault에 안 담김
   final bool isRoom;
 
   // 호스트 쪽에서만 유지됨 (호스트 포함 인원). 멤버 쪽은 0
   final int memberCount;
 
-  // 내가 멤버로 들어간 방의 호스트 alias (내가 호스트면 null). 있으면 UI가 "메시지가 호스트 기기를 거침"을 알림
+  // 내가 멤버로 들어간 방의 호스트 alias (내가 호스트면 null). 있으면 UI가 메시지가 호스트 기기를 거친다고 알림
   final String? hostAlias;
 
-  // 내가 멤버로 들어간 방의 확정된 호스트 peerId: 최초 정당한 room_join을 인가한 링크 상대의 인증된 신원
-  // 이후 room_join/room_state는 이 peerId의 링크에서만 받음
-  // (alias는 표시용이라 권한 판단에 안 씀). 호스트면 null, RAM 전용
+  // 내가 멤버로 들어간 방의 확정된 호스트 peerId: 처음 정당한 room_join을 인가한 링크 상대의 인증된 신원.
+  // 그 뒤 room_join·room_state는 이 peerId의 링크에서만 받음 (alias는 표시용이라 권한 판단에 안 씀). 호스트면 null, RAM 전용
   final String? hostPeerId;
 
-  // 인증된 방 호스트가 알린 현재 앱 피어 ID. 수신자별 파일 토큰 라우팅용 RAM 값
+  // 인증된 방 호스트가 알려 준 지금 앱 피어 ID들. 받는 사람별 파일 토큰 라우팅에 씀. RAM 전용
   final List<String> roomRecipientIds;
 
-  // 방 멤버별 SAS 검증 상태 (key = 멤버의 peerId). isRoom이 아니면 비어있고 1:1은 위
-  // sas/localVerified/peerVerified를 씀
+  // 방 멤버별 SAS 검증 상태 (key = 멤버 peerId). 1:1은 비어 있고 위의 sas·localVerified·peerVerified를 씀
   final Map<String, RoomMember> members;
 
-  // 나가면서 "저장 안 함"을 고르면 true. toSnapshot이 대화와 메시지/전송을 vault에서 통째로 뺌. RAM 전용
+  // 나가면서 저장 안 함을 고르면 true. toSnapshot이 이 대화와 메시지·전송을 vault에서 통째로 뺌. RAM 전용
   final bool vaultOptOut;
 
   Conversation copyWith({
@@ -147,9 +143,8 @@ class Conversation {
     );
   }
 
-  // 되살린 대화는 라이브 링크가 아니라 아카이브: fromJson이
-  // online/secure/verified/sas/typing을 초기 상태로 되돌림
-  // 고정 피어 신원이 없어서 같은 피어가 다시 붙으면 새 방이 열림
+  // 되살린 대화는 라이브 링크가 아니라 기록: fromJson이 online·secure·verified·sas·typing을 초기값으로 되돌림.
+  // 신원 키가 실행마다 바뀌어서 같은 상대가 다시 붙어도 새 대화가 열림
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
     'peerAlias': peerAlias,

@@ -154,10 +154,8 @@ void main() {
     // 닫다가 영영 멈춤
     await listening.future.timeout(const Duration(seconds: 10));
     token.cancel();
-    // 생산자는 계속 멈춰 있음. 취소는 다음 청크나 stall 타임아웃(25s)을 기다리지 않고 끝나야 함 —
-    // 취소를 무시하면 25s 뒤에야 끝나서 아래 상한에서 실패함. 정리(close/delete)의 파일 IO는 부하에서
-    // 수백 ms 걸리기도 해서(측정: 부하 중 60회 중 1회 886ms)
-    // 고정 250ms 상한은 코드가 아니라 기계 부하를 재고 있었음
+    // 생산자는 계속 멈춰 있음. 취소는 다음 청크나 stall 타임아웃(25s)을 안 기다리고 끝나야 함 (무시하면 25s 뒤에야 끝나서 아래 상한에 걸림).
+    // 정리(close·delete)의 파일 IO는 부하가 걸리면 수백 ms씩 걸리기도 해서(부하 중 60회에 1회 886ms) 고정 250ms 상한은 코드가 아니라 기계 부하를 재고 있었음
     final outcome = await observed.timeout(
       const Duration(seconds: 10),
       onTimeout: () => 'still waiting for the stalled producer',

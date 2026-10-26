@@ -155,8 +155,7 @@ void main() {
       final aad = utf8.encode('t');
       final sealed = await a.sealBytes(Uint8List.fromList([1, 2, 3]), aad: aad);
 
-      // 같은 nonce/cipher/mac을 메시지 채널 open()으로 열려고 하면 실패해야
-      // 함: 파일 서브키로 봉인됐지 세션 키로 봉인된 게 아니라서
+      // 같은 nonce·cipher·mac을 메시지 채널 open()으로 열면 실패해야 함: 세션 키가 아니라 파일 서브키로 봉인돼서
       await expectLater(
         b.open(
           nonceB64: base64.encode(sealed.nonce),

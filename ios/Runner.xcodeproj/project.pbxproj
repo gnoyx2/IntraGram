@@ -14,6 +14,7 @@
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		923FFF68DCEA5A1C6EC9EB82 /* VoicePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D7893FB4725C914FE6977F9 /* VoicePlayer.swift */; };
 		611ED005428B0FA35D9D2E3D /* MemoryFileSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B93C30FBBBE71C18039942 /* MemoryFileSource.swift */; };
+		8C3E1F5A92B7D04E6A1C3B97 /* DisplayRegions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15A7E0B27C4F3A9B6E18D20 /* DisplayRegions.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		EDEC38CA8EA6E89CFCDF4D2E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A6F6D4807F72710AEE58943A /* InfoPlist.strings */; };
@@ -62,6 +63,7 @@
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		95B93C30FBBBE71C18039942 /* MemoryFileSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryFileSource.swift; sourceTree = "<group>"; };
 		2D7893FB4725C914FE6977F9 /* VoicePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoicePlayer.swift; sourceTree = "<group>"; };
+		D15A7E0B27C4F3A9B6E18D20 /* DisplayRegions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayRegions.swift; sourceTree = "<group>"; };
 		A6E16B8D4F414E85994D3E22 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
@@ -169,6 +171,7 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				95B93C30FBBBE71C18039942 /* MemoryFileSource.swift */,
 				2D7893FB4725C914FE6977F9 /* VoicePlayer.swift */,
+				D15A7E0B27C4F3A9B6E18D20 /* DisplayRegions.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
@@ -408,6 +411,7 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				611ED005428B0FA35D9D2E3D /* MemoryFileSource.swift in Sources */,
 				923FFF68DCEA5A1C6EC9EB82 /* VoicePlayer.swift in Sources */,
+				8C3E1F5A92B7D04E6A1C3B97 /* DisplayRegions.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 			);

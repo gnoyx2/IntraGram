@@ -14,18 +14,11 @@ import java.io.InputStream
 import java.util.UUID
 import java.util.concurrent.Executors
 
-/**
- * `intragram/file_source` MethodChannel — 모바일 문서/사진 선택을 캐시 복사
- * 없이 Direct RAM 스트리밍으로 넘김. `ACTION_OPEN_DOCUMENT` +
- * `ContentResolver.openInputStream`으로 앱 캐시 디렉터리를 전혀 안 거침.
- * URI/권한은 이 안(프로세스 RAM)에서만 들고 있고 persistable permission은
- * 안 씀 — 이번 세션 첨부 용도라 프로세스 생존 동안만 유효하면 충분함.
- *
- * 계약: `pick(imagesOnly) -> [{id,name,size}]`, `open(sourceId) -> readerId`,
- * `read(readerId, maxBytes) -> bytes|null(EOF)`, `close(readerId)`,
- * `release(sourceId)`, `releaseAll()`. `read`는 Dart가 다음 조각을 요청할
- * 때만 불리는 pull 방식이라 무제한 버퍼링이 없음.
- */
+// intragram/file_source 채널: 모바일 문서·사진 선택을 캐시 사본 없이 RAM으로 흘려 넘김.
+// ACTION_OPEN_DOCUMENT + ContentResolver.openInputStream이라 앱 캐시 폴더를 아예 안 거침.
+// URI·권한은 프로세스 RAM에만 두고 persistable permission은 안 씀 (이번 세션 첨부용이라 프로세스가 사는 동안이면 충분)
+// 계약: pick(imagesOnly) -> [{id,name,size}], open(sourceId) -> readerId, read(readerId, maxBytes) -> bytes|null(EOF),
+// close(readerId), release(sourceId), releaseAll(). read는 Dart가 다음 조각을 달라고 할 때만 불려서 버퍼가 끝없이 안 쌓임
 class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenger) :
     MethodChannel.MethodCallHandler {
 
@@ -41,9 +34,8 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
     private val readers = mutableMapOf<String, InputStream>()
     private var pendingPick: MethodChannel.Result? = null
 
-    /** releaseAll()마다 증가. pick/open이 그 순간 이미 진행 중이었으면(비동기
-     * 콜백이 아직 안 돌아옴) 자기가 시작할 때 캡처한 값과 나중에 비교해서,
-     * 다르면 방금 얻은 소스/스트림을 등록하지 않고 바로 버림. */
+    // releaseAll()마다 오름. 그 순간 도는 pick·open은(콜백이 아직 안 옴) 시작할 때 잡은 값과 나중에 비교해서
+    // 다르면 방금 얻은 소스·스트림을 등록 안 하고 바로 버림
     private var generation = 0
     private var pendingPickGeneration = 0
 
@@ -74,8 +66,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
             addCategory(Intent.CATEGORY_OPENABLE)
             type = if (imagesOnly) "image/*" else "*/*"
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            // 클라우드 전용(로컬 미다운로드) 문서를 provider 목록에서 미리
-            // 걸러냄 — 첨부가 조용히 네트워크 다운로드를 유도하지 않게 함.
+            // 클라우드 전용(기기에 안 받은) 문서는 목록에서 미리 거름: 첨부가 몰래 네트워크 다운로드를 일으키면 안 됨
             putExtra(Intent.EXTRA_LOCAL_ONLY, true)
         }
         try {
@@ -86,7 +77,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
         }
     }
 
-    /** [MainActivity.onActivityResult]가 불러줌. 이 채널 요청이면 true. */
+    // MainActivity.onActivityResult가 부름. 이 채널 요청이면 true
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode != REQUEST_CODE) return false
         val result = pendingPick ?: return true
@@ -97,8 +88,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
             return true
         }
         if (pickGeneration != generation) {
-            // releaseAll이 이 pick 도중에 돎 — 새 source를 등록하지 않고 빈
-            // 결과로 끝냄.
+            // 이 pick 도중에 releaseAll이 돎: 새 source를 등록 안 하고 빈 결과로 끝냄
             result.success(emptyList<Any>())
             return true
         }
@@ -118,7 +108,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
         return true
     }
 
-    /** 스트림은 아직 안 엶 — 이름/크기만 커서 메타데이터로 조회함. */
+    // 스트림은 아직 안 엶 (이름·크기만 커서로 조회)
     private fun describe(uri: Uri): Pair<String, Source>? {
         var name = uri.lastPathSegment ?: "file"
         var size = -1L
@@ -130,8 +120,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
                 if (sizeIdx >= 0 && !cursor.isNull(sizeIdx)) size = cursor.getLong(sizeIdx)
             }
         }
-        // 크기를 못 구하면(클라우드 전용 등) 여기서 조용히 건너뜀 — 네트워크
-        // 다운로드를 유도하는 대신 이 파일만 목록에서 빠짐.
+        // 크기를 못 구하면(클라우드 전용 등) 조용히 건너뜀: 네트워크 다운로드를 일으키는 대신 이 파일만 목록에서 빠짐
         if (size < 0) return null
         val id = UUID.randomUUID().toString()
         val source = Source(uri, name, size)
@@ -154,8 +143,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
             }
             main.post {
                 if (openGeneration != generation) {
-                    // releaseAll이 open 도중에 돎 — 방금 연 스트림은 등록하지
-                    // 않고 바로 닫음.
+                    // open 도중에 releaseAll이 돎: 방금 연 스트림은 등록 안 하고 바로 닫음
                     try {
                         stream?.close()
                     } catch (e: Exception) {

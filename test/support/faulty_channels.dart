@@ -15,10 +15,8 @@ class FaultyChannel extends StreamChannelMixin<dynamic> {
   // true면 sink.add가 던짐: 링크의 송신은 "미전달(false)"로 끝나고 링크는 스스로 닫힘
   bool failAdds = false;
 
-  // 세팅하면 sink.close()가 이 completer가 끝날 때까지
-  // 안 끝남: 링크의 종료를 소켓 종료 대기(최대 2초) 구간에 붙잡아
-  // 둠
-  // (그 사이 링크는 isClosed지만 onClosed 정리는 아직 안 돎)
+  // 세팅하면 sink.close()가 이 completer가 끝날 때까지 안 끝남: 링크 종료를 소켓 종료 대기(최대 2초) 구간에 붙잡아 둠
+  // (그사이 링크는 isClosed지만 onClosed 정리는 아직 안 돎)
   Completer<void>? closeGate;
 
   bool closeStarted = false;

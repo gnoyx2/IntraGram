@@ -22,8 +22,7 @@ import 'package:intragram/theme/app_theme.dart';
 import 'package:intragram/theme/motion.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/widgets/action_menu.dart';
-import 'package:intragram/widgets/adaptive_dialog_action.dart'
-    show dialogActions;
+import 'package:intragram/widgets/adaptive_dialog_action.dart';
 import 'package:intragram/widgets/keyboard_access.dart';
 import 'package:intragram/widgets/press_scale.dart';
 import 'burn_countdown.dart';
@@ -199,37 +198,7 @@ class MessageBubble extends ConsumerWidget {
           : CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 키보드: Tab·화살표로 말풍선에 오고 Enter·Space·메뉴 키·Shift+F10으로 동작 시트를 엶
-        // (Enter는 ActivateIntent라 말풍선 안 버튼에 포커스가 있으면 그 버튼이 먼저 받음)
-        Actions(
-          actions: <Type, Action<Intent>>{
-            ActivateIntent: CallbackAction<ActivateIntent>(
-              onInvoke: (_) =>
-                  _promptActions(context, ref, menuAnchor(context)),
-            ),
-          },
-          child: CallbackShortcuts(
-            bindings: menuKeyBindings(
-              () => _promptActions(context, ref, menuAnchor(context)),
-            ),
-            // 보낸이·본문·시각과 길게 누르기·사용자 지정 동작(답장·복사·반응·삭제)을 한 노드로:
-            // 스크린 리더가 이름 없는 바깥 칸에서 길게 누를 필요 없이 말풍선에서 바로 고름
-            child: MergeSemantics(
-              child: Semantics(
-                customSemanticsActions: _semanticActions(context, ref),
-                child: Focus(
-                  child: _PressScale(
-                    onTap: onRetry,
-                    onLongPress: () => _promptActions(context, ref),
-                    onSecondaryTapUp: (details) =>
-                        _promptActions(context, ref, details.globalPosition),
-                    child: body,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+        _interactive(context, ref, body, onRetry: onRetry),
         _ReactionChips(
           message: message,
           mine: mine,

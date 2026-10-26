@@ -62,7 +62,7 @@ class _TextSizeTile extends ConsumerWidget {
       title: Text(s.t('settings.textSize')),
       subtitle: Text(
         s.t('settings.textSizeKeys', {
-          'keys': mac ? '⌘+ · ⌘− · ⌘0' : 'Ctrl + · Ctrl − · Ctrl 0',
+          'keys': mac ? '⌘+ · ⌘− · ⌘0' : 'Ctrl++ · Ctrl+- · Ctrl+0',
         }),
       ),
       trailing: DropdownButton<double>(

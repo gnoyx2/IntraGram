@@ -1,7 +1,5 @@
 part of '../transfer_tile.dart';
 
-// voice_player.dart가 쓰는 파형 계산과 그리기
-
 const int _kWaveBars = 28;
 
 String _formatClock(Duration d) {

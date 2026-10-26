@@ -64,8 +64,7 @@ void main() {
 
   test('hello carries the dialling peer\'s real listening port, overwriting '
       'the TCP-accept ephemeral port acceptInbound staged it with', () async {
-    // B는 인바운드 소켓을 accept해서 그 대화가 TCP 수준의 원격(클라이언트
-    // 쪽 ephemeral) 포트로 만들어졌고 A의 실제 서버 포트가 아님:
+    // B는 인바운드 소켓을 accept해서 그 대화가 A의 진짜 서버 포트가 아니라 TCP 원격(클라이언트 쪽 ephemeral) 포트로 만들어짐:
     // hello가 A의 진짜 리스닝 포트로 고쳐야 함
     final p = await connectedPair(localPortA: 51820, remotePortB: 54321);
     addTearDown(p.storeA.dispose);

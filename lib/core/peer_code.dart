@@ -1,14 +1,13 @@
 import 'package:intragram/core/network_guard.dart';
 
-// 앱끼리 잇는 QR 내용. 기기 코드(intragram://<host>:<port>/<peerId>)와 게스트 포털 주소
-// (http://<host>:<port>#t=…&p=<peerId>) 둘 다 받음. peerId가 있으면 그 신원을 증명한 상대하고만
-// 연결되게 expectedPeerId로 넘김 (화면을 직접 찍은 경로라 중간에서 바꿔치기할 수 없음)
+// 앱끼리 잇는 QR: 기기 코드(intragram://<host>:<port>/<peerId>)와 포털 주소(http://<host>:<port>#t=…&p=<peerId>).
+// peerId가 있으면 그 신원을 증명한 상대하고만 붙게 expectedPeerId로 넘김 (화면을 직접 찍는 거라 중간에서 못 바꿈)
 typedef PeerCode = ({String host, int port, String? peerId});
 
-// 휴대폰 카메라 앱이 게스트 포털로 열지 않게 http가 아닌 앱 전용 스킴을 씀
+// 폰 카메라 앱이 포털로 열지 않게 http 말고 앱 전용 스킴을 씀
 const String kDeviceCodeScheme = 'intragram';
 
-// peerId는 신원 공개키 SHA-256 앞 16바이트의 소문자 hex (app_identity.dart peerIdOfKey)
+// 신원 공개키 SHA-256 앞 16바이트의 hex (peerIdOfKey)
 final RegExp _peerIdPattern = RegExp(r'^[0-9a-f]{32}$');
 final RegExp _fragmentPeerId = RegExp(r'(?:^|&)p=([^&]*)');
 
@@ -22,7 +21,7 @@ String deviceCode({
 String portalCodeWithPeer(String portalUrl, String peerId) =>
     '$portalUrl&p=$peerId';
 
-// 사설 IPv4가 아니거나 peerId 형식이 틀리면 null (형식이 틀린 p는 고정 없이 넘기지 않고 코드째 버림)
+// 사설 IPv4가 아니거나 peerId가 이상하면 null (틀린 p만 빼고 넘기지 않고 코드째 버림)
 PeerCode? parsePeerCode(String raw) {
   final text = raw.trim();
   final uri = Uri.tryParse(text);

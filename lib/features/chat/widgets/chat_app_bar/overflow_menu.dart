@@ -31,7 +31,15 @@ class ChatOverflowMenu extends StatelessWidget {
     return PopupMenuButton<String>(
       tooltip: s.t('chat.more'),
       onSelected: (value) {
-        if (value == 'auto') {
+        if (value == 'audit') {
+          unawaited(
+            showAuditProofSheet(
+              context,
+              registry.store.evidence,
+              registry.identity,
+            ),
+          );
+        } else if (value == 'auto') {
           registry.setAutoAcceptFiles(
             conversation.id,
             enabled: !conversation.autoAcceptFiles,
@@ -51,6 +59,7 @@ class ChatOverflowMenu extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
+        PopupMenuItem<String>(value: 'audit', child: Text(s.t('audit.title'))),
         if (onSearch != null)
           PopupMenuItem<String>(
             value: 'search',
@@ -61,16 +70,16 @@ class ChatOverflowMenu extends StatelessWidget {
             value: 'add',
             child: Text(s.t('chat.addPeople')),
           ),
-        PopupMenuItem<String>(
-          value: 'auto',
-          // 방은 SAS 검증이 없어서(호스트 중계가 신뢰 경계) verified가 영원히 false라서,
-          // isRoom도 허용 안 하면 이 토글이 방에서 항상 회색으로 죽음
-          enabled: conversation.isRoom || conversation.verified,
-          child: _CheckRow(
-            label: s.t('chat.autoAcceptFiles'),
-            checked: conversation.autoAcceptFiles,
+        // 방 파일은 늘 물어봄 (레지스트리도 미검증 대화의 자동 수락은 무시함)
+        if (!conversation.isRoom)
+          PopupMenuItem<String>(
+            value: 'auto',
+            enabled: conversation.verified,
+            child: _CheckRow(
+              label: s.t('chat.autoAcceptFiles'),
+              checked: conversation.autoAcceptFiles,
+            ),
           ),
-        ),
         if (onToggleKeep != null)
           PopupMenuItem<String>(
             value: 'keep',
@@ -101,7 +110,8 @@ class ChatOverflowMenu extends StatelessWidget {
     final cupertino = isCupertinoDialog(context);
     final ok = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog.adaptive(
+      builder: (dialogContext) => AppAlertDialog(
+        cupertino: cupertino,
         title: Text(s.t('chat.blockTitle', {'alias': conversation.peerAlias})),
         content: Text(s.t('chat.blockBody')),
         actions: dialogActions(dialogContext, [
@@ -124,8 +134,7 @@ class ChatOverflowMenu extends StatelessWidget {
   }
 }
 
-// CheckedPopupMenuItem은 title을 내부 ListTile로 그려서 다른 항목과 자간이 다르게 먹음
-// 평범한 PopupMenuItem + 수동 체크 아이콘으로 같은 텍스트 경로를 타게 함
+// CheckedPopupMenuItem은 내부 ListTile로 그려서 다른 항목과 글자 간격이 달라짐: 평범한 항목에 체크 아이콘만 직접 그림
 class _CheckRow extends StatelessWidget {
   const _CheckRow({required this.label, required this.checked});
 

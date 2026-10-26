@@ -4,8 +4,6 @@ import 'dart:math' as math;
 import 'dart:typed_data' show Endian;
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,9 +16,11 @@ import 'package:intragram/core/constants.dart' show kMaxThumbBytes;
 import 'package:intragram/core/file_kind.dart';
 import 'package:intragram/core/native_open.dart';
 import 'package:intragram/core/os_privacy.dart';
+import 'package:intragram/core/target_platform.dart';
 import 'package:intragram/core/voice/voice_clip.dart';
 import 'package:intragram/core/voice/voice_wav.dart';
 import 'package:intragram/core/voice_producer_registry.dart';
+import 'package:intragram/features/chat/audit/transfer_evidence_badges.dart';
 import 'package:intragram/features/chat/widgets/image_viewer_screen.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/network/link_registry.dart';
@@ -30,7 +30,7 @@ import 'package:intragram/theme/app_theme.dart';
 import 'package:intragram/theme/motion.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/widgets/adaptive_dialog_action.dart'
-    show dialogActions;
+    show AppAlertDialog, dialogActions;
 import 'package:intragram/widgets/picker_feedback.dart';
 import 'package:intragram/widgets/press_scale.dart';
 import 'package:intragram/widgets/safe_file_image.dart';
@@ -84,14 +84,19 @@ class TransferTile extends ConsumerWidget {
     // 무엇을 받는지 알 수 있게 음성 제목과 크기를 위에 붙임
     if (transfer.voice) {
       final control = _control(context, ref, transfer, muted);
-      if (transfer.voiceBytes != null) return control;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _voiceTitle(context, transfer, muted),
-          const SizedBox(height: AppSpacing.sm),
+          if (transfer.voiceBytes == null) ...[
+            _voiceTitle(context, transfer, muted),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           control,
+          TransferEvidenceBadges(
+            evidence: ref.watch(inMemoryStoreProvider).evidence,
+            transferId: transferId,
+          ),
         ],
       );
     }
@@ -114,6 +119,10 @@ class TransferTile extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             _control(context, ref, transfer, muted),
+            TransferEvidenceBadges(
+              evidence: ref.watch(inMemoryStoreProvider).evidence,
+              transferId: transferId,
+            ),
           ],
         ),
       ),

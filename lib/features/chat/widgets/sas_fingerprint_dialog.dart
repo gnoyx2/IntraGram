@@ -1,23 +1,21 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:intragram/core/haptics.dart';
 import 'package:intragram/core/sas_qr.dart';
+import 'package:intragram/core/target_platform.dart';
 import 'package:intragram/features/chat/widgets/sas_scan_screen.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/widgets/adaptive_dialog_action.dart';
 
-// 사용자가 고른 결과. null은 "나중에"(아무것도 안 바뀜)
+// null은 '나중에' (아무것도 안 바뀜)
 enum SasOutcome { matched, mismatched }
 
-// "They match"를 눌렀거나 QR 스캔으로 숫자가 일치하면 matched, "숫자가 달라요"를 눌렀거나
-// 다른 숫자의 코드를 찍으면 mismatched
-// 사람이 맞춰야 하는 이유: 같은 Wi-Fi 공격자가 양쪽과 핸드셰이크를 따로 돌려 중계(MITM)해도 두 링크 다 "암호화됨"으로 보이지만
-// 유도 키가 달라 SAS가 달라짐. 공격자가 통제 못 하는 채널(목소리, 같은 방의 카메라)로 대조해야 그 틈이 메워짐
-// 그래서 이 채팅으로 코드를 보내 맞추는 건 의미가 없고, 복사 버튼도 두지 않음
+// 일치 버튼이나 같은 숫자의 QR이면 matched, 다르다 버튼이나 다른 숫자의 QR이면 mismatched.
+// 사람이 맞춰야 하는 이유: 같은 Wi-Fi의 공격자가 양쪽과 따로 핸드셰이크해 중계(MITM)해도 두 링크 다 암호화됨으로 보이지만
+// 유도 키가 달라 SAS가 달라짐. 공격자가 못 건드리는 채널(목소리, 같은 공간의 카메라)로 대조해야 그 틈이 막힘.
+// 그래서 채팅으로 코드를 보내 맞추는 건 의미가 없어서 복사 버튼도 없음
 Future<SasOutcome?> showSasFingerprintDialog(
   BuildContext context, {
   required String peerAlias,
@@ -26,13 +24,14 @@ Future<SasOutcome?> showSasFingerprintDialog(
   required bool verified,
 }) {
   if (sas == null) return Future<SasOutcome?>.value();
-  final canScan = Platform.isAndroid || Platform.isIOS;
+  final canScan = isMobileTarget;
   final cupertino = isCupertinoDialog(context);
   final s = S.of(context);
   final muted = Theme.of(context).colorScheme.onSurfaceVariant;
   return showDialog<SasOutcome>(
     context: context,
-    builder: (dialogContext) => AlertDialog.adaptive(
+    builder: (dialogContext) => AppAlertDialog(
+      cupertino: cupertino,
       title: Text(s.t('sas.title')),
       content: SingleChildScrollView(
         child: Column(
@@ -98,7 +97,7 @@ Future<SasOutcome?> showSasFingerprintDialog(
           onPressed: () => Navigator.of(dialogContext).pop(),
           label: s.t('sas.notNow'),
         ),
-        // 일치 버튼과 같은 무게로 둬서, 숫자가 다를 때 남는 출구가 "일치함"뿐이지 않게 함
+        // 일치 버튼과 같은 무게로 둠: 숫자가 다를 때 누를 출구가 일치뿐이면 안 됨
         AdaptiveDialogAction(
           cupertino: cupertino,
           destructive: true,
@@ -124,7 +123,7 @@ Future<SasOutcome?> showSasFingerprintDialog(
   );
 }
 
-// 상대는 숫자를 한 자리씩 읽으므로 스크린 리더도 "1 2 3, 4 5 6"으로 읽게 라벨을 따로 줌
+// 상대가 한 자리씩 읽어 주니까 스크린 리더도 '1 2 3, 4 5 6'처럼 읽게 라벨을 따로 줌
 class _SasDigits extends StatelessWidget {
   const _SasDigits({required this.sas});
 
@@ -139,13 +138,13 @@ class _SasDigits extends StatelessWidget {
         .split(' ')
         .map((group) => group.split('').join(' '))
         .join(', ');
-    // FittedBox: 큰 글씨 접근성 설정에서도 여섯 자리가 고정폭 다이얼로그 밖으로 안 넘치게 줄어듦
+    // 큰 글씨 설정에서도 여섯 자리가 고정폭 대화상자 밖으로 안 넘치게 줄임
     return Semantics(
       label: spoken,
       excludeSemantics: true,
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        // 고르기 복사도 막음: 이 코드는 채팅으로 보내 맞추는 게 아님 (위 복사 버튼을 안 두는 이유와 같음)
+        // 선택 복사도 막음 (복사 버튼이 없는 이유와 같음)
         child: Text(
           grouped,
           style: const TextStyle(
@@ -166,7 +165,7 @@ class _SasQr extends StatelessWidget {
   final String sas;
   final String label;
 
-  // 흰 배경은 스캐너 가독성 때문에 의도적으로 유지. 다크 모드에서 밝은 얼룩으로 안 보이게 그림자를 줌
+  // 흰 배경은 스캐너가 잘 읽게 일부러 둠. 다크 모드에서 붕 뜬 얼룩처럼 안 보이게 그림자를 줌
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(AppSpacing.sm),
@@ -181,7 +180,7 @@ class _SasQr extends StatelessWidget {
         ),
       ],
     ),
-    // 고정 크기 박스로 감쌈: AlertDialog가 intrinsic 측정할 때 QrImageView 내부 LayoutBuilder가 터지는 걸 막음
+    // 고정 크기: AlertDialog가 intrinsic 크기를 잴 때 QrImageView 안의 LayoutBuilder가 터지는 걸 막음
     child: SizedBox(
       width: 148,
       height: 148,

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:intragram/store/vault.dart';
 
+import 'support/chmod_injection.dart';
 import 'support/vault_order_rig.dart';
 import 'support/vault_snapshot.dart';
 
@@ -110,18 +111,11 @@ void main() {
   );
 
   group('failures are visible and leave no temp file', () {
-    test(
-      'a disk read error during load reaches the caller',
-      () async {
-        r.file.writeAsStringSync('{}');
-        Process.runSync('chmod', ['000', r.file.path]);
-        await expectLater(
-          r.vault().load(),
-          throwsA(isA<FileSystemException>()),
-        );
-      },
-      skip: Platform.isWindows ? 'chmod-based failure injection' : false,
-    );
+    test('a disk read error during load reaches the caller', () async {
+      r.file.writeAsStringSync('{}');
+      Process.runSync('chmod', ['000', r.file.path]);
+      await expectLater(r.vault().load(), throwsA(isA<FileSystemException>()));
+    }, skip: chmodInjectionSkip);
 
     test('a failed rename surfaces and cleans its own temp', () async {
       // 아카이브 자리에 디렉터리가 있어서 rename이 실패함
@@ -146,7 +140,7 @@ void main() {
           throwsA(isA<FileSystemException>()),
         );
       },
-      skip: Platform.isWindows ? 'chmod-based failure injection' : false,
+      skip: chmodInjectionSkip,
     );
 
     test(
@@ -163,7 +157,7 @@ void main() {
           reason: 'still there — and we know',
         );
       },
-      skip: Platform.isWindows ? 'chmod-based failure injection' : false,
+      skip: chmodInjectionSkip,
     );
 
     test('erasing an already-missing archive is fine (not-found)', () async {

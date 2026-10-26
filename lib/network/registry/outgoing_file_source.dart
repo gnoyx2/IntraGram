@@ -1,7 +1,6 @@
 part of 'outgoing_transfers.dart';
 
-// offer 시점에 확정된 제안 내용: 재시도가 같은 내용/같은 mode로 다시 offer하려고 source가 들고 있음
-// (예전 retry는 썸네일을 빠뜨리고 mode를 push로 바꿨음)
+// offer 때 정한 내용. 재시도도 같은 내용으로 다시 냄
 class OutgoingOfferSpec {
   const OutgoingOfferSpec({
     this.mime,
@@ -33,11 +32,11 @@ class OutgoingOfferSpec {
   );
 }
 
-// 방 전송은 바이트가 평문으로 가서 offer(인증된 링크)에 내용의 SHA-256을 실음: 받는 쪽이 LAN에서 같은
-// 길이로 바꿔치기된 내용을 잡음. 파일을 한 번 끝까지 읽어서 큰 파일은 그만큼 offer가 늦게 나감
-// (순수 Dart SHA-256이 약 100 MB/s라 수 GB면 수십 초. 더 빨라야 하면 OS 해시를 FFI로 부를 자리)
-// 이 읽기도 reader라 취소·소각이 끊고(_stopHashing), 끊기가 끝난 뒤에야 _hashing이 끝나서 그 전엔 원본을 안 놓음
-// 못 읽으면 실패로 표시하고 false. 끊겼거나 그 사이 전송이 사라졌어도 false
+// 방 전송은 바이트가 평문이라 offer(인증된 링크)에 SHA-256을 실음: 받는 쪽이 LAN에서 바꿔치기된 내용을 잡음.
+// 파일을 한 번 끝까지 읽어서 큰 파일은 offer가 늦음 (순수 Dart라 약 100 MB/s, 더 빨라야 하면 OS 해시를 FFI로).
+// 이 읽기도 reader라 취소·소각이 끊고, 끊기가 끝나야 원본을 놓음. 못 읽거나 끊기거나 전송이 사라지면 false.
+// 1:1(봉인)은 여기서 안 읽음: 수신 영수증용 같은 SHA-256을 보내는 길(_plainFor)과 받는 길(FileStreamer onDigest)에서 재서
+// offer가 늦거나 원본을 두 번 열지 않음
 Future<bool> _stampDigest(
   OutgoingTransfers self,
   String transferId,
@@ -69,13 +68,16 @@ Future<bool> _stampDigest(
   }
   if (stopping != null || !wanted()) return false;
   sink.close();
-  source.spec = source.spec.withDigest(base64.encode(sink.hashSync().bytes));
+  final digest = base64.encode(sink.hashSync().bytes);
+  source.spec = source.spec.withDigest(digest);
+  self.store.updateTransfer(
+    transferId,
+    (t) => t.copyWith(digest: digest, contentCommitment: digest),
+  );
   return true;
 }
 
-// 보내려고 staged된 로컬 파일. transport가 필요한 것만(표시용
-// 이름, 바이트 길이, 새 바이트 스트림을 여는 팩토리) 들고 있어서
-// 파일을 어떻게 골랐는지(picker vs drop)와 분리됨. 수신자별 상태는 _recipients에 있음
+// 보내려고 올려 둔 파일. 이름·크기·스트림 팩토리만 들고 있어서 어떻게 골랐는지와 상관없음
 class OutgoingFileSource {
   OutgoingFileSource({
     required this.conversationId,
@@ -87,7 +89,6 @@ class OutgoingFileSource {
     required this.encrypted,
     required this.mode,
     required this.spec,
-    this.room = false,
     this.viaRelayHost = false,
     this.releaseSource,
   });
@@ -95,40 +96,25 @@ class OutgoingFileSource {
   final String name;
   final int size;
 
-  // 평문 바이트를 새로 여는 팩토리 (암호화 여부와 무관하게 항상 평문). 봉인은
-  // 실제로 보낼 때(push 전송/GET 서빙) 그 시점의 attemptId로 함:
-  // offer 시점에 감싸면 retry가 새 attemptId를 발급해도 이미 봉인된 스트림엔 옛 attemptId가 AAD로 박혀 있음
+  // 늘 평문을 엶. 봉인은 실제로 보낼 때 그때의 attemptId로 함 (offer 때 감싸면 재시도해도 옛 attempt가 AAD에 박힘)
   final Stream<List<int>> Function() openStream;
   final String? host;
   final int? port;
 
-  // true면 openStream을 실제로 내보낼 때 encryptChunks로
-  // 봉인해야 함 (1:1만, 그룹 방 직접 pull은 항상 false)
-  // size는 항상 평문 기준이라 wire에 나갈 바이트 수(HTTP Content-Length) 계산에도 이 플래그가 필요
+  // 1:1이면 true: 보낼 때 봉인함. size는 평문 기준이라 wire 길이 계산에도 씀
   final bool encrypted;
 
-  // 이 전송의 데이터 경로. 재시도해도 안 바뀜 (pull이 push로 둔갑 금지)
+  // 재시도해도 안 바뀜 (pull이 push로 둔갑 금지)
   final FileTransferMode mode;
 
-  // offer 내용 스냅샷: 썸네일은 로컬 행이 뜬 뒤에 만들어져서 만든
-  // 직후 이 필드를 완성본으로 교체함 (그 전엔 썸네일 없는 spec)
+  // 썸네일이 행이 뜬 뒤에 만들어져서 그때 완성본으로 바꿈
   OutgoingOfferSpec spec;
 
-  // 그룹 방 제안이면 true: 완료돼도 staged로 남아 다른 수신자가 받을 수 있음
-  final bool room;
-
-  // 내가 호스트가 중계하는 방의 멤버로서 낸 제안이면 true: 멤버끼리는 직접
-  // 링크가 없어 offer가 인증된 호스트 링크 하나로만 나가고 to로 수신자를
-  // 지정함
-  // 수신자(호스트 포함 방의 앱 멤버)마다 자기 attempt/일회용 pull
-  // 토큰/상태를 _recipients에 따로 갖고, 호스트는 지정된 멤버에게만
-  // 중계함
+  // 방 멤버로서 낸 제안: offer는 호스트 링크로만 나가고 to로 수신자를 지정함 (호스트는 그 멤버에게만 넘김)
   final bool viaRelayHost;
 
-  // 이 source가 쥔 native 자원(모바일 zero-disk 첨부의 URI/security-scoped
-  // 권한)을 놓는 함수 (없으면 null). reader(push/GET)가 전부 닫힌 뒤에만
-  // 한 번 불림: 완료, 거절, 취소, 소각, 링크 종료, 세션 teardown/패닉
-  // 재시도 가능한 실패에선 안 부름 (같은 source를 새 attempt가 다시 열어야 함)
+  // 모바일 첨부의 네이티브 자원(URI·보안 범위 권한)을 놓는 함수. reader가 다 닫힌 뒤 한 번만 부름 (끝·거절·취소·소각·정리).
+  // 재시도할 수 있는 실패에선 안 부름 (새 attempt가 다시 열어야 함)
   final Future<void> Function()? releaseSource;
   Future<void>? _released;
 
@@ -136,9 +122,7 @@ class OutgoingFileSource {
   Future<void> Function()? _stopHashing;
   Future<void>? _hashing;
 
-  // releaseSource를 정확히 한 번만 부름 (이후엔 같은 Future): 여러
-  // 경로(완료 뒤 정리, 취소, clear)가 겹쳐 불러도 native release는
-  // 한 번
+  // 여러 경로가 겹쳐 불러도 해제는 한 번
   Future<void> _release() =>
       _released ??= Future<void>.sync(() => releaseSource?.call());
 
@@ -146,17 +130,13 @@ class OutgoingFileSource {
   final Map<String, _OutgoingRecipient> _recipients =
       <String, _OutgoingRecipient>{};
 
-  // 수신자가 정확히 한 명일 때 그 수신자의 현재 pull 토큰 (1:1/음성).
-  // 여럿이거나 push면 null: 토큰은 수신자/attempt별이라 단일 값이
-  // 없음
+  // 수신자가 딱 한 명일 때의 pull 토큰 (여럿이면 수신자별이라 null)
   String? get downloadToken =>
       _recipients.length == 1 ? _recipients.values.single.pullToken : null;
 }
 
-// source 구독이 완전히 풀린 시점(끝까지 흘렀거나 취소가 소스까지 전달돼 소스 정리가 끝남)을 settled로 알려주는 얇은 래퍼
-// push 전송은 HTTP 클라이언트를 강제로 닫아도 소스 구독의 취소 완료를 기다려
-// 주지 않아서, 그대로면 "reader를 닫은 뒤에 source를 release" 순서를
-// 보장 못 함. 아무도 listen하지 않았으면 소스는 열리지도 않았으니 settled는 즉시 완료
+// 소스 구독이 완전히 풀린 때를 settled로 알려 줌. HTTP 클라이언트를 강제로 닫아도 소스 취소가 끝나길 안 기다려서
+// 이게 없으면 reader를 닫은 뒤 해제하는 순서를 못 지킴. 아무도 listen 안 했으면 바로 끝남
 class _SettledStream {
   _SettledStream(Stream<List<int>> source) {
     late final StreamController<List<int>> controller;
@@ -194,8 +174,7 @@ class _SettledStream {
     if (!_settled.isCompleted) _settled.complete();
   }
 
-  // 소스가 멈춰서 영영 안 풀려도 teardown이 매달리지 않게 kTransferStallTimeout까지만 기다림
-  // (그땐 reader가 아직 열려 있을 수 있어서 패닉의 releaseAll이 끝내 닫음)
+  // 소스가 멈춰 안 풀려도 정리가 매달리지 않게 kTransferStallTimeout까지만 기다림 (남은 reader는 패닉의 releaseAll이 닫음)
   Future<void> get settled => _listened
       ? _settled.future.timeout(kTransferStallTimeout, onTimeout: () {})
       : Future<void>.value();

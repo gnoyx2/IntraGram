@@ -1,6 +1,6 @@
 part of '../image_viewer_screen.dart';
 
-// 닫기와 (모바일) 공유. 공유 팝오버는 iPad에서 이 버튼을 가리킴
+// 공유는 모바일만. iPad 공유 팝오버가 이 버튼을 가리키게 버튼의 context를 넘김
 class _ViewerTopBar extends StatelessWidget {
   const _ViewerTopBar({required this.path, required this.canShare});
 

@@ -23,6 +23,15 @@ void main() {
       expect(NetworkGuard.isRfc1918('192.168.1'), isFalse);
       expect(NetworkGuard.isRfc1918('300.1.1.1'), isFalse);
     });
+
+    // int.tryParse는 0x·부호·앞뒤 공백도 숫자로 읽음: 정규 10진 표기만 사설로 봄
+    test('rejects hex, signed and padded octets', () {
+      expect(NetworkGuard.isRfc1918('0xa.0.0.1'), isFalse);
+      expect(NetworkGuard.isRfc1918('+10.0.0.1'), isFalse);
+      expect(NetworkGuard.isRfc1918(' 10.0.0.1'), isFalse);
+      expect(NetworkGuard.isRfc1918('192.168.0.-0'), isFalse);
+      expect(NetworkGuard.isLinkLocalOrPrivate('0x7f.0.0.1'), isFalse);
+    });
   });
 
   group('isLinkLocalOrPrivate', () {
@@ -167,9 +176,7 @@ void main() {
     test(
       'isLinkLocalOrPrivate rejects IPv6 link-local (no scope id support)',
       () {
-        // 알려진 한계: fe80::/10은 실제로 다이얼하려면 zone
-        // id(%en0)가 필요한데 discovery/QR이 아직
-        // 안 실음
+        // 알려진 한계: fe80::/10을 실제로 다이얼하려면 zone id(%en0)가 필요한데 discovery·QR이 아직 안 실음
         expect(NetworkGuard.isLinkLocalOrPrivate('fe80::1'), isFalse);
       },
     );

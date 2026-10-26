@@ -39,9 +39,8 @@ void main() {
     expect(FileKind.of('.zshrc'), FileKind.other); // dotfile은 확장자 없음
   });
 
-  test('every kind has an icon and a non-empty label', () {
+  test('every kind has an icon', () {
     for (final kind in FileKind.values) {
-      expect(kind.label, isNotEmpty);
       expect(kind.icon, isA<IconData>());
     }
   });

@@ -30,6 +30,10 @@ const Map<String, String> kStringsKoConnect = {
       '이 네트워크가 기기에 공인 주소({address})를 줬어요. IntraGram은 사설 Wi-Fi '
       '주소로만 통신해요. 폰 핫스팟을 켜고 두 기기를 거기에 연결하세요.',
   'server.failedTitle': '로컬 서버를 시작하지 못했어요',
+  'server.localNetworkDeniedTitle': '로컬 네트워크 접근이 꺼져 있어요',
+  'server.localNetworkDenied':
+      '이 Wi-Fi의 기기를 찾고 연결하려면 로컬 네트워크 접근이 필요해요. '
+      '앱 설정에서 허용한 뒤 돌아오면 다시 시도해요.',
   'server.failed': '다시 시도해 보고, 계속 안 되면 앱을 다시 시작하세요.',
   'discoveryHelp.title': '상대 기기가 안 보이나요?',
   'discoveryHelp.sameWifi': '두 기기가 같은 Wi-Fi에 있고, 게스트 네트워크가 아니에요.',
@@ -44,7 +48,7 @@ const Map<String, String> kStringsKoConnect = {
       '회사·학교·카페 Wi-Fi는 기기끼리 연결을 막는 경우가 많아요. 폰 핫스팟을 켜고 '
       '두 기기를 거기에 연결하세요.',
   'discoveryHelp.byIp':
-      '그래도 안 되면 상대 기기 홈 화면에 보이는 주소로 "IP로 연결"을 쓰거나 기기 '
+      '그래도 안 되면 상대 기기 홈 화면에 보이는 주소로 \'IP로 연결\'을 쓰거나 기기 '
       '코드를 스캔하세요.',
   'scan.cameraDenied': 'IntraGram의 카메라 접근이 꺼져 있어요.',
   'sas.mismatch': '숫자가 달라요',

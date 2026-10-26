@@ -1,12 +1,10 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 
+import 'package:intragram/core/target_platform.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 카메라 즉석 촬영은 없음: image_picker의 카메라 경로가 앱 캐시에
-// 기록해서 zero-disk 원칙과 안 맞음 (로컬 이미지 파일 선택으로 대체)
+// 카메라 촬영은 없음: image_picker 카메라는 앱 캐시에 파일을 써서 제로 디스크와 안 맞음 (사진첩 선택으로 대신함)
 enum AttachChoice { photoLibrary, file }
 
 Future<AttachChoice?> showAttachSheet(BuildContext context) {
@@ -23,16 +21,15 @@ class _AttachSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final isMobile = Platform.isIOS || Platform.isAndroid;
+    // 큰 글씨의 작은 플로팅 창에선 두 줄도 시트 높이를 넘어서 스크롤되게 함
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 데스크톱엔 진짜 사진첩이 없어서 "파일"과 똑같아 보이므로 모바일 전용
-            // 호출부(drag_drop.dart)도 데스크톱에선 시트를 건너뛰지만 방어적으로 여기서도 숨김
-            if (isMobile)
+            // 데스크톱엔 진짜 사진첩이 없어서 모바일만 (호출부도 데스크톱에선 시트를 건너뜀)
+            if (isMobileTarget)
               _AttachOption(
                 icon: Icons.photo_library_outlined,
                 label: s.t('attach.photoLibrary'),

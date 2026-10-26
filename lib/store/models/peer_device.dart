@@ -26,8 +26,7 @@ class PeerDevice {
   // mDNS TXT에 room=1이 있으면 true: 지금 그룹 방을 호스팅 중 (탭하면 합류)
   final bool hostsRoom;
 
-  // mDNS TXT에 inRoom=1이 있으면 true: 호스트든 멤버든 방 안에 있음
-  // hostsRoom과 달리 탭해도 합류가 안 됨 (멤버는 직접 합류를 못 받음)
+  // mDNS TXT inRoom=1: 호스트든 멤버든 방 안. hostsRoom과 달리 탭해도 합류 안 됨
   final bool inRoom;
 
   PeerDevice copyWith({

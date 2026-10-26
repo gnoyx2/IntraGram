@@ -2,15 +2,14 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // Flutter Gradle 플러그인은 Android·Kotlin 플러그인 다음에 적용해야 함
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// 릴리즈 서명 키는 저장소에 없음. android/key.properties(gitignore됨)에
-// storeFile / storePassword / keyAlias / keyPassword가 있을 때만 릴리즈 키로
-// 서명함. 키 없이 release를 만들면 debug 서명 산출물이 release 이름으로 나와 배포본으로
-// 착각되니 빌드를 멈춤. 시험용 debug 서명 release가 필요하면 allowDebugSigning 속성을 줌
-// (ORG_GRADLE_PROJECT_allowDebugSigning=true). 절차와 검증은 RELEASING.md 참고.
+// 릴리즈 서명 키는 저장소에 없음. android/key.properties(gitignore됨)에 storeFile·storePassword·keyAlias·keyPassword가
+// 있을 때만 릴리즈 키로 서명함. 키 없이 release를 만들면 debug 서명 산출물이 release 이름으로 나와 배포본으로 착각할 수 있어서
+// 빌드를 멈춤. 시험용 debug 서명 release가 필요하면 allowDebugSigning 속성을 줌 (ORG_GRADLE_PROJECT_allowDebugSigning=true).
+// 절차와 검증은 RELEASING.md
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }
@@ -36,19 +35,15 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        // flutter_local_notifications(18.x)가 java.time 등 최신 Java API를
-        // 쓰는 AAR이라 core library desugaring이 꺼져 있으면
-        // :app:checkDebugAarMetadata에서 빌드가 중단됨.
+        // flutter_local_notifications(18.x) AAR이 java.time 같은 최신 Java API를 써서 core library desugaring이 꺼져 있으면
+        // :app:checkDebugAarMetadata에서 빌드가 멈춤
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.yonghun0310.intragram"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -80,8 +75,7 @@ kotlin {
 }
 
 dependencies {
-    // desugar_jdk_libs 1.2.2 — flutter_local_notifications 18.0.1 설정 안내와
-    // 로컬 Gradle 캐시(1.2.2) 버전. 임의로 올리지 않음.
+    // flutter_local_notifications 18.0.1 설정 안내대로 1.2.2. 함부로 안 올림
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.2.2")
 }
 

@@ -1,4 +1,4 @@
-// Branding and contrast contracts for the actual bundled portal, without a CDN or DOM library.
+// 실제로 번들되는 포털의 브랜딩·대비 계약을 CDN이나 DOM 라이브러리 없이 확인함
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
@@ -36,6 +36,35 @@ assert.match(css, /\.jump\s*\{[^}]*env\(safe-area-inset-right\)/);
 assert.match(css, /@media \(forced-colors: active\)\s*\{[^}]*\.btn[^}]*border:\s*1px solid ButtonText/);
 assert.match(css, /@media \(max-height: 360px\)/);
 assert.match(html, /interactive-widget=resizes-content/);
+assert.match(css, /prefers-reduced-transparency:\s*reduce/);
+assert.match(css, /prefers-contrast:\s*more/);
+assert.match(css, /backdrop-filter:\s*none/);
+assert.match(css, /horizontal-viewport-segments:\s*2/);
+assert.match(css, /width:\s*env\(viewport-segment-width 0 0\)/);
+assert.match(css, /vertical-viewport-segments:\s*2/);
+
+// 와이드 창에서도 스크롤·드롭은 전체 폭을 쓰고 본문·입력만 네이티브와 같은 840px 열로 정렬함
+assert.match(theme, /--chat-width:\s*840px/);
+for (const selector of ['#log', 'footer']) {
+  const rule = new RegExp(selector + '\\s*\\{[^}]*calc\\(\\(100% - var\\(--chat-width\\)\\) / 2\\)');
+  assert.match(css, rule);
+}
+assert.match(css, /#log\s*\{[^}]*overflow-y:\s*auto/);
+assert.match(css, /body\.drag-over #log-wrap::before\s*\{[^}]*inset:\s*var\(--sp-sm\)/);
+assert.match(html, /<textarea[^>]*enterkeyhint="send"/);
+assert.match(css, /field-sizing:\s*content/);
+assert.match(css, /font-variant-numeric:\s*tabular-nums/);
+assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)/);
+assert.match(css, /\.row:focus-within \.reaction-action\s*\{[^}]*visibility:\s*visible/);
+const forced = css.slice(css.indexOf('@media (forced-colors: active)'), css.indexOf('/* 시스템 투명도'));
+for (const selector of ['.bubble', 'header', 'footer', '.plain-notice', 'textarea', 'select', ':focus-visible']) {
+  assert.ok(forced.includes(selector), selector + ' must have a forced colors rule');
+}
+assert.match(forced, /border:\s*1px solid CanvasText/);
+assert.match(forced, /outline:\s*2px solid Highlight/);
+// 👍 버튼은 .btn의 ButtonText 경계를 받고, 켜진 상태는 색이 아니라 aria-pressed와 Highlight 경계로 구분됨
+assert.match(forced, /\.reaction-action\[aria-pressed="true"\]\s*\{[^}]*border-color:\s*Highlight/);
+assert.match(forced, /\.bubble[^{]*\{[^}]*border:\s*1px solid CanvasText/);
 
 function luminance(hex) {
   return [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)

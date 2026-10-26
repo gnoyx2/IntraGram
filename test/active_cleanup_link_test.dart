@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intragram/network/file_streamer.dart';
 import 'package:intragram/store/models.dart';
 
+import 'support/chmod_injection.dart';
 import 'support/incoming_cleanup_rig.dart';
 
 // 직접 pull이 예약한 partial, 링크 종료가 건드리는 범위, 지우지 못한 partial의
@@ -106,7 +107,7 @@ void main() {
 
       expect(rig.parts(), isEmpty);
     },
-    skip: Platform.isWindows ? 'chmod-based failure injection' : false,
+    skip: chmodInjectionSkip,
   );
 
   test(
@@ -124,6 +125,6 @@ void main() {
       );
       expect(rig.parts(), hasLength(1), reason: 'not silently forgotten');
     },
-    skip: Platform.isWindows ? 'chmod-based failure injection' : false,
+    skip: chmodInjectionSkip,
   );
 }

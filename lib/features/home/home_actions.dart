@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intragram/app_providers.dart';
 import 'package:intragram/core/network_guard.dart';
 import 'package:intragram/core/peer_code.dart';
+import 'package:intragram/core/target_platform.dart';
 import 'package:intragram/features/chat/open_chat.dart';
 import 'package:intragram/features/connect/scan_screen.dart';
 import 'package:intragram/l10n/strings.dart';
@@ -33,8 +33,7 @@ Future<void> connectAndOpenPeer(
   );
 }
 
-// mDNS 멀티캐스트가 필터링돼 피어가 안 나타나는 Wi-Fi용 탈출구
-// 사설 IP + 포트만 받음 (다이얼로그가 그 외는 거부)
+// 멀티캐스트를 막는 Wi-Fi라 피어가 안 보일 때의 탈출구. 사설 IP와 포트만 받음 (나머지는 다이얼로그가 거부)
 Future<void> manualConnect(BuildContext context, WidgetRef ref) async {
   final target = await showDialog<({String host, int port})>(
     context: context,
@@ -49,11 +48,10 @@ Future<void> manualConnect(BuildContext context, WidgetRef ref) async {
   );
 }
 
-// 데스크톱은 스캔 진입점을 숨기고 "Connect by IP"가 그 자리를 채움
-bool get canScanQr => Platform.isAndroid || Platform.isIOS;
+// 데스크톱은 스캔 대신 IP로 연결이 그 자리를 채움
+bool get canScanQr => isMobileTarget;
 
-// 상대가 방을 호스팅 중이면 기존 room_join 디스패치가 방으로, 아니면 1:1로 연결됨
-// (ScanScreen이 에어갭 밖 코드를 이미 거름)
+// 상대가 방을 열고 있으면 room_join이 방으로 들이고 아니면 1:1 (LAN 밖 코드는 ScanScreen이 이미 거름)
 Future<void> scanConnect(BuildContext context, WidgetRef ref) async {
   final target = await Navigator.of(context).push<PeerCode>(
     MaterialPageRoute<PeerCode>(builder: (_) => const ScanScreen()),
@@ -139,8 +137,7 @@ Future<void> sendClipboardToPeer(
   });
 }
 
-// connect가 도는 동안 모달 스피너, 이후 방 push, 실패면 이유를 담은 SnackBar
-// SecurityException(에어갭 가드)은 사설 주소 안내, 다이얼 실패는 이유별 안내(connect_failure.dart)
+// 연결 중엔 모달 스피너, 성공하면 대화로 들어가고 실패하면 이유별 스낵바 (주소 검사에 걸리면 사설 주소 안내)
 Future<void> _runConnectFlow(
   BuildContext context,
   Future<String> Function() connect,
@@ -148,35 +145,35 @@ Future<void> _runConnectFlow(
   final messenger = ScaffoldMessenger.of(context);
   final navigator = Navigator.of(context);
   final s = S.of(context);
-  // 취소해도 네트워크 콜은 중단 안 됨 (Future는 취소 불가). 다이얼로그를 접고,
-  // connect가 나중에 끝나도 화면 전환/에러 스낵바를 건너뜀
+  // 취소해도 연결 시도는 못 멈춤 (Future는 취소 불가): 다이얼로그만 접고 나중에 끝나도 화면 전환·스낵바를 건너뜀.
+  // 취소 버튼뿐 아니라 뒤로(예측형 포함)·Esc로 닫아도 취소로 봄 (안 그러면 닫은 뒤에 대화가 열리고 엉뚱한 화면을 닫음)
   var cancelled = false;
-  showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (dialogContext) => AlertDialog.adaptive(
-      content: Row(
-        children: [
-          const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(child: Text(s.t('homeActions.connecting'))),
-        ],
-      ),
-      actions: dialogActions(dialogContext, [
-        AdaptiveDialogAction(
-          cupertino: isCupertinoDialog(dialogContext),
-          onPressed: () {
-            cancelled = true;
-            Navigator.of(dialogContext).pop();
-          },
-          label: s.t('common.cancel'),
+  unawaited(
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AppAlertDialog(
+        cupertino: isCupertinoDialog(dialogContext),
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: Text(s.t('homeActions.connecting'))),
+          ],
         ),
-      ]),
-    ),
+        actions: dialogActions(dialogContext, [
+          AdaptiveDialogAction(
+            cupertino: isCupertinoDialog(dialogContext),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            label: s.t('common.cancel'),
+          ),
+        ]),
+      ),
+    ).whenComplete(() => cancelled = true),
   );
   try {
     final conversationId = await connect();

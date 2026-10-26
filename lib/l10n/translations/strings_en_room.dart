@@ -47,6 +47,8 @@ const Map<String, String> kStringsEnRoom = {
   'chat.relayBanner':
       'Host relay (hop-by-hop), not end-to-end: the host can read this room. '
       'Files and browser guests are not encrypted on the LAN.',
+  'chat.roomEmptyBanner':
+      'Everyone has left. Members can rejoin from their own devices.',
   'chat.burnTimer': 'Self-destruct timer',
   'chat.timerOff': 'Timer off',
   'chat.burnAfter': 'Burn after {n}s',

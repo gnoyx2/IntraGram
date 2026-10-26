@@ -19,11 +19,11 @@ import 'package:intragram/store/in_memory_store.dart';
 final class PanicStepFailure {
   const PanicStepFailure(this.step, {required this.timedOut, this.error});
 
-  // 사용자 데이터/경로를 안 담는 고정 라벨이라 로그/화면에 그대로 써도 됨
+  // 사용자 데이터·경로가 없는 고정 라벨이라 로그나 화면에 그대로 써도 됨
   final String step;
 
-  // kPanicStepTimeout 안에 안 끝나 기다리길 포기했으면 true. 그 Future는 취소 안 되고 계속 돌 수 있고,
-  // 뒤늦은 완료가 새 세션을 못 건드리게 하는 건 admission 차단(각 producer가 패닉 첫 동기 구간에서 닫음)이 맡음
+  // stepTimeout 안에 안 끝나서 기다리길 포기함. 그 Future는 계속 돌 수 있지만 늦은 완료가 새 세션을 못 건드리게 하는 건
+  // admission 차단이 맡음 (각 producer가 패닉 첫 동기 구간에서 닫음)
   final bool timedOut;
 
   final Object? error;
@@ -41,13 +41,10 @@ final class PanicWipeResult {
   bool get isComplete => failures.isEmpty;
 }
 
-// 순서: admission 동기적으로 닫기 -> 실행 중 producer 정지/drain 대기 -> RAM
-// 소각 -> 디스크(vault, 기기 이름) 삭제. 반대면 살아있던 I/O가 소각 뒤 상태를 되살릴 수 있음
-// 각 단계는 stepTimeout까지만 기다리고 넘으면 PanicStepFailure로 기록한
-// 뒤 진행 (native 호출 하나가 소각을 막으면 안 되지만 남은 위험은 숨기지 않음)
-// 링크/서버가 멈춘 뒤 신원 키도 교체(rotateKey)해서 소각 전후 세션이
-// peerId로 안 엮임. duress 세션도 실제 신원 파일까지 지움
-// RAM 소각과 함께 OS 쪽 흔적(이미지 캐시, 클립보드, 고아 .part)도 지움.
+// 순서: 증적·자격·방 장부 소거와 admission 동기 차단 -> producer drain -> 나머지 RAM 소각 -> 디스크 삭제.
+// 거꾸로면 살아 있던 I/O가 소각 뒤 상태를 되살릴 수 있음. 단계마다 stepTimeout까지만 기다리고 넘으면 PanicStepFailure로 남긴 뒤 진행
+// (native 호출 하나가 소각을 막으면 안 되지만 남은 위험은 숨기지 않음). 링크·서버가 멈춘 뒤 신원 키도 갈아서 소각 전후 세션이
+// peerId로 안 엮임. duress 세션도 진짜 신원 파일까지 지움. OS 쪽 흔적(이미지 캐시, 클립보드, 고아 .part)도 지우고
 // deleteReceivedFiles면 이번 세션에 받은 파일까지 지움
 Future<PanicWipeResult> executePanicWipe({
   required InMemoryStore store,
@@ -59,7 +56,6 @@ Future<PanicWipeResult> executePanicWipe({
   required VaultAccessNotifier vaultAccess,
   required IdentityStore identityStore,
   required AppIdentity identity,
-  required bool isDecoySession,
   bool deleteReceivedFiles = false,
   VoiceProducerRegistry? voiceProducers,
   Future<void> Function()? clearClipboard,
@@ -68,6 +64,10 @@ Future<PanicWipeResult> executePanicWipe({
   File? directorySettingsFile,
   Duration stepTimeout = kPanicStepTimeout,
 }) async {
+  // 종료가 멈춰도 첫 await 전에 증적 발급과 세션 장부부터 동기로 차단·소거함.
+  store.evidence.freeze();
+  store.orgCredentials.clear();
+  store.roomIntegrity.clear();
   final failures = <PanicStepFailure>[];
 
   Future<void> guarded(String step, Future<void> Function() run) async {
@@ -83,17 +83,15 @@ Future<PanicWipeResult> executePanicWipe({
 
   final voice = voiceProducers ?? VoiceProducerRegistry.instance;
 
-  // admission 차단: 아래 전부 첫 await 전에 동기적으로 실행됨
+  // admission 차단: 여기서 첫 await 전까지 다 동기로 돎
   store.stopPersisting(); // 디바운스 저장부터 끊음 (소각 중간값이 안 나가게)
-  // 아직 아무도 안 읽은 vault snapshot 참조부터 없앰: store가
-  // 소각된 뒤 provider가 재생성돼도 옛 내용이 재hydrate 못 하게
+  // 아직 안 읽힌 vault 스냅샷 참조부터 버림: 소각 뒤 provider가 다시 만들어져도 옛 내용으로 못 채우게
   vaultAccess.clearPendingSnapshot();
   voice.closeAdmission();
 
   try {
-    // 정지 단계는 병렬: 한 단계가 안 끝나도 다른 단계 시작이 안 밀리고,
-    // 각자 stepTimeout 상한이라 최악에도 한 번 분량만 기다림
-    // 각 호출의 첫 동기 구간이 목록을 만드는 즉시 실행돼 admission이 한 틱에 닫힘
+    // 정지 단계는 병렬: 하나가 안 끝나도 다른 단계 시작이 안 밀리고, 각자 stepTimeout 상한이라 최악에도 한 번 분량만 기다림.
+    // 목록을 만드는 순간 각 호출의 첫 동기 구간이 돌아서 admission이 한 틱에 닫힘
     await Future.wait(<Future<void>>[
       guarded('voiceProducers', voice.stopAll),
       guarded('notifications', notificationService.cancelAll),
@@ -107,8 +105,7 @@ Future<PanicWipeResult> executePanicWipe({
     ]);
     // 링크가 다 닫힌 뒤에 갈아야 핸드셰이크 도중인 링크가 옛 키로 서명하다 어긋나지 않음
     await guarded('identityKey', identity.rotateKey);
-    // native 첨부 소스는 링크/전송 reader가 drain된 뒤에 무효화함
-    // 그 뒤 도착하는 늦은 pick/open 결과는 native 쪽 generation 검사가 등록 자체를 막음
+    // native 첨부 소스는 링크·전송 reader가 drain된 뒤에 무효화. 그 뒤 늦게 오는 pick·open 결과는 native 쪽 generation 검사가 등록부터 막음
     await guarded(
       'nativeSources',
       releaseNativeSources ?? MobileFileSource.releaseAll,
@@ -139,6 +136,8 @@ Future<PanicWipeResult> executePanicWipe({
     await guarded('vaultErase', vaultSettings.eraseForPanic);
     await guarded('identityFile', identityStore.clear);
   } finally {
+    store.secureWipe();
+    store.evidence.resume();
     voice.reopenAdmission();
   }
   return PanicWipeResult(List<PanicStepFailure>.unmodifiable(failures));

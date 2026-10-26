@@ -1,11 +1,8 @@
 part of 'incoming_transfers.dart';
 
-// 원본 기기에서 바이트를 당겨오는 두 경로: 그룹 방 멤버 직접 전송(디스크로)과 음성
-// 메시지(RAM으로). 둘 다 IncomingTransfers.accept에서만 불림
+// 보낸 기기에서 당겨 오는 두 길: 방 파일(디스크로)과 음성(RAM으로). 둘 다 accept에서만 불림
 extension _IncomingPull on IncomingTransfers {
-  // 그룹 방 멤버 직접 전송: 원본 멤버의 GET /api/download/<id>에서 바이트를 당겨 directory
-  // 안 목적지에 씀. WAN/비리터럴 호스트는 FileStreamer.download가 소켓을 열기 전에 거부
-  // push 수신(_receiveIncoming)과 같은 패턴으로 이번 시도 전용 .part에 먼저 쓰고 성공해야만 최종 이름으로 커밋
+  // 방 파일: 보낸 멤버의 GET /api/download/<id>에서 당김. push처럼 이번 시도 전용 .part에 쓰고 성공해야 커밋
   Future<void> _pullDirect({
     required String transferId,
     required String host,
@@ -28,7 +25,7 @@ extension _IncomingPull on IncomingTransfers {
       name: suggestedName,
       attemptId: attemptId,
     );
-    // 예약 직후 다음 await 전에 소유 등록 (예약을 기다리는 사이 세션이 정리됐다면 방금 만든 파셜을 바로 치움)
+    // 예약 직후 await 전에 소유 등록 (그사이 세션이 정리됐으면 바로 치움)
     _ownPartial(transferId, conversationId, attemptId, partial);
     if (!_isCurrent(transferId, attemptId)) {
       await _deleteOwnedPartialsRecorded(transferId);
@@ -49,6 +46,7 @@ extension _IncomingPull on IncomingTransfers {
         transferId,
         (t) => t.copyWith(state: TransferState.transferring),
       );
+      String? received;
       final written = await FileStreamer.download(
         host: host,
         port: port,
@@ -64,6 +62,7 @@ extension _IncomingPull on IncomingTransfers {
         decrypt: decrypt,
         cancelToken: cancelToken,
         sha256: digest,
+        onDigest: (sha256) => received = sha256,
       );
       if (cancelToken.isCancelled || !_isCurrent(transferId, attemptId)) {
         throw const TransferCancelledException();
@@ -80,22 +79,15 @@ extension _IncomingPull on IncomingTransfers {
           transferredBytes: written,
           bytesPerSecond: 0,
           localPath: committed,
+          contentCommitment: received,
         ),
       );
       final transfer = store.transfer(transferId);
-      if (transfer != null) {
-        await _linkForTransfer(
-          transfer,
-        )?.sendFileReceived(transferId, attemptId: attemptId);
-      }
+      if (transfer != null) _acknowledge(transfer, attemptId, received);
     } on Object catch (e) {
-      // FileStreamer.download가 receive()까지 못 가고 던지면(원본이 non-200, 연결
-      // 실패 등) receive()의 abort()가 안 불려
-      // 파셜이 안 지워지므로 소유 registry에서 끝까지 지움
-      // (이미 지워졌으면 no-op, 삭제가 실패하면 registry에 남아 다음 discard/clear가 다시 시도하고 기록됨)
+      // receive까지 못 가고 던졌으면(200 아님, 연결 실패) abort가 안 돌아서 .part를 여기서 지움
       await _deleteOwnedPartialsRecorded(transferId);
-      // cancelTransfer/handleCancelledByPeer가 이미 cancelled로
-      // 세팅했으면 failed로 덮어쓰지 않음 (끊긴 토큰 때문에 던져진 것뿐)
+      // 이미 cancelled면 failed로 안 덮음 (끊긴 토큰 때문에 던진 것뿐)
       if (store.transfer(transferId)?.state != TransferState.cancelled) {
         _failReceive(transferId, e);
       }
@@ -107,8 +99,7 @@ extension _IncomingPull on IncomingTransfers {
     }
   }
 
-  // 음성 메시지 수신: 원본 기기에서 오디오 바이트를 RAM으로 당겨 FileTransfer.voiceBytes에 담음 (디스크엔 안 씀)
-  // WAN/비리터럴 호스트는 소켓을 열기 전에 거부하고 선언 크기를 넘는 스트림은 중단
+  // 음성: RAM으로 당겨 voiceBytes에 담음 (디스크엔 안 씀). 선언 크기를 넘으면 끊음
   Future<void> _pullVoice(FileTransfer transfer) async {
     if (_closed) return;
     final host = transfer.srcHost;
@@ -123,9 +114,7 @@ extension _IncomingPull on IncomingTransfers {
       );
       return;
     }
-    // 음성은 RAM으로 통째로 들어와서(파일처럼 디스크로 안 흘림) 상한을 강제함:
-    // 넘게 선언한 피어는 여기서 잘리고 downloadToMemory가 초과분에서
-    // 중단
+    // RAM에 통째로 받아서 상한을 둠 (넘게 선언하면 여기서 거절)
     if (transfer.totalBytes > kMaxVoiceNoteBytes) {
       store.updateTransfer(
         transfer.id,
@@ -167,6 +156,8 @@ extension _IncomingPull on IncomingTransfers {
         SecureBytes.wipe(bytes);
         throw const TransferCancelledException();
       }
+      // RAM에 다 있어서 영수증 커밋먼트는 바로 잼 (방 음성은 offer 해시와 이미 맞춰 봄)
+      final digest = transfer.digest ?? sha256B64(bytes);
       store.updateTransfer(
         transfer.id,
         (t) => t.copyWith(
@@ -174,12 +165,10 @@ extension _IncomingPull on IncomingTransfers {
           transferredBytes: bytes.length,
           bytesPerSecond: 0,
           voiceBytes: bytes,
+          contentCommitment: digest,
         ),
       );
-      await _linkForTransfer(transfer)?.sendFileReceived(
-        transfer.id,
-        attemptId: transfer.attemptId ?? transfer.id,
-      );
+      _acknowledge(transfer, transfer.attemptId ?? transfer.id, digest);
     } on Object catch (e) {
       if (store.transfer(transfer.id)?.state != TransferState.cancelled) {
         store.updateTransfer(

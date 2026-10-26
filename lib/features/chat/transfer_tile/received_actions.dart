@@ -33,7 +33,9 @@ class _ReceivedActions extends StatelessWidget {
     final s = S.of(context);
     final choice = await showDialog<_ExecChoice>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      // 데스크톱 전용이라 기본 동작(폴더 보기)에 키보드 초점을 주는 Material 버튼을 그대로 씀
+      builder: (ctx) => AppAlertDialog(
+        cupertino: false,
         title: Text(
           s.t(executable ? 'transfer.execWarnTitle' : 'transfer.netWarnTitle'),
         ),
@@ -94,10 +96,6 @@ class _ReceivedActions extends StatelessWidget {
     );
   }
 }
-
-bool get _isMobile =>
-    defaultTargetPlatform == TargetPlatform.android ||
-    defaultTargetPlatform == TargetPlatform.iOS;
 
 // 모바일은 받은 파일이 앱 전용 폴더에 있어서(Android는 파일 관리자에 안 보임) 공유 시트로 꺼냄:
 // 파일 앱·드라이브에 저장하거나 다른 앱으로 엶

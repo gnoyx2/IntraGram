@@ -1,14 +1,10 @@
-// Application-level settings for the Runner target.
-//
-// This may be replaced with something auto-generated from metadata (e.g., pubspec.yaml) in the
-// future. If not, the values below would default to using the project name when this becomes a
-// 'flutter create' template.
+// Runner 타깃의 앱 단위 설정
 
-// The application's name. By default this is also the title of the Flutter window.
+// 앱 이름 (Flutter 창 제목도 됨)
 PRODUCT_NAME = IntraGram
 
-// The application's bundle identifier
+// 번들 ID
 PRODUCT_BUNDLE_IDENTIFIER = com.yonghun0310.intragram
 
-// The copyright displayed in application information
+// 앱 정보에 뜨는 저작권 표시
 PRODUCT_COPYRIGHT = Copyright © 2026 IntraGram contributors. MIT License.

@@ -3,19 +3,22 @@ import 'package:flutter/widgets.dart';
 import 'package:intragram/store/models.dart';
 import 'translations/strings_en_core.dart';
 import 'translations/strings_en_chat.dart';
+import 'translations/strings_en_audit.dart';
+import 'translations/strings_en_integrity.dart';
+import 'translations/strings_en_org.dart';
 import 'translations/strings_ko_core.dart';
 import 'translations/strings_ko_chat.dart';
 import 'translations/strings_ko_connect.dart';
 import 'translations/strings_ko_privacy.dart';
 import 'translations/strings_ko_settings.dart';
+import 'translations/strings_ko_audit.dart';
+import 'translations/strings_ko_integrity.dart';
+import 'translations/strings_ko_org.dart';
 
 // en이 기준 언어. 새 키는 항상 영어 테이블(kStringsEn*)에 먼저 추가
 enum AppLang { en, ko }
 
-// 코드 생성/intl 없이 Map 두 개로 관리. 사용 예:
-//   S.of(context).t('sys.memberJoined', {'alias': name})   // {alias} 치환
-// S.of(context).plural(n, one: '{n} person',
-// other: '{n} people') LocaleScope가 없으면 영어로 폴백
+// 코드 생성·intl 없이 Map 두 개로 씀. 예: S.of(context).t('sys.memberJoined', {'alias': name}). LocaleScope가 없으면 영어
 class S {
   const S(this.lang);
 
@@ -88,7 +91,13 @@ class S {
     AppLang.ko: _ko,
   };
 
-  static const Map<String, String> _en = {...kStringsEnCore, ...kStringsEnChat};
+  static const Map<String, String> _en = {
+    ...kStringsEnCore,
+    ...kStringsEnChat,
+    ...kStringsEnAudit,
+    ...kStringsEnIntegrity,
+    ...kStringsEnOrg,
+  };
 
   static const Map<String, String> _ko = {
     ...kStringsKoCore,
@@ -96,6 +105,9 @@ class S {
     ...kStringsKoConnect,
     ...kStringsKoPrivacy,
     ...kStringsKoSettings,
+    ...kStringsKoAudit,
+    ...kStringsKoIntegrity,
+    ...kStringsKoOrg,
   };
 }
 

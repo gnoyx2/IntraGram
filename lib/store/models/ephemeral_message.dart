@@ -28,34 +28,33 @@ class EphemeralMessage {
   final MessageKind kind;
   final String senderAlias;
 
-  // _PeerLinkAuthorization이 확정한 발신자 peerId (웹 게스트는
-  // peerId가 없어 alias로 대체). reactions/readBy 키의 기준
-  // 로컬에서 만든 메시지(내가 보낸 것, 시스템 알림)는 null
+  // _PeerLinkAuthorization이 확정한 보낸 사람 peerId (웹 게스트는 peerId가 없어서 alias). reactions·readBy 키도 이 기준.
+  // 내가 만든 메시지(보낸 것, 시스템 줄)는 null
   final String? senderPeerId;
   final DateTime createdAt;
 
   final String? text;
 
-  // 렌더 시점에 번역됨. RAM 전용이라 직렬화/동등성 비교에 안 들어감 (시스템 메시지는 vault에 안 담김)
+  // 그릴 때 번역함. RAM 전용이라 직렬화·동등성 비교에 안 들어감 (시스템 메시지는 vault에 안 담김)
   final SystemEvent? systemEvent;
 
   final String? transferId;
 
-  // 원본이 소각/삭제되면 UI가 "Message deleted"로 표시 (소각된 텍스트 사본을 안 남김)
+  // 원본이 소각·삭제되면 UI가 삭제된 메시지로 보여 줌 (소각된 글의 사본을 안 남김)
   final String? replyToId;
 
-  // senderAlias -> 그 사람이 건 emoji 집합 (한 사람이 여러 개 가능, 디스코드식)
+  // 반응한 사람 peerId(웹 게스트는 alias) -> 그 사람이 건 이모지 집합 (한 사람이 여러 개 가능)
   final Map<String, Set<String>> reactions;
 
   final int ttlSeconds;
 
-  // 소각 예약 벽시계 시각. 카운트다운이 실제로 시작될 때(읽었을 때) 세팅되고, 아직이면 null
+  // 소각 예정 벽시계 시각. 카운트다운이 실제로 시작될 때(읽었을 때) 채워지고 그전엔 null
   final DateTime? burnAt;
 
   final DeliveryState delivery;
   final bool burned;
 
-  // 그룹 방에서 읽음이 확인된 멤버 alias 집합. 1:1은 delivery의 read 하나로 충분해서 안 씀(빈 집합)
+  // 방에서 읽음이 확인된 멤버 peerId(웹 게스트는 alias) 집합. 1:1은 delivery의 read로 충분해서 빈 집합
   final Set<String> readBy;
 
   bool get hasTimer => ttlSeconds > 0;

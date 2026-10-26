@@ -135,7 +135,7 @@ class _DeliveryIcon extends StatelessWidget {
       DeliveryState.read => S.of(context).t('a11y.deliveryRead'),
       DeliveryState.failed => S.of(context).t('a11y.deliveryFailed'),
     };
-    // 나 빼고 읽을 수 있는 사람이 2명 이상일 때만 카운트 표시 (멤버 2명짜리 "방"은 사실상 1:1)
+    // 나 빼고 읽을 수 있는 사람이 2명 이상일 때만 카운트 표시 (멤버 2명짜리 방은 사실상 1:1)
     final possibleReaders = roomMemberCount == null
         ? null
         : math.max(roomMemberCount! - 1, readCount);

@@ -6,9 +6,8 @@ import 'package:cryptography/dart.dart' show DartSha256;
 
 import 'package:intragram/core/constants.dart';
 
-// 다이얼러가 첫 hello에 임시키 대신 싣는 커밋. 리스너는 이 값만 보고 자기 임시키를 정해야 해서
-// 중간자가 상대 키를 본 뒤 6자리 SAS를 맞추는 키를 고를 수 없음 (임시키는 auth에서 공개)
-// 신원 키도 묶어서 다른 신원으로 같은 커밋을 재사용하지 못하게 함
+// 다이얼러가 첫 hello에 임시키 대신 싣는 커밋 (임시키는 auth에서 공개). 리스너가 이것만 보고 자기 키를 정해서
+// 중간자가 상대 키를 보고 SAS 맞추는 키를 못 고름. 신원 키도 묶어서 커밋을 다른 신원으로 못 돌려씀
 Uint8List ephemeralCommitment({
   required List<int> ephemeral,
   required List<int> identityKey,
@@ -23,10 +22,8 @@ Uint8List ephemeralCommitment({
   );
 }
 
-// 신원 증명에서 서명하는 바이트: peerId가 신원 공개키의 해시라서 그 개인키로 서명하면
-// peerId를 실제로 가진 쪽임이 증명됨. 양쪽 신원 공개키(unknown-key-share 방지)와 역할 바이트
-// (다이얼러 서명이 리스너 서명으로 통하지 않게)를 함께 서명함
-// 리스너는 다이얼러 임시키를 보기 전에 서명하므로 그 자리에 다이얼러 커밋을 넣음
+// 신원 증명 서명 바이트: peerId가 신원 공개키 해시라 그 개인키로 서명하면 peerId 주인임이 증명됨. 양쪽 신원 키(unknown-key-share 방지)와
+// 역할 바이트(다이얼러 서명을 리스너 서명으로 못 씀)를 같이 묶음. 리스너는 다이얼러 임시키를 보기 전에 서명해서 그 자리에 커밋을 넣음
 Uint8List listenerTranscript({
   required List<int> dialerCommitment,
   required List<int> listenerEphemeral,
@@ -39,7 +36,7 @@ Uint8List listenerTranscript({
   listenerKey,
 ]);
 
-// 다이얼러는 리스너 임시키를 받은 뒤 공개하는 자기 임시키로 서명함
+// 다이얼러는 리스너 임시키를 받은 뒤 자기 임시키를 공개하며 서명함
 Uint8List dialerTranscript({
   required List<int> dialerEphemeral,
   required List<int> listenerEphemeral,
@@ -52,7 +49,7 @@ Uint8List dialerTranscript({
   listenerKey,
 ]);
 
-// 모든 필드가 32바이트 고정 길이라 이어붙여도 모호하지 않음 (길이가 다르면 ArgumentError)
+// 다 32바이트 고정이라 이어붙여도 모호하지 않음
 Uint8List _transcript(int role, List<List<int>> fields) {
   _require32(fields);
   return Uint8List.fromList(<int>[
@@ -71,9 +68,8 @@ void _require32(List<List<int>> fields) {
 // Ed25519 체 크기 p = 2^255 - 19
 final BigInt _fieldPrime = (BigInt.one << 255) - BigInt.from(19);
 
-// 위수 8 이하인 8개 점(작은 위수 점)의 y 좌표 (x 부호와 무관):
-// 0(위수 4), 1(위수 1), p-1(위수 2), 위수 8인 두 값
-// 값은 test/peer_auth_weak_key_test.dart가 곡선 산술로 독립 검증함
+// 위수 8 이하 점들의 y 좌표 (x 부호 무관): 0(위수 4), 1(위수 1), p-1(위수 2), 위수 8 두 개.
+// test/peer_auth_weak_key_test.dart가 곡선 산술로 따로 검증함
 final Set<BigInt> _smallOrderYs = <BigInt>{
   BigInt.zero,
   BigInt.one,
@@ -86,9 +82,8 @@ final Set<BigInt> _smallOrderYs = <BigInt>{
   ),
 };
 
-// 작은 위수 점 키는 아무나 임의 메시지에 유효한 서명을 만들 수 있어서(항등원이면
-// R=[s]B, S=s) 그 해시인 peerId를 누구나 "증명"함
-// 그래서 신원 키로 안 받음. y가 p 이상인 비정규 인코딩도 있어 p로 줄여서 비교
+// 작은 위수 점 키는 누구나 아무 메시지에 통하는 서명을 만들 수 있어서(항등원이면 R=[s]B, S=s) 그 peerId를 아무나 '증명'함.
+// 그래서 신원 키로 안 받음. y가 p 이상인 비정규 인코딩도 있어 p로 줄여 비교
 bool isSmallOrderKey(List<int> key) {
   var y = BigInt.zero;
   for (var i = 31; i >= 0; i--) {

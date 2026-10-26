@@ -1,10 +1,8 @@
 part of 'outgoing_transfers.dart';
 
 extension OutgoingTransfersDelivery on OutgoingTransfers {
-  // 수신자 한 명에게 HTTP로 바이트를 스트리밍 (앱-앱 push). 봉인은 offer 시점이 아니라
-  // 지금 그 수신자의 현재 attemptId로 해서 재시도가 새 attemptId를 발급해도 따라감
-  // 성공하면 POST 200을 그 attempt의 wire EOF로 기록 (complete는 ACK와
-  // 결합해서 판정, _onWireEof). 절대 안 던짐: 실패는 그 수신자의 상태로만 기록
+  // 수신자 한 명에게 POST로 밀어 넣음. 봉인은 지금 attempt로 함. POST 200은 wire EOF일 뿐이고 완료는 ACK와 같이 봄.
+  // 안 던짐: 실패는 그 수신자 상태로만 남김
   Future<void> _runPush(
     String transferId,
     OutgoingFileSource source,
@@ -15,8 +13,7 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
     final port = source.port;
     final pushToken = recipient.pushToken;
     if (host == null || port == null || pushToken == null) {
-      // 피어는 accept를 보냈는데 보낼 곳/토큰이 없음: 조용히 무시하면 받는 쪽 진행률이 0%에서 영원히 멈추니
-      // cancel로 알려서 받는 쪽이 실패를 보고 재시도할 수 있게 함
+      // 상대는 수락했는데 보낼 곳·토큰이 없음: 그냥 두면 받는 쪽이 0%에 멈춰서 취소로 알림
       unawaited(
         _linkForRecipient(
           source,
@@ -35,8 +32,7 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
     var acquired = false;
     _SettledStream? tracked;
     try {
-      // 동시 전송 상한: 자리 날 때까지 기다림 (그동안 취소가 대기열에서도 즉시 빠지게 cancelToken도 같이 줌)
-      // 무한정은 안 기다리고 막혀도 kTransferStallTimeout 뒤엔 실패로 드러남
+      // 자리 날 때까지 기다림 (취소되면 바로 빠지고 막혀도 kTransferStallTimeout 뒤엔 실패)
       await gate.acquire(
         timeout: kTransferStallTimeout,
         cancelToken: cancelToken,
@@ -49,13 +45,14 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
       final link =
           _linkForRecipient(source, recipient) ??
           _linkFor(source.conversationId);
-      // 소스 구독이 완전히 풀린 시점을 알아야 reader를 닫은 뒤에 release할 수 있음
+      // reader가 닫힌 뒤에 해제하려고 구독이 풀린 때를 잼
       final wire = tracked = _SettledStream(
         _openWireStream(
           source: source,
           transferId: transferId,
           attemptId: attemptId,
           link: link,
+          recipient: recipient,
         ),
       );
       _syncTransfer(transferId);
@@ -78,9 +75,7 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
       if (recipient.attemptId != attemptId || recipient.isTerminal) return;
       _onWireEof(transferId, source, recipient);
     } on Object catch (e) {
-      // 사용자 취소/상대 취소/새 시도가 이미 상태를 정리했으면 failed로
-      // 덮어쓰지 않음: 이 catch는 끊긴 토큰 때문에 I/O가 던진 게 전파된
-      // 것뿐
+      // 취소나 새 시도가 이미 상태를 정리했으면 failed로 안 덮음 (끊긴 토큰 때문에 던진 것뿐)
       if (recipient.attemptId == attemptId && !recipient.isTerminal) {
         recipient
           ..error = classifyTransferError(e)
@@ -97,25 +92,29 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
     }
   }
 
-  // 스토어에서 transferId가 이미 사라진 뒤(소각/전체 와이프) 불림: 진행 중 전송을 전부 끊고 끝날 때까지 기다린 뒤에만
-  // source를 버림. cancelTransfer와 달리
-  // store.transfer를 다시 조회하지 않음 (이미 없어서 가드가 항상 실패)
+  // 스토어에서 이미 사라진 뒤에도 불려서 store를 다시 안 봄. 도는 전송을 다 끊고 끝나길 기다린 뒤에 source를 버림
   Future<void> discard(String transferId) async {
     final source = _outgoing[transferId];
-    if (source == null) return;
-    for (final r in source._recipients.values) {
-      r.stopActivity();
+    var release = _retiring[transferId];
+    if (source != null) {
+      for (final r in source._recipients.values) {
+        r.stopActivity();
+      }
+      unawaited(source._stopHashing?.call());
+      await _drainRecipients(source);
+      if (identical(_outgoing[transferId], source)) {
+        _outgoing.remove(transferId);
+      }
+      release = _retireSource(transferId, source);
     }
-    unawaited(source._stopHashing?.call());
-    await _drainRecipients(source);
-    if (identical(_outgoing[transferId], source)) _outgoing.remove(transferId);
-    await _releaseSource(source); // reader가 다 닫힌 뒤 native 자원을 놓음
+    if (release == null) return;
+    final failure = await release;
+    _retiring.remove(transferId);
+    // 완료 뒤 소스가 먼저 은퇴했어도 native 실패를 정리 완료로 서명하지 않음.
+    if (failure != null) throw TransferCleanupException(failures: [failure]);
   }
 
-  // 아직 안 보내졌거나(offered) 전송 중인 아웃고잉 전송을 사용자가
-  // 무름: 모든 수신자를 끊고 각자에게 자기 attempt로 취소를 알림
-  // 상태는 응답성 우선으로 즉시 cancelled로 세팅 (실제 소켓 정리는
-  // 비동기로 뒤따라도 push의 catch가 failed로 덮어쓰지 않음)
+  // 사용자가 보내기를 무름: 수신자를 다 끊고 각자 attempt로 취소를 알림. 상태는 바로 cancelled (소켓 정리는 뒤따름)
   void cancelTransfer(String transferId) {
     final transfer = store.transfer(transferId);
     if (transfer == null || transfer.direction != TransferDirection.outgoing) {
@@ -150,12 +149,10 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
   Future<void> retryTransfer(String transferId) =>
       _retryOutgoingTransfer(this, transferId);
 
-  // 테스트/진단용 staged source 조회
+  // 테스트·진단용
   OutgoingFileSource? source(String transferId) => _outgoing[transferId];
 
-  // 링크가 닫힘. recipientKey가 주어지면(그룹 방의 멤버 링크 하나)
-  // 그 수신자만 실패로 돌리고 나머지 수신자의 source와 상태는 그대로 둠
-  // 없으면(1:1 링크) 그 대화의 전송 전부를 버림
+  // 링크가 닫힘. recipientKey가 있으면(방 멤버 하나) 그 수신자만 실패, 없으면(1:1) 그 대화 전송을 다 버림
   Future<void> handleLinkClosed(
     String conversationId, {
     String? recipientKey,

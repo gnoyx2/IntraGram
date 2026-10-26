@@ -15,8 +15,6 @@ extension _DiscoveryBroadcast on DiscoveryController {
     },
   );
 
-  // bonsoir엔 라이브 TXT 업데이트 API가 없어서 alias나 방 호스팅 여부가 바뀌면
-  // 재시작이 유일한 방법 (setHostsRoom/restartBroadcast 참고)
   Future<void> _restartBroadcast() async {
     final identity = _identity;
     final port = _port;

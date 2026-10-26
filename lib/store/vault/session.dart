@@ -1,11 +1,8 @@
 part of '../vault.dart';
 
 extension _VaultSession on Vault {
-  // private이라 공개 진입점은 Vault.load의 위임. 전이를 시작하는 순간(첫 await 전, 동기적으로) _epoch를
-  // 올리고 _transitioning을 켜서, 이미 큐에 있던 저장이 체크포인트에서 옛 epoch를 보고 스스로 멈추게 함
-  // 판독도 저장/삭제와 같은 큐에 태워서 판독 도중 파일이 바뀌거나 전이가 결정된 뒤 옛 세션의 rename이
-  // 아카이브를 바꾸는 일을 막음 (큐 앞의 저장은 epoch 체크에서 곧바로 물러나 교착 없음)
-  // 오래된 전이가 새 전이(또는 erase)의 flag를 내리지 않게 지금 epoch가 시작 때 캡처한 값과 같을 때만 내림
+  // 첫 await 전에 epoch를 올리고 전이 중으로 표시: 큐에 있던 저장은 옛 epoch를 보고 물러남. 읽기도 같은 큐에 태워서
+  // 읽는 도중 파일이 바뀌거나 옛 세션의 rename이 아카이브를 바꾸지 못함. 표시는 epoch가 그대로일 때만 내림 (옛 전이가 새 전이 표시를 못 내리게)
   Future<VaultSnapshot?> _load({String? pin}) {
     _epoch++;
     _transitioning = true;
@@ -45,8 +42,7 @@ extension _VaultSession on Vault {
           if (stale()) return null;
           if (isDecoy) {
             _decoyMode = true;
-            // 진짜 세션의 흔적을 전부 지움 (decoy가 실제 PIN/salt를
-            // 참조하거나 나중에 실제 archive를 hydrate할 수단을 안 남김)
+            // 진짜 세션 흔적을 다 지움 (duress 세션이 진짜 PIN·salt로 아카이브를 열 길을 안 남김)
             _clearKey();
             _pin = null;
             _decoyPin = null;

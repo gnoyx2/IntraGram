@@ -12,7 +12,7 @@ class _MessageEntry extends _Entry {
   final EphemeralMessage message;
 }
 
-// 소각 애니메이션에만 필요한 최소 정보. 원본 내용을 안 들고 있어서 만료 후에도 평문이 위젯 트리에 안 남음
+// 소각 애니메이션용 최소 정보: 원본 내용이 없어서 만료 뒤 평문이 위젯 트리에 안 남음
 class _GhostEntry extends _Entry {
   const _GhostEntry(this.ghost);
   final _BurnGhostSpec ghost;

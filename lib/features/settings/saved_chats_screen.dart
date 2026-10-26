@@ -12,9 +12,9 @@ import 'package:intragram/widgets/empty_state.dart';
 import 'package:intragram/widgets/empty_state_art.dart';
 import 'package:intragram/widgets/readable_list.dart';
 
-// 라이브 스토어를 거치지 않고 디스크 스냅샷을 직접 읽어 지금 파일에 뭐가 남았는지 보여줌
-// (홈 목록은 라이브/vault 대화가 섞여 "저장된 것만" 보기·지우기가 안 됨)
-// 탭하면 기존 ChatRoomScreen을 엶 (vault가 켜진 동안은 이미 라이브 스토어에 하이드레이트돼 새 뷰어 불필요)
+// 라이브 스토어를 안 거치고 디스크 스냅샷을 직접 읽어서 지금 파일에 뭐가 남았는지 보여 줌
+// (홈 목록은 라이브와 보관 대화가 섞여서 저장된 것만 보고 지우기가 안 됨). 탭하면 기존 ChatRoomScreen을 엶
+// (보관이 켜진 동안엔 이미 라이브 스토어에 올라와 있음)
 class SavedChatsScreen extends ConsumerStatefulWidget {
   const SavedChatsScreen({super.key});
 
@@ -38,7 +38,8 @@ class _SavedChatsScreenState extends ConsumerState<SavedChatsScreen> {
     final cupertino = isCupertinoDialog(context);
     final ok = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog.adaptive(
+      builder: (dialogContext) => AppAlertDialog(
+        cupertino: cupertino,
         title: Text(s.t('savedChats.deleteTitle')),
         content: Text(
           s.t('savedChats.deleteBody', {'name': s.title(conversation)}),
@@ -77,7 +78,7 @@ class _SavedChatsScreenState extends ConsumerState<SavedChatsScreen> {
             .toList(),
       ),
     );
-    // 라이브 스토어에도 하이드레이트돼 있으면 거기서도 지움 (안 그러면 "지웠는데 목록엔 그대로"로 보임)
+    // 라이브 스토어에도 올라와 있으면 거기서도 지움 (안 그러면 지웠는데 목록엔 그대로 보임)
     ref.read(inMemoryStoreProvider).wipeConversation(conversation.id);
     if (!mounted) return;
     _reload();

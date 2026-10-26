@@ -2,6 +2,7 @@ part of '../home_screen.dart';
 
 mixin _HomeScreenAppBar on ConsumerState<HomeScreen> {
   PreferredSizeWidget _appBar(ColorScheme scheme) {
+    // 좁은 폰에 큰 글씨면 제목을 줄이지 않고 아이콘 액션을 메뉴로 옮김
     final compact =
         MediaQuery.sizeOf(context).width < 480 &&
         MediaQuery.textScalerOf(context).scale(20) > 28;
@@ -45,7 +46,6 @@ mixin _HomeScreenAppBar on ConsumerState<HomeScreen> {
             onPressed: () => PortalSheet.show(context),
           ),
         ],
-        // 큰 글씨에서도 제목을 축소하지 않고 같은 액션을 메뉴로 옮김.
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
           tooltip: S.of(context).t('chat.more'),

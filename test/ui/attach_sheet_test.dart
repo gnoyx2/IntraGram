@@ -27,11 +27,29 @@ void main() {
     expect(result, AttachChoice.file);
   });
 
-  // 카메라도 사진첩도 모바일 전용(데스크톱엔 진짜 사진첩이 없어서 file_picker
-  // 파일 브라우저와 똑같아 보임): 둘 다 이 (비모바일) 테스트 호스트에선
-  // 숨겨짐. photoLibrary 선택 자체는 desktop이 아닌 실기기에서만 검증 가능
+  // 사진첩은 모바일 전용(데스크톱엔 진짜 사진첩이 없어서 file_picker 파일 브라우저와 똑같아 보임)
+  // 플랫폼은 테스트를 돌리는 호스트가 아니라 대상 플랫폼으로 정해서 양쪽 다 여기서 확인함
   testWidgets(
-    'camera and photo library are hidden on this (non-mobile) test platform',
+    'a phone offers the photo library',
+    (tester) async {
+      AttachChoice? result;
+      await tester.pumpWidget(
+        _harness((future) => future.then((v) => result = v)),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Photo Library'));
+      await tester.pumpAndSettle();
+      expect(result, AttachChoice.photoLibrary);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
+
+  testWidgets(
+    'a desktop offers no camera or photo library',
     (tester) async {
       await tester.pumpWidget(_harness((_) {}));
       await tester.tap(find.text('open'));
@@ -40,5 +58,6 @@ void main() {
       expect(find.text('Photo Library'), findsNothing);
       expect(find.text('File'), findsOneWidget);
     },
+    variant: TargetPlatformVariant.desktop(),
   );
 }

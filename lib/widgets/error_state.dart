@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 원본 에러는 절대 안 지움 (헤드라인으로만 안 씀). LAN 제품이라 사용자가 곧 네트워크 관리자인
-// 경우가 많아 복사 가능하게 둠
+// 원본 오류는 숨기지만 지우진 않음 (제목으론 안 씀): LAN 앱이라 사용자가 곧 네트워크 관리자인 경우가 많아 펼쳐서 복사할 수 있게 둠
 class ErrorState extends StatefulWidget {
   const ErrorState({
     super.key,

@@ -1,15 +1,13 @@
 #include "win32_window.h"
 
-// WM_DWMCOLORIZATIONCOLORCHANGED 상수가 dwmapi.h에 정의돼 있어서 필요함 -- 이
-// 파일에서 Dwm* 함수를 직접 부르진 않음 (UpdateTheme은 win32_window.cpp에 있음).
+// WM_DWMCOLORIZATIONCOLORCHANGED 상수가 dwmapi.h에 있어서 필요함 (Dwm* 함수는 여기서 안 부르고 UpdateTheme은 win32_window.cpp에 있음)
 #include <dwmapi.h>
 
 namespace {
 
 using EnableNonClientDpiScaling = BOOL __stdcall(HWND hwnd);
 
-// Dynamically loads the |EnableNonClientDpiScaling| from the User32 module.
-// This API is only needed for PerMonitor V1 awareness mode.
+// User32에서 EnableNonClientDpiScaling을 동적으로 불러옴 (PerMonitor V1 모드에서만 필요한 API)
 void EnableFullDpiSupportIfAvailable(HWND hwnd) {
   HMODULE user32_module = LoadLibraryA("User32.dll");
   if (!user32_module) {
@@ -40,6 +38,10 @@ LRESULT CALLBACK Win32Window::WndProc(HWND const window,
     EnableFullDpiSupportIfAvailable(window);
     that->window_handle_ = window;
   } else if (Win32Window* that = GetThisFromHandle(window)) {
+    if (message == WM_DPICHANGED || message == WM_MOVE ||
+        message == WM_DISPLAYCHANGE || message == WM_DWMCOMPOSITIONCHANGED) {
+      ProtectContent(window);
+    }
     return that->MessageHandler(window, message, wparam, lparam);
   }
 
@@ -70,10 +72,20 @@ Win32Window::MessageHandler(HWND hwnd,
 
       return 0;
     }
+    case WM_DWMCOMPOSITIONCHANGED:
+      UpdateTheme(hwnd);
+      break;
+    case WM_ERASEBKGND: {
+      const auto dc = reinterpret_cast<HDC>(wparam);
+      const COLORREF previous = SetDCBrushColor(dc, background_color_);
+      const RECT rect = GetClientArea();
+      FillRect(dc, &rect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+      SetDCBrushColor(dc, previous);
+      return 1;
+    }
     case WM_SIZE: {
       RECT rect = GetClientArea();
       if (child_content_ != nullptr) {
-        // Size and position the child window.
         MoveWindow(child_content_, rect.left, rect.top, rect.right - rect.left,
                    rect.bottom - rect.top, TRUE);
       }
@@ -81,7 +93,7 @@ Win32Window::MessageHandler(HWND hwnd,
     }
 
     case WM_ACTIVATE:
-      if (child_content_ != nullptr) {
+      if (LOWORD(wparam) != WA_INACTIVE && child_content_ != nullptr) {
         SetFocus(child_content_);
       }
       return 0;
@@ -91,20 +103,15 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
 
     case WM_SETTINGCHANGE:
-      // WM_DWMCOLORIZATIONCOLORCHANGED only fires for the accent color.
-      // Toggling Settings > Personalization > Colors > light/dark sends this
-      // broadcast instead (lParam names the changed policy), so the title
-      // bar stays stuck in the old mode until relaunch without this case.
-      if (lparam != 0 &&
-          wcscmp(reinterpret_cast<const wchar_t*>(lparam),
-                L"ImmersiveColorSet") == 0) {
-        UpdateTheme(hwnd);
-      }
+      // WM_DWMCOLORIZATIONCOLORCHANGED는 강조색에만 옴. 설정 > 개인 설정 > 색에서 라이트·다크를 바꾸면 대신 이 브로드캐스트가
+      // 와서(lParam이 바뀐 정책 이름) 이 case가 없으면 다시 켤 때까지 제목 표시줄이 옛 모드에 머묾
+    case WM_SYSCOLORCHANGE:
+      UpdateTheme(hwnd);
       return 0;
 
     case WM_GETMINMAXINFO: {
-      // 420x560 논리 픽셀 — 두 줄 채팅 앱바 타이틀 + 트레일링 액션, 오프라인
-      // 배너 + 버블 3개 + 입력창이 텍스트 스케일 1.0에서 안 찌그러지는 최소치.
+      // 최소 420x560 논리 픽셀: 두 줄 채팅 앱바 제목과 오른쪽 액션, 오프라인 배너, 말풍선 3개, 입력창이
+      // 글자 배율 1.0에서 안 찌그러지는 최소치
       auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
       const double scale_factor = GetDpiForWindow(hwnd) / 96.0;
       info->ptMinTrackSize.x = Scale(420, scale_factor);

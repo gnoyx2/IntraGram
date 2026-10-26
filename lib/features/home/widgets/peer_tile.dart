@@ -7,7 +7,7 @@ import 'package:intragram/widgets/action_menu.dart';
 import 'package:intragram/widgets/keyboard_access.dart';
 import 'package:intragram/widgets/peer_avatar.dart';
 
-// 탭하면 다이얼하고 방 엶. 롱프레스는 퀵 전송 단축키: 다이얼 + 클립보드 텍스트 전송 + 방 엶
+// 탭하면 연결하고 대화를 엶. 길게 누르거나 우클릭하면 메뉴 (클립보드 보내기, 방에 넣기)
 class PeerTile extends StatelessWidget {
   const PeerTile({
     required this.peer,
@@ -24,8 +24,7 @@ class PeerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final line = peer.detail;
-    // 우클릭(데스크톱)도 롱프레스와 같은 액션 시트를 열게 함
-    // ListTile엔 secondary-tap 훅이 없어서 GestureDetector로 감쌈
+    // ListTile엔 우클릭 훅이 없어서 GestureDetector로 감쌈
     return CallbackShortcuts(
       bindings: menuKeyBindings(() => onMenu(menuAnchor(context))),
       child: GestureDetector(
@@ -69,8 +68,8 @@ class PeerTile extends StatelessWidget {
   }
 }
 
-// mDNS inRoom=1(호스트 아닌 멤버) 피어 표시. 멤버는 직접 합류를 못 받아서 눌러보라고 유도하면
-// 안 되니 _RoomChip과 일부러 다르게(알약 배지 아님) 순수 정보성으로 그림
+// mDNS inRoom=1(호스트 아닌 멤버) 표시. 멤버는 합류를 직접 못 받아서 누르라고 유도하면 안 됨:
+// _RoomChip과 일부러 다르게(알약 배지 아님) 정보로만 그림
 class _InRoomHint extends StatelessWidget {
   const _InRoomHint();
 

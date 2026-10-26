@@ -109,3 +109,12 @@ extension _AppLock on _IntraGramAppState {
     }
   }
 }
+
+// 봉인 확인 중엔 Home/게이트 어느 쪽도 단정 안 함. 틀리면 Home이 한 프레임 깜빡임
+class _VaultCheckingScreen extends StatelessWidget {
+  const _VaultCheckingScreen();
+
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: CircularProgressIndicator()));
+}

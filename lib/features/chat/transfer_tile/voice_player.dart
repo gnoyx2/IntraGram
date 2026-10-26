@@ -46,10 +46,8 @@ class _VoicePlayerState extends State<_VoicePlayer> {
     await clip?.dispose();
   }
 
-  // 기본은 zero-disk라 재생만 되고 앱을 끄면 사라짐. 사용자가
-  // 눌러야만 디스크에 씀 (받은 파일 수락과 같은 목적지 선택 로직 재사용)
-  // 폴더 선택 중 화면이 닫히거나 세션이 소각될 수 있어서 선택 뒤/쓰기
-  // 직전에 mounted를 재확인 (소각돼 지워진 바이트를 저장하지 않으려고)
+  // 기본은 재생만 하고 앱을 끄면 사라짐. 눌러야만 디스크에 씀 (받기와 같은 폴더 선택).
+  // 고르는 사이 화면이 닫히거나 소각될 수 있어서 쓰기 직전까지 mounted를 다시 봄
   Future<void> _save() async {
     final messenger = ScaffoldMessenger.of(context);
     final s = S.of(context);
@@ -125,7 +123,16 @@ class _VoicePlayerState extends State<_VoicePlayer> {
         return;
       }
       _clip = clip;
-      _progressSub = clip.progress.listen((p) => _last = p);
+      _progressSub = clip.progress.listen(
+        (p) => _last = p,
+        // 재생 도중 출력이 죽음(Linux 오디오 서버 종료 등): 완료처럼 보이지 않게 알림
+        onError: (Object _) {
+          if (!messenger.mounted) return;
+          messenger.showSnackBar(
+            SnackBar(content: Text(s.t('transfer.cannotPlay'))),
+          );
+        },
+      );
       VoiceProducerRegistry.instance.register(_panicStop);
       setState(() => _loading = false);
     }
@@ -159,7 +166,8 @@ class _VoicePlayerState extends State<_VoicePlayer> {
         stream: clip?.progress,
         initialData: _last,
         builder: (context, snap) {
-          final progress = snap.data;
+          // 오류 뒤 스냅샷엔 값이 없어서 마지막 위치를 그대로 보여 줌
+          final progress = snap.data ?? _last;
           final playing = progress?.playing ?? false;
           final position = progress?.position ?? Duration.zero;
           final total = clip?.duration ?? _length;

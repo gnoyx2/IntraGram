@@ -23,7 +23,6 @@ part 'settings_privacy.dart';
 part 'settings_language.dart';
 part 'settings_connection.dart';
 
-// 기본은 꺼짐(zero-disk). 켜면 사용자가 고른 범위만 앱 전용 폴더의 파일에 저장함
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -128,7 +127,8 @@ class SettingsScreen extends ConsumerWidget {
     final cupertino = isCupertinoDialog(context);
     final ok = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog.adaptive(
+      builder: (dialogContext) => AppAlertDialog(
+        cupertino: cupertino,
         title: Text(s.t('settings.eraseTitle')),
         content: Text(s.t('settings.eraseBody')),
         actions: dialogActions(dialogContext, [

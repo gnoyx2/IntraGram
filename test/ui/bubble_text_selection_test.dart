@@ -52,7 +52,7 @@ void main() {
   Offset wordCenter(WidgetTester tester) {
     final paragraph = tester
         .renderObjectList<RenderParagraph>(find.byType(RichText))
-        .firstWhere((p) => p.text.toPlainText().contains('⁠'));
+        .firstWhere((p) => p.text.toPlainText().contains('\u2060'));
     final index = paragraph.text.toPlainText().indexOf('낼');
     final caret = paragraph.getOffsetForCaret(
       TextPosition(offset: index),

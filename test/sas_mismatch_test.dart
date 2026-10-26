@@ -102,5 +102,24 @@ void main() {
       await tester.pumpAndSettle();
       expect(results, [SasOutcome.matched]);
     });
+
+    // 상대 화면의 코드를 찍어 맞추는 길은 카메라가 있는 폰에만 둠 (플랫폼은 호스트가 아니라 대상 플랫폼)
+    testWidgets(
+      'a phone can scan the other screen instead',
+      (tester) async {
+        await open(tester);
+        expect(find.text('Scan their code'), findsOne);
+      },
+      variant: const TargetPlatformVariant({
+        TargetPlatform.android,
+        TargetPlatform.iOS,
+      }),
+    );
+
+    testWidgets('a desktop has no scan button', (tester) async {
+      await open(tester);
+      expect(find.text('Scan their code'), findsNothing);
+      expect(find.text('They match'), findsOne);
+    }, variant: TargetPlatformVariant.desktop());
   });
 }

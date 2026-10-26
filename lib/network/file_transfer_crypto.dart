@@ -8,12 +8,9 @@ import 'package:intragram/network/file_chunks.dart';
 
 part 'file_transfer_decrypt.dart';
 
-// 파일 전송 청크에 AEAD를 씌우는 프레이밍 레이어. PeerLink/CryptoSession을 import
-// 안 하고 함수 타입(SealChunk/OpenChunk)으로만 통신해서 독립 테스트 가능
-// 레코드: [4바이트 BE 길이][12바이트 nonce][16바이트 mac][ciphertext].
-// 밑 전송이 경계와 무관하게 쪼개도 decryptChunks가 버퍼링해서 다시 자름
-// 청크마다 AAD [version, transferId, attemptId, chunkIndex, totalBytes]를
-// 인증해서 재사용/순서 바꿔치기를 막고, 레코드가 빠지거나(짧은 EOF) 더 오면 즉시 던짐
+// 파일 청크에 AEAD를 씌우는 프레이밍. PeerLink·CryptoSession 대신 함수 타입(SealChunk/OpenChunk)만 받아서 따로 테스트됨.
+// 레코드 = [4바이트 BE 길이][12바이트 nonce][16바이트 mac][암호문]. AAD [version, transferId, attemptId, chunkIndex, totalBytes]로
+// 레코드를 다른 전송·순서로 돌려쓰는 걸 막고, 빠지거나(짧은 EOF) 더 오면 바로 던짐
 
 typedef SealChunk =
     Future<({Uint8List nonce, Uint8List cipher, Uint8List mac})> Function(
@@ -34,7 +31,7 @@ const int _kNonceBytes = 12;
 const int _kMacBytes = 16;
 const int _kMinRecordBody = _kNonceBytes + _kMacBytes; // 빈 ciphertext 허용
 
-// 평문 totalBytes를 kFileChunkBytes로 나눴을 때 기대 레코드 개수. 0이면 레코드 0개 (빈 파일 계약)
+// 기대 레코드 수. 빈 파일이면 0개
 int _expectedChunkCount(int totalBytes) {
   if (totalBytes <= 0) return 0;
   final full = totalBytes ~/ kFileChunkBytes;
@@ -47,10 +44,10 @@ int _expectedChunkLength(int chunkIndex, int totalBytes) {
   final remainder = totalBytes % kFileChunkBytes;
   if (chunkIndex < full) return kFileChunkBytes;
   if (chunkIndex == full && remainder > 0) return remainder;
-  return kFileChunkBytes; // 나머지가 없어 딱 떨어지는 경우(remainder==0)
+  return kFileChunkBytes; // 딱 떨어지는 경우
 }
 
-// 양쪽이 같은 transferId/attemptId/totalBytes로 독립적으로 재구성해야 tag가 맞음
+// 양쪽이 같은 값으로 따로 만들어야 tag가 맞음
 Uint8List _chunkAad({
   required String transferId,
   required String attemptId,
@@ -68,8 +65,8 @@ Uint8List _chunkAad({
   ),
 );
 
-// 평문을 고정 청크로 다시 자르고 조각마다 seal로 봉인해 길이-접두 레코드로 내보냄. 끝까지 돈 뒤 봉인한 평문 총합이
-// totalBytes와 다르면 던짐 (offer 이후 로컬 파일이 바뀌어 약속한 크기와 어긋나는 걸 wire로 나가기 전에 잡음)
+// 고정 크기로 다시 잘라 조각마다 봉인해 길이-접두 레코드로 내보냄. 다 돌고 나서 평문 총합이 totalBytes와 다르면 던짐
+// (offer 뒤에 로컬 파일이 바뀐 걸 wire로 나가기 전에 잡음)
 Stream<List<int>> encryptChunks(
   Stream<List<int>> plain,
   SealChunk seal, {
@@ -112,9 +109,7 @@ Stream<List<int>> encryptChunks(
   }
 }
 
-// encryptChunks로 감쌌을 때 실제로 wire에 나가는 총 바이트 수. 포맷이 결정적이라 스트림을 돌려보지 않고 미리 정확히 계산됨
-// send()가 이 값을 Content-Length로 선언해서 chunked encoding에
-// 기대지 않고도 항상 맞음 (평문 크기로 잘못 선언해 끊기던 버그 재발 방지)
+// 암호화했을 때 wire에 나가는 총 바이트 (형식이 결정적이라 미리 계산됨). send()가 Content-Length로 씀: 평문 크기로 잘못 선언해 끊기던 버그 방지
 int encryptedFileLength(int plaintextSize) {
   if (plaintextSize <= 0) return 0;
   const recordOverhead = _kLengthPrefixBytes + _kNonceBytes + _kMacBytes;

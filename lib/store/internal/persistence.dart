@@ -1,8 +1,7 @@
 part of '../in_memory_store.dart';
 
 mixin _StorePersistence on _InMemoryStoreState, _StoreCore {
-  // 절대 안 담음: 소각된 메시지, 시스템 메시지, 완료 안 된 파일
-  // 전송(제안/거절/전송중/실패는 재시작 후 의미 없음) 대화는 담을 자식이 있을 때만
+  // 절대 안 담음: 소각된 메시지, 시스템 줄, 안 끝난 전송 (재시작하면 의미 없음). 대화는 담을 게 있을 때만
   VaultSnapshot toSnapshot(VaultSettings settings) {
     // 방이거나 사용자가 "저장 안 함"을 고른 대화, 대화가 없는 기록(지운 대화의 잔여)은 통째로 뺌
     bool skip(String conversationId) {
@@ -99,7 +98,7 @@ mixin _StorePersistence on _InMemoryStoreState, _StoreCore {
           messageId: messageId,
         ));
       }
-      burnMessage(messageId);
+      burnMessage(messageId, cause: BurnCause.ttlAfterRead);
     });
   }
 

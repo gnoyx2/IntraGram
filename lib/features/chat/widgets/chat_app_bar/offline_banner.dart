@@ -1,17 +1,17 @@
 part of '../chat_app_bar.dart';
 
-// 새 상태/의존성 없이 ChatTitle의 "offline" 텍스트와 같은 Conversation.online 신호를 씀
-// onReconnect가 끝날 때까지 버튼을 잠그고 "재연결 중…"으로 바꿈. 재연결이 실패해도(마지막 주소가 죽음)
-// 배너는 안 사라져서 다시 눌러볼 수 있고, 소켓에서 막힌 이유는 홈 연결과 같은 스낵바로 알림
+// 재연결이 끝날 때까지 버튼을 잠금. 실패해도(마지막 주소가 죽음) 배너가 남아서 다시 누를 수 있고
+// 막힌 이유는 홈 연결과 같은 스낵바로 알림
 class OfflineBanner extends StatefulWidget {
   const OfflineBanner({
-    required this.onReconnect,
+    this.onReconnect,
     this.blocked = false,
     this.onUnblock,
     super.key,
   });
 
-  final Future<void> Function() onReconnect;
+  // 없으면 내가 연 방: 다시 걸 상대가 하나가 아니라서 버튼 대신 멤버가 각자 다시 들어온다고 알림
+  final Future<void> Function()? onReconnect;
 
   // 내가 차단한 상대: 재연결 대신 차단 해제를 보임 (차단 중엔 다이얼해도 거절됨)
   final bool blocked;
@@ -29,7 +29,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
     final s = S.of(context);
     setState(() => _reconnecting = true);
     try {
-      await widget.onReconnect();
+      await widget.onReconnect!();
     } on PeerUnreachableException catch (e) {
       messenger.showSnackBar(connectFailureSnackBar(s, e.reason));
     } on SecurityException {
@@ -66,6 +66,8 @@ class _OfflineBannerState extends State<OfflineBanner> {
                 child: Text(
                   widget.blocked
                       ? s.t('chat.blockedBanner')
+                      : widget.onReconnect == null
+                      ? s.t('chat.roomEmptyBanner')
                       : _reconnecting
                       ? s.t('sys.reconnecting')
                       : s.t('sys.disconnected'),
@@ -76,20 +78,21 @@ class _OfflineBannerState extends State<OfflineBanner> {
               ),
             ),
             // 아주 큰 글씨에선 버튼 글자도 줄바꿈되게 남은 폭을 글과 나눠 가짐 (안 그러면 가로로 넘침)
-            Flexible(
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: scheme.onErrorContainer,
-                ),
-                onPressed: widget.blocked
-                    ? widget.onUnblock
-                    : (_reconnecting ? null : _tap),
-                child: Text(
-                  s.t(widget.blocked ? 'chat.unblock' : 'sys.reconnect'),
-                  textAlign: TextAlign.center,
+            if (widget.blocked || widget.onReconnect != null)
+              Flexible(
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: scheme.onErrorContainer,
+                  ),
+                  onPressed: widget.blocked
+                      ? widget.onUnblock
+                      : (_reconnecting ? null : _tap),
+                  child: Text(
+                    s.t(widget.blocked ? 'chat.unblock' : 'sys.reconnect'),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

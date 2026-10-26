@@ -46,7 +46,12 @@ ShapeDecoration bubbleDecoration({
       radius: radius,
       tail: joinsNext ? null : (mine ? _Tail.right : _Tail.left),
       side: edge.a > 0
-          ? BorderSide(color: edge, width: AppBorder.hairline)
+          ? BorderSide(
+              color: edge,
+              width: scheme.outlineVariant == scheme.outline
+                  ? AppBorder.defined
+                  : AppBorder.hairline,
+            )
           : BorderSide.none,
     ),
     shadows: shadowVisible

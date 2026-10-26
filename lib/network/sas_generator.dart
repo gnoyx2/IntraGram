@@ -6,10 +6,8 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:intragram/core/constants.dart';
 import 'package:intragram/core/secure_bytes.dart';
 
-// X25519 공유 비밀에서 6자리 SAS를 유도. 세션 키와 다른 HKDF info(kSasInfo)로
-// 별도 서브키를 뽑아 domain separation (어느 채널과도 키 공유 안 함)
-// transcript는 두 핸드셰이크 공개키를 정렬한 바이트(순서 무관)로 salt에 써서 이 핸드셰이크 쌍에 묶음. 같은 shared
-// secret이면 항상 같은 6자리라 소리 내어 맞춰보면 다른 shared secret을 가진 active MITM을 잡아냄
+// 공유 비밀에서 6자리 SAS를 뽑음 (세션 키와 다른 HKDF info라 어느 채널과도 키 안 겹침). salt는 정렬한 두 공개키라
+// 같은 핸드셰이크면 늘 같은 숫자고, 공유 비밀이 다른 중간자는 숫자가 달라서 걸림
 Future<String> deriveSasDigits(
   SecretKey sharedSecret, {
   required List<int> transcript,
@@ -29,12 +27,10 @@ Future<String> deriveSasDigits(
   }
 }
 
-// [0, 1000000) 균등분포에서 안 쓰는 꼬리 구간: 2^32가 1,000,000의 배수가 아니라 단순히 % 1000000 하면
-// 일부 조합이 약 0.02% 더 자주 나옴. 레인(4바이트)이 이 구간에 걸리면 버리고 다음 레인으로
+// 2^32가 1,000,000의 배수가 아니라 그냥 % 하면 일부 숫자가 약 0.02% 더 자주 나옴: 이 위 구간에 걸린 레인은 버리고 다음 레인
 const int _kRejectThreshold = (0x100000000 ~/ 1000000) * 1000000;
 
-// 32바이트(4바이트 레인 8개)를 편향 없는 6자리로 매핑. 순수 함수라 테스트에서 HKDF 없이 바이트를 직접 넣어볼 수 있음
-// 8레인 전부 거부될 확률은 사실상 0(약 10^-35)이지만 나오면 조용히 편향된 값을 주느니 던짐
+// 32바이트(4바이트 레인 8개)를 편향 없는 6자리로. 8레인 다 버려질 확률은 약 10^-35지만 나오면 편향된 값 대신 던짐
 @visibleForTesting
 String digitsFromBytes(List<int> bytes) {
   for (var offset = 0; offset + 4 <= bytes.length; offset += 4) {

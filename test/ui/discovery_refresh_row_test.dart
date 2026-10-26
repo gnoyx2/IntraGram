@@ -36,7 +36,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(spy.refreshCalls, 0);
     await tester.pump(const Duration(seconds: 18));
-    // Animation completion is reported on the first frame after the interval.
+    // 애니메이션 완료는 주기가 지난 뒤 첫 프레임에서야 알려짐
     await tester.pump(const Duration(milliseconds: 1));
     expect(spy.refreshCalls, 1);
   });

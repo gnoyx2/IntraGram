@@ -1,14 +1,9 @@
 part of 'outgoing_transfers.dart';
 
-// 방의 일반 멤버가 내는 offer의 수신자별 라우팅: 방 멤버끼리는 직접 링크가 없어서 offer는 인증된 호스트 링크 하나로만 나가고
-// to로 수신자를 지정함 (호스트가 그 멤버에게만 중계). 수신자(호스트 자신
-// 포함, 방의 앱 멤버 전원)마다 자기 attempt/일회용 pull 토큰/상태를
-// 따로 가져서 한 수신자의 토큰/ACK/실패/재시도가 다른 수신자에게 번지지 않음
+// 방 멤버로서 내는 offer: 멤버끼리 직접 링크가 없어서 호스트 링크로만 나가고 to로 수신자를 지정함.
+// 수신자(호스트 포함)마다 attempt·토큰·상태가 따로라 한 명의 실패·재시도가 다른 수신자에게 안 번짐
 extension OutgoingTransfersRelay on OutgoingTransfers {
-  // 방 멤버로서 내는 offer의 유일한 다음 홉: 대화가 확정한 호스트
-  // peerId와 링크의 인증된 peerId가 정확히 같은 열린 링크만
-  // 인정
-  // (그 외 링크로는 offer도 취소도 안 보냄)
+  // 다음 홉은 확정된 호스트 peerId로 증명된 열린 링크뿐 (그 외 링크로는 offer도 취소도 안 보냄)
   PeerLink? _relayHostLink(String conversationId) {
     final hostId = store.conversation(conversationId)?.hostPeerId;
     final link = _linkFor(conversationId);
@@ -16,8 +11,7 @@ extension OutgoingTransfersRelay on OutgoingTransfers {
     return link.remotePeerId == hostId ? link : null;
   }
 
-  // 호스트가 알린 방 명단의 나 말고 모든 앱 멤버(호스트 포함)를 수신자로 등록하고 호스트 링크로 하나씩 offer
-  // 호스트 링크나 명단(호스트와 나 포함)을 확인 못 하면 정직하게 failed, 링크에 못 실은 수신자는 그 자리에서 실패로 기록
+  // 명단에서 나 빼고 전원(호스트 포함)을 수신자로 등록해 하나씩 offer. 호스트 링크나 명단이 안 맞으면 실패
   Future<void> _offerViaRelayHost(
     String transferId,
     OutgoingFileSource source, {
@@ -59,10 +53,7 @@ extension OutgoingTransfersRelay on OutgoingTransfers {
     if (undelivered) _syncTransfer(transferId);
   }
 
-  // 호스트가 알린 방 앱 피어 목록 갱신(room_join/room_state):
-  // 목록에서 사라진(방을 나갔거나 끊긴) 수신자는 실패로 돌림
-  // (호스트가 그 멤버에게 offer를 못 넘기고, 돌아오면 재시도할 수 있음).
-  // 나머지 수신자의 진행/완료 상태는 그대로 빈 목록은 명단 정보가 없는 것이라 무시
+  // 명단 갱신: 빠진(나간·끊긴) 수신자는 실패로 돌림 (돌아오면 재시도 가능). 빈 목록은 정보가 없는 거라 무시
   void handleRoomRoster(String conversationId, List<String> peerIds) {
     if (peerIds.isEmpty) return;
     for (final entry in _outgoing.entries.toList()) {

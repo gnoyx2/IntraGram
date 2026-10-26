@@ -9,8 +9,7 @@ import 'package:intragram/network/discovery_engine.dart';
 import 'package:intragram/network/server_controller.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 자동 새로고침 타이머도 여기서 돎: DiscoveryController는 mDNS 상태만 들고,
-// "언제 다시 훑을지"는 화면을 보는 유저 관심사라 UI 쪽에 둠
+// 자동 새로고침 카운트다운도 여기서 돎: 언제 다시 훑을지는 화면을 보는 사람 쪽 관심사라 UI에 둠 (DiscoveryController는 mDNS 상태만 듦)
 class DiscoveryRefreshRow extends ConsumerStatefulWidget {
   const DiscoveryRefreshRow({super.key});
 
@@ -49,8 +48,7 @@ class _DiscoveryRefreshRowState extends ConsumerState<DiscoveryRefreshRow>
     _controller.forward(from: 0);
   }
 
-  // mDNS 재스캔뿐 아니라 서버 bind 주소가 그새 바뀌었는지도 같이 확인함
-  // 자동 주기 재스캔은 ServerController의 foreground 타이머가 이미 그 몫을 함
+  // 손으로 누르면 mDNS 재스캔에 더해 bind 주소가 바뀌었는지도 봄 (자동 주기의 주소 확인은 ServerController 타이머 몫)
   void _manualRefresh() {
     unawaited(ref.read(serverControllerProvider.notifier).refreshNetwork());
     _refresh();

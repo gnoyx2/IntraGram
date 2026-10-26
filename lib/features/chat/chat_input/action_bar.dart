@@ -172,34 +172,37 @@ mixin _ChatInputActionBar
     final action = await showModalBottomSheet<VoidCallback>(
       context: context,
       showDragHandle: true,
+      // 이 메뉴가 뜨는 좁은 창(플로팅 창 등)은 낮기도 해서 항목이 시트 높이를 넘으면 스크롤함
       builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_hasClipboardFiles)
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_hasClipboardFiles)
+                ListTile(
+                  leading: const Icon(Icons.file_present_outlined),
+                  title: Text(s.t('input.sendClipFiles')),
+                  onTap: () => Navigator.of(sheetContext).pop(_pasteFiles),
+                ),
+              if (_hasClipboardImage)
+                ListTile(
+                  leading: const Icon(Icons.image_outlined),
+                  title: Text(s.t('input.sendClipImage')),
+                  onTap: () => Navigator.of(sheetContext).pop(_pasteImage),
+                ),
+              if (_hasClipboardText)
+                ListTile(
+                  leading: const Icon(Icons.content_paste),
+                  title: Text(s.t('input.sendClipText')),
+                  onTap: () => Navigator.of(sheetContext).pop(_pasteAndSend),
+                ),
               ListTile(
-                leading: const Icon(Icons.file_present_outlined),
-                title: Text(s.t('input.sendClipFiles')),
-                onTap: () => Navigator.of(sheetContext).pop(_pasteFiles),
+                leading: const Icon(Icons.attach_file),
+                title: Text(s.t('input.sendFile')),
+                onTap: () => Navigator.of(sheetContext).pop(widget.onAttach),
               ),
-            if (_hasClipboardImage)
-              ListTile(
-                leading: const Icon(Icons.image_outlined),
-                title: Text(s.t('input.sendClipImage')),
-                onTap: () => Navigator.of(sheetContext).pop(_pasteImage),
-              ),
-            if (_hasClipboardText)
-              ListTile(
-                leading: const Icon(Icons.content_paste),
-                title: Text(s.t('input.sendClipText')),
-                onTap: () => Navigator.of(sheetContext).pop(_pasteAndSend),
-              ),
-            ListTile(
-              leading: const Icon(Icons.attach_file),
-              title: Text(s.t('input.sendFile')),
-              onTap: () => Navigator.of(sheetContext).pop(widget.onAttach),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

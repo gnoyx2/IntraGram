@@ -62,8 +62,7 @@ mixin _StoreCore on _InMemoryStoreState {
     yield* _transferEvents.stream;
   }
 
-  // 타이머 걸린 메시지가 안 읽혀도 after 뒤엔 소각되게 함 (읽으면
-  // _startBurn이 취소하고 ttlSeconds 카운트다운으로 넘김)
+  // 안 읽혀도 after 뒤엔 소각 (읽으면 _startBurn이 넘겨받음)
   void _armBurnCeiling(String messageId, Duration after) {
     if (_ceilingTimers.containsKey(messageId)) return;
     _ceilingTimers[messageId] = Timer(after, () {
@@ -74,23 +73,42 @@ mixin _StoreCore on _InMemoryStoreState {
           messageId: messageId,
         ));
       }
-      burnMessage(messageId);
+      burnMessage(messageId, cause: BurnCause.unreadCeiling);
     });
   }
 
   EphemeralMessage? _findMessage(String messageId) =>
       _messages[_messageRooms[messageId]]?[messageId];
 
-  // 방과 메시지를 바로 찾아 참조를 제거함
-  void burnMessage(String messageId) {
+  // cause는 소각 증적에 남는 이유 (상대 요청·사용자 삭제·타이머). 기본은 내 쪽만 지우기
+  void burnMessage(
+    String messageId, {
+    BurnCause cause = BurnCause.deletedForMe,
+  }) {
     _burnTimers.remove(messageId)?.cancel();
     _ceilingTimers.remove(messageId)?.cancel();
-    final roomId = _messageRooms.remove(messageId);
+    final roomId = _messageRooms[messageId];
+    final doomed = _messages[roomId]?[messageId];
+    // 지우기 직전에 커밋먼트를 잡음: 지운 뒤엔 localBurns로 id만 나가서 맥락이 없음
+    final captured = doomed == null ? null : _attestBurn(this, doomed, cause);
+    _messageRooms.remove(messageId);
     final removed = _messages[roomId]?.remove(messageId);
     if (removed == null) return;
+    roomIntegrity.retireMessage(removed.conversationId, messageId);
     _emitRoom(roomId!);
     final transferId = removed.transferId;
-    if (transferId != null) _removeTransfer(transferId);
+    if (transferId != null) {
+      _removeTransfer(transferId);
+    } else if (captured != null) {
+      _attestCleanup(
+        this,
+        done: Future<void>.value(),
+        subjectId: removed.id,
+        conversationId: removed.conversationId,
+        policy: 'cleanup/message-reference',
+        captured: captured,
+      );
+    }
   }
 
   StreamController<List<EphemeralMessage>> _roomController(String id) =>
@@ -106,9 +124,7 @@ mixin _StoreCore on _InMemoryStoreState {
   }
 
   void _emitRoom(String conversationId) {
-    // 이 방을 보는 화면이 없어서 아래에서 조용히 return하더라도 방금 생긴 변경(타이머 만료, 원격 burn,
-    // 닫힌 방 삭제 등)은 vault에 반영돼야 함. listener 확인 뒤에 두면 안 보는 방의 변경이 다음 실행까지 안 저장됨
-    // (재실행하면 소각된 메시지가 부활한 것처럼 보임)
+    // 보는 화면이 없어 아래서 return해도 저장은 예약함 (안 그러면 안 보는 방의 소각이 저장 안 돼 재실행 때 되살아남)
     _schedulePersist();
     final controller = _roomEvents[conversationId];
     if (controller == null || controller.isClosed) return;
@@ -121,39 +137,60 @@ mixin _StoreCore on _InMemoryStoreState {
     _transferEvents.add(transfers);
   }
 
-  // 전송 레코드를 스토어에서 떼고 화면에 즉시 반영한 뒤, 네트워크 정리(onTransferRemoved)와 owned 바이트 wipe를
-  // 백그라운드 Future로 켬. burnMessage/wipeConversation/secureWipe가 전부 여길 거쳐서
-  // "화면에서 없어짐"과 "실제로 정리됨"이 항상 같은 곳을 지남. 없는 id면 no-op
-  void _removeTransfer(String id) {
+  // 레코드를 떼고 화면에 바로 반영한 뒤 네트워크 정리와 바이트 덮기를 뒤에서 돌림. 소각·와이프가 전부 여길 지나서
+  // '안 보임'과 '정리됨'이 한 길로 감. attest면 정리가 끝난 뒤 정리 증적을 남김 (secureWipe는 증적째 비워서 안 남김)
+  Future<void> _removeTransfer(String id, {bool attest = true}) {
     final transfer = _transfers.remove(id);
-    if (transfer == null) return;
+    if (transfer == null) return Future<void>.value();
     OsPrivacy.evictImages(transfer.localPath);
     OsPrivacy.evictImages(transfer.thumbBytes);
     _emitTransfers();
+    final generation = evidence.generation;
     final future = _disposeTransfer(transfer);
     _pendingDisposals.add(future);
-    // 정리 실패는 drainDisposals를 기다리는 쪽(패닉)이 보고함. 기다리는 쪽이 없어도
-    // 미처리 async 에러로 새지 않게 여기서도 핸들러를 붙여 둠
+    if (attest) {
+      _attestCleanup(
+        this,
+        done: future,
+        subjectId: transfer.id,
+        conversationId: transfer.conversationId,
+        transferId: transfer.id,
+        policy: 'cleanup/transfer-resources',
+        sinceGeneration: generation,
+        attemptId: transfer.attemptId,
+        counterpartId: _peerIdPattern.hasMatch(transfer.senderPeerId ?? '')
+            ? transfer.senderPeerId
+            : null,
+        fields: <Object?>[
+          transfer.id,
+          transfer.direction.name,
+          transfer.fileName,
+          transfer.totalBytes,
+          transfer.contentCommitment ?? transfer.digest ?? '',
+        ],
+      );
+    }
+    // 실패는 drainDisposals를 기다리는 패닉이 보고함. 기다리는 쪽이 없어도 처리 안 된 오류로 안 새게 핸들러를 붙임
     unawaited(
       future
           .then<void>((_) {}, onError: (Object _) {})
           .whenComplete(() => _pendingDisposals.remove(future)),
     );
+    return future;
   }
 
-  // onTransferRemoved가 네트워크 자원을 놓을 때까지 기다린 뒤에만 owned voiceBytes를 지움
-  // 순서가 반대면 아직 전송 중인 바이트를 먼저 지울 수 있음 (FileTransfer.voiceBytes의 공유 버퍼 설명 참고)
+  // 네트워크가 자원을 놓은 뒤에만 voiceBytes를 덮음 (거꾸로면 아직 보내는 중인 바이트를 지울 수 있음)
   Future<void> _disposeTransfer(FileTransfer transfer) async {
     try {
       await onTransferRemoved?.call(transfer);
     } finally {
-      // 네트워크 정리가 실패해도 owned 바이트 wipe는 반드시 함. 실패는 전파돼 drainDisposals 쪽이 보고함
+      // 네트워크 정리가 실패해도 바이트는 꼭 덮음 (실패는 위로 감)
       final bytes = transfer.voiceBytes;
       if (bytes != null) SecureBytes.wipe(bytes);
     }
   }
 
-  // 패닉 와이프만 부름 (일반 burn은 UI 반응성을 위해 fire-and-forget)
+  // 패닉만 부름
   Future<void> drainDisposals() => Future.wait(_pendingDisposals.toList());
 
   // 마지막 변경 1초 뒤 저장하되 연속 변경도 최대 5초만 기다림

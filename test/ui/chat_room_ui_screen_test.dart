@@ -46,6 +46,44 @@ void main() {
     );
   });
 
+  testWidgets('an empty room I host explains instead of offering reconnect', (
+    tester,
+  ) async {
+    final h = Harness();
+    addTearDown(h.dispose);
+    h.store
+      ..upsertConversation(conv('r1').copyWith(isRoom: true, online: false))
+      ..upsertConversation(
+        conv('r2').copyWith(isRoom: true, online: false, hostAlias: 'ann'),
+      );
+
+    await tester.pumpWidget(h.wrap(const ChatRoomScreen(conversationId: 'r1')));
+    await tester.pump();
+    expect(find.textContaining('Everyone has left'), findsOneWidget);
+    expect(find.text('Reconnect'), findsNothing);
+
+    // 남이 연 방은 호스트 하나만 다시 걸면 돼서 버튼이 그대로 있음
+    await tester.pumpWidget(h.wrap(const ChatRoomScreen(conversationId: 'r2')));
+    await tester.pump();
+    expect(find.text('Reconnect'), findsOneWidget);
+  });
+
+  testWidgets('a room menu has no auto-accept item', (tester) async {
+    final h = Harness();
+    addTearDown(h.dispose);
+    h.store.upsertConversation(conv('r1').copyWith(isRoom: true));
+
+    await tester.pumpWidget(h.wrap(const ChatRoomScreen(conversationId: 'r1')));
+    await tester.pump();
+    await tester.tap(find.byTooltip('More'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // 방 파일은 늘 물어봐서 눌러도 아무 일 없는 토글을 안 보여줌
+    expect(find.byType(PopupMenuItem<String>), findsWidgets);
+    expect(find.text('Auto-accept files'), findsNothing);
+  });
+
   testWidgets('a message URL renders as a tappable link span', (tester) async {
     final h = Harness();
     addTearDown(h.dispose);

@@ -1,9 +1,6 @@
 part of 'incoming_transfers.dart';
 
-// 수락된 POST /api/transfer의 바디를 처리. transfer id가 예상된 거고 협상한 크기 안에서 쓰기가 성공하면 true
-// lookup -> 검증(token/헤더 크기) -> 소비(map에서 제거) 순서:
-// 사이에 await가 없어서 틀린 토큰이나 offer와 다른 헤더 크기만으로는
-// 정상 업로드 슬롯이 소모되지 않음 (같은 attempt로 다시 정확하게 보내는 재시도가 그 슬롯을 쓸 수 있어야 함)
+// 수락한 POST /api/transfer 바디를 받음. 찾기 → 검증 → 소비 순이고 사이에 await가 없음: 틀린 토큰이나 크기로는 정상 슬롯이 안 닳음
 Future<bool> _receiveIncoming(
   IncomingTransfers self, {
   required String transferId,
@@ -16,21 +13,18 @@ Future<bool> _receiveIncoming(
   final destination = self._incoming[transferId];
   final transfer = self.store.transfer(transferId);
   if (destination == null || transfer == null) return false;
-  // 우리가 accept 때 발급한 값과 정확히 일치해야 함 (안 그러면 transferId를 아는 아무나 이 슬롯에 바이트를 밀어 넣음)
-  // lookup만 했을 뿐 map에서 안 지웠으니 거부해도 정상 슬롯은 남음
+  // accept 때 발급한 토큰이어야 함 (아니면 id만 알면 아무나 바이트를 밀어 넣음)
   if (!constantTimeEquals(token, destination.token)) return false;
-  // 업로드 헤더의 attempt는 이 슬롯을 만든 attempt와 같아야 함 (낡은 시도의 업로드가 새 슬롯을 소모 못 하게)
+  // 옛 시도의 업로드가 새 슬롯을 못 쓰게
   if (attemptId != destination.attemptId ||
       attemptId != (transfer.attemptId ?? transferId)) {
     return false;
   }
-  // 업로드 헤더(x-file-size)는 offer에서 이미 확정한 크기와 정확히 같아야 함
-  // (min(header, offer)면 더 작은 헤더가 조용히 강제 크기를 줄일 수 있었음)
-  // 서버가 헤더 누락/파싱 실패는 이미 걸러서 필수 int로 넘김
+  // 헤더 크기는 offer 크기와 딱 같아야 함 (작은 헤더로 받을 크기를 몰래 줄이지 못하게)
   if (headerDeclaredSize != transfer.totalBytes) return false;
   final declaredSize = transfer.totalBytes;
 
-  // 여기서부터 실제로 슬롯을 소비함 (검증이 전부 끝난 뒤, await 전에)
+  // 검증이 다 끝났으니 여기서 슬롯을 씀 (await 전에)
   self._incoming.remove(transferId);
 
   final cancelToken = CancelToken();
@@ -48,6 +42,8 @@ Future<bool> _receiveIncoming(
       transferId,
       (t) => t.copyWith(state: TransferState.transferring),
     );
+    // 1:1 offer엔 해시가 없어서 쓰는 대로 잰 SHA-256을 수신 영수증 커밋먼트로 씀
+    String? received;
     final written = await FileStreamer.receive(
       body: body,
       transferId: transferId,
@@ -60,6 +56,7 @@ Future<bool> _receiveIncoming(
       ),
       decrypt: self._decryptorFor(transfer),
       cancelToken: cancelToken,
+      onDigest: (sha256) => received = sha256,
     );
     if (cancelToken.isCancelled || !self._isCurrent(transferId, attemptId)) {
       throw const TransferCancelledException();
@@ -76,22 +73,15 @@ Future<bool> _receiveIncoming(
         transferredBytes: written,
         bytesPerSecond: 0,
         localPath: committed,
+        contentCommitment: received,
       ),
     );
-    await self
-        ._linkForTransfer(transfer)
-        ?.sendFileReceived(
-          transferId,
-          attemptId: transfer.attemptId ?? transferId,
-        );
+    self._acknowledge(transfer, transfer.attemptId ?? transferId, received);
     return true;
   } on Object catch (e) {
-    // gate.acquire()가 FileStreamer.receive() 호출 전에 던지면(취소/timeout)
-    // receive()의 abort()가 안 불려 파셜이 안 지워지므로 소유 registry에서 끝까지 지움
-    // (이미 지워졌으면 no-op, 삭제가 실패하면 registry에 남아 다음 discard/clear가 다시 시도하고 기록됨)
+    // receive 전에 던졌으면(게이트 취소·타임아웃) abort가 안 돌아서 .part를 여기서 지움
     await self._deleteOwnedPartialsRecorded(transferId);
-    // cancelTransfer/handleCancelledByPeer가 이미 cancelled로
-    // 세팅했으면 failed로 덮어쓰지 않음 (끊긴 토큰 때문에 던져진 것뿐)
+    // 이미 cancelled면 failed로 안 덮음 (끊긴 토큰 때문에 던진 것뿐)
     if (self.store.transfer(transferId)?.state != TransferState.cancelled) {
       self._failReceive(transferId, e);
     }
@@ -104,8 +94,7 @@ Future<bool> _receiveIncoming(
   }
 }
 
-// IncomingTransfers._incoming의 값 타입: accept가 등록하고
-// receive/취소가 소비
+// accept가 만들고 receive·취소가 소비하는 push 수신 슬롯
 class _IncomingFile {
   _IncomingFile({
     required this.conversationId,
@@ -116,21 +105,14 @@ class _IncomingFile {
   });
   final String conversationId;
 
-  // 이번 시도 전용 .intragram-<attempt>.part: accept
-  // 시점에 exclusive create로 미리 예약. 실제 바이트는 여기에 쓰고,
-  // 실패하면 FileStreamer.receive의 abort()가 이
-  // 파일(자기가 쓴 파일 그 자체)만 지움 (최종 이름은 절대 안 건드림)
+  // accept 때 예약한 이번 시도 전용 .part. 실패하면 이 파일만 지움 (최종 이름은 안 건드림)
   final File partial;
 
-  // 완료 시 commitDestination에 넘길 목표 이름 (충돌하면
-  // 커밋 시점에 (n) 접미사가 붙을 수 있고 그건 커밋 결과로 확정)
+  // 커밋할 목표 이름 (충돌하면 커밋 때 (n)이 붙음)
   final String finalName;
 
-  // accept 때 우리가 발급해 file_accept로 돌려보낸 POST
-  // /api/transfer 인가 토큰: 실제 업로드가 이 값을 실어 와야
-  // 함
+  // file_accept로 보낸 POST 토큰. 업로드가 이걸 실어 와야 함
   final String token;
 
-  // 이 슬롯을 만든 offer의 시도 id (업로드 헤더의 attempt와 일치해야 함)
   final String attemptId;
 }

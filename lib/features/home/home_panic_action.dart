@@ -14,7 +14,6 @@ import 'package:intragram/store/models.dart';
 import 'package:intragram/widgets/action_menu.dart';
 import 'package:intragram/widgets/adaptive_dialog_action.dart';
 
-// 홈에서 바로 "End conversation"을 띄움 (PeerTile과 대칭)
 Future<void> conversationActions(
   BuildContext context,
   WidgetRef ref,
@@ -35,7 +34,8 @@ Future<void> conversationActions(
   final endCupertino = isCupertinoDialog(context);
   final ok = await showDialog<bool>(
     context: context,
-    builder: (dialogContext) => AlertDialog.adaptive(
+    builder: (dialogContext) => AppAlertDialog(
+      cupertino: endCupertino,
       title: Text(s.t('chat.endConversation')),
       content: Text(s.t('chat.endBody')),
       actions: dialogActions(dialogContext, [
@@ -57,21 +57,20 @@ Future<void> conversationActions(
   await endConversation(ref, conversation.id);
 }
 
-// 재진입 가능한 단일 Future. 버튼 연타나 종료 시그널과 겹쳐도 두 번째 호출은 이미 도는 것에 합류함
+// 도는 패닉 하나. 연타나 종료 신호와 겹쳐도 두 번째 호출은 도는 것에 합류함
 Future<PanicWipeResult>? _panicInFlight;
 
-// 확인받고, 실행 중인 걸 먼저 멈춘 뒤에만 RAM/디스크를 정리함 (executePanicWipe 참고). 되돌릴 수 없음
-// 일부 단계가 끝까지 성공 못 하면(타임아웃/예외) "지워짐"이 아니라 부분 실패로 표시함
+// 되돌릴 수 없음. 한 단계라도 실패하거나 시간을 넘기면 지워짐이 아니라 부분 실패로 알림 (순서는 executePanicWipe)
 Future<void> panicWipe(BuildContext context, WidgetRef ref) async {
   final s = S.of(context);
   final wipeCupertino = isCupertinoDialog(context);
-  // 이번 세션에 받은 파일이 있을 때만 "받은 파일도 삭제" 옵션을 보여줌
   final hasReceived = IncomingSessionFiles.receivedCount > 0;
   var deleteReceivedFiles = false;
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => StatefulBuilder(
-      builder: (dialogContext, setDialogState) => AlertDialog.adaptive(
+      builder: (dialogContext, setDialogState) => AppAlertDialog(
+        cupertino: wipeCupertino,
         title: Text(s.t('homeActions.wipeTitle')),
         content: Material(
           type: MaterialType.transparency,
@@ -109,7 +108,7 @@ Future<void> panicWipe(BuildContext context, WidgetRef ref) async {
   if (confirmed != true || !context.mounted) return;
   AppHaptics.heavyImpact();
 
-  // 아래는 전부 async라 그 사이 context/ref가 죽을 수 있어서 마운트된 지금 provider 핸들을 잡음
+  // 아래는 다 async라 그사이 context·ref가 죽을 수 있어서 마운트된 지금 핸들을 잡아 둠
   final store = ref.read(inMemoryStoreProvider);
   final registry = ref.read(linkRegistryProvider);
   final serverController = ref.read(serverControllerProvider.notifier);
@@ -119,8 +118,7 @@ Future<void> panicWipe(BuildContext context, WidgetRef ref) async {
   final vaultAccess = ref.read(vaultAccessProvider.notifier);
   final identityStore = ref.read(identityStoreProvider);
   final identity = ref.read(appIdentityProvider);
-  final isDecoySession = ref.read(vaultProvider).isDecoyMode;
-  // await 뒤엔 위젯이 죽어 ref를 못 써서, 앱 수명 내내 유효한 컨테이너를 지금 잡아둠
+  // await 뒤엔 ref를 못 쓸 수 있어서 앱 내내 사는 컨테이너를 잡아 둠
   final container = ProviderScope.containerOf(context);
 
   Navigator.of(context).popUntil((route) => route.isFirst);
@@ -141,12 +139,10 @@ Future<void> panicWipe(BuildContext context, WidgetRef ref) async {
       vaultAccess: vaultAccess,
       identityStore: identityStore,
       identity: identity,
-      isDecoySession: isDecoySession,
       deleteReceivedFiles: deleteReceivedFiles,
     );
     _panicInFlight = future;
-    // whenComplete는 원본이 에러면 그 에러를 복제한 새 Future를 만듦
-    // catchError로 먼저 소비해 두 번째 미처리 에러를 막음 (실제 성공/실패는 아래 await future가 처리)
+    // whenComplete는 원본 에러를 복제한 새 Future를 만들어서 먼저 삼킴 (안 그러면 미처리 에러가 하나 더 생김. 진짜 결과는 아래 await가 봄)
     unawaited(
       future.then<void>((_) {}, onError: (Object _) {}).whenComplete(() {
         _panicInFlight = null;
@@ -154,8 +150,8 @@ Future<void> panicWipe(BuildContext context, WidgetRef ref) async {
     );
   }
   final result = await future;
-  // 새 LinkRegistry(+TransferCoordinator, burn 구독)를 다음 읽기에서 다시 만듦
-  // disposeAll이 취소한 구독은 되살아나지 않아서 invalidate 안 하면 패닉 뒤 새 대화의 burn이 피어에게 안 나감
+  // 다음 읽기에서 LinkRegistry를 새로 만듦: disposeAll이 끊은 burn 구독은 안 되살아나서 그대로 두면
+  // 패닉 뒤 새 대화의 소각이 상대에게 안 감
   container.invalidate(linkRegistryProvider);
 
   if (context.mounted) {

@@ -12,7 +12,6 @@ enum PeerUnreachableReason {
   notIntraGram,
 }
 
-// 소켓 연결이 안 되는 경우. 앱이 꺼졌거나 오프라인인 것과 구분해 이유별 안내를 주게 타입을 나눔
 class PeerUnreachableException implements Exception {
   PeerUnreachableException(this.message, {required this.reason});
   final String message;

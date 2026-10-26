@@ -108,9 +108,8 @@ void main() {
   test(
     'clear at every await depth of an in-progress write leaves no part',
     () async {
-      // 쓰기 도중/청크 대기/검증 직전 등 수신 루프가 서 있을 수 있는 어느 await
-      // 지점에서 clear가 들어와도 같은 불변식이 서야 함 (깊이를 0~7로 바꿔가며
-      // 반복)
+      // 쓰기 도중·청크 대기·검증 직전처럼 수신 루프가 설 수 있는 어느 await 지점에서 clear가 와도
+      // 같은 불변식이 서야 함 (깊이를 0~7로 바꿔 가며 반복)
       for (var depth = 0; depth < 8; depth++) {
         final id = 'w$depth';
         rig.store.upsertTransfer(rig.offer(id));

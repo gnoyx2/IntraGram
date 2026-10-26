@@ -1,13 +1,8 @@
 part of 'peer_link.dart';
 
-// 링크 종료 경로: 프레임 pause/resume 드레인과 실제 종료(cleanup).
-// PeerLink.close/내부 오류 경로가 전부 여기로 모여
-// _closeFuture 하나로 멱등 await됨 (동시 호출자 전원이 진짜 cleanup 완료를 같이 기다림)
+// 종료 경로: 프레임을 하나씩 처리하는 pause/resume과 실제 정리. 모든 종료가 _closeFuture 하나로 모임
 extension _PeerLinkLifecycle on PeerLink {
-  // 도착한 프레임마다 구독을 멈췄다가 처리가 끝나면 재개해서 한 번에 한 프레임만 처리되게 강제함
-  // _onFrame이 여러 await(핸드셰이크, 복호화)를 거치는 동안
-  // 다음 프레임이 끼면 phase 검사/_lastSeenSeq 갱신 사이에
-  // 경합이 생길 수 있음 (무한 Future chain에 프레임을 쌓지도 않음)
+  // 프레임마다 구독을 멈췄다 처리가 끝나면 재개: _onFrame이 await를 거치는 사이 다음 프레임이 끼면 phase·_lastSeenSeq 검사가 꼬임
   void _onRawFrame(dynamic raw) {
     _subscription?.pause();
     _onFrame(raw).catchError((Object _) => _shutdown()).whenComplete(() {
@@ -18,13 +13,14 @@ extension _PeerLinkLifecycle on PeerLink {
   Future<void> _shutdown() => _closeFuture ??= _performShutdown();
 
   Future<void> _performShutdown() async {
-    // 끝내 누구인지 밝히지 않고 끊긴 인바운드 소켓인가 (_phase를 바꾸기 전에 봄)
+    // 끝내 누군지 안 밝히고 끊긴 인바운드 소켓인가 (_phase 바꾸기 전에 봄)
     final unidentified = !dialledByUs && isPendingHandshake;
     _closed = true;
+    _stopOrgAttestation();
     _phase = _LinkPhase.closed;
     _awaitingAuth = null;
     _handshakeWatchdog?.cancel();
-    // 못 나간 대기 큐와 확인 못 받은 내 메시지는 재시도할 수 있게 failed로 (이 링크로는 ack가 더 안 옴)
+    // 못 나간 대기 큐와 ack 못 받은 내 메시지는 다시 보낼 수 있게 failed로
     for (final inner in _pending) {
       _noteWrite(inner, written: false);
       _reowe(inner);
@@ -41,7 +37,7 @@ extension _PeerLinkLifecycle on PeerLink {
     _crypto?.destroy();
     _crypto = null;
     try {
-      // half-open 채널(피어가 자기 쪽을 안 읽음)이 teardown을 막으면 안 됨
+      // 상대가 안 읽는 반쯤 열린 채널이 정리를 막으면 안 됨
       await channel.sink.close().timeout(
         const Duration(seconds: 2),
         onTimeout: () {},
@@ -49,22 +45,19 @@ extension _PeerLinkLifecycle on PeerLink {
     } on Object {
       // 이미 사라짐
     }
-    // registry가 이 링크를 이미 다른 링크로 대체했으면(재연결/재합류 경합) 늦게 도착한 이 종료가
-    // 새 링크의 online/typing/메시지 상태를 덮어쓰지 않음 (소켓/구독/크립토는 위에서 이미 정리됨)
+    // 이미 다른 링크로 대체됐으면 늦게 온 이 종료가 새 링크 상태를 안 덮음
     final tile = store.conversation(conversationId);
     if (!_superseded &&
         unidentified &&
         tile != null &&
         !tile.isRoom &&
         store.messages(conversationId).isEmpty) {
-      // 연결만 열고 닫는 반복이 목록을 빈 "peer" 대화로 채우지 못하게 함
-      // (버전 불일치 같은 안내 줄이 남은 대화와 방 대화는 아래 일반 경로로 둠)
+      // 연결만 열고 닫는 반복으로 목록이 빈 'peer' 대화로 차는 걸 막음 (안내 줄이 남은 대화·방은 아래로)
       store.wipeConversation(conversationId);
     } else if (!_superseded) {
       store.setConversationOnline(conversationId, online: false);
       store.setPeerTyping(conversationId, typing: false);
-      // 대화가 아직 있을 때만 (패닉 와이프 중이면 이미 사라짐: 빈 방 되살리지 않음)
-      // 내가 다이얼한 핸드셰이크가 실패했으면 이유 줄로 대신함
+      // 대화가 남아 있을 때만 (패닉 중이면 이미 없음: 빈 방 안 되살림). 내가 다이얼한 핸드셰이크가 실패했으면 그 이유 줄로
       if (store.conversation(conversationId) != null) {
         store.addSystemMessage(
           conversationId,

@@ -154,6 +154,25 @@ void main() {
       },
     );
 
+    // 수락을 고르는 카드에 상대가 정한 이름이 그대로 뜨면 RLO로 확장자를 위장할 수 있음:
+    // 저장될 이름 그대로 받아 두고, 같은 파일의 재offer도 그 이름끼리 비교함
+    test('an offered name is kept the way it will be saved', () async {
+      final rlo = String.fromCharCode(0x202e);
+      final autoAccepted = <String>[];
+      rig.linkB.onAutoAcceptOffer = autoAccepted.add;
+      final disguised = {'name': 'invoice${rlo}txt.exe'};
+      await rig.sendFromA(authOffer('f7', extra: disguised));
+      expect(rig.storeB.transfer('f7')!.fileName, 'invoicetxt.exe');
+
+      rig.storeB.updateTransfer(
+        'f7',
+        (t) => t.copyWith(state: TransferState.failed, error: 'network'),
+      );
+      await rig.sendFromA(authOffer('f7', extra: {...disguised, 'at': 'a2'}));
+      expect(rig.storeB.transfer('f7')!.attemptId, 'a2');
+      expect(autoAccepted, ['f7']);
+    });
+
     test('a transfer in flight cannot be swapped by a new attempt', () async {
       await rig.sendFromA(authOffer('f6'));
       rig.storeB.updateTransfer(

@@ -1,9 +1,7 @@
 part of 'peer_link.dart';
 
-// PeerLinkOutbound 중 파일 전송 프레임(file_*) 보내기와 청크 seal/open
 extension PeerLinkOutboundFile on PeerLink {
-  // to가 있으면 방 안 특정 멤버 몫 offer (호스트가 그 멤버에게만
-  // 중계). 이 링크로 프레임을 못 내보내면(닫힘/큐 상한) false
+  // to가 있으면 방 안 특정 멤버 몫 (호스트가 그 멤버에게만 중계). 못 내보내면 false
   Future<bool> sendFileOffer({
     required String transferId,
     required String attemptId,
@@ -41,13 +39,13 @@ extension PeerLinkOutboundFile on PeerLink {
       token: pullToken,
       to: to,
       digest: digest,
+      senderPubKey: identity.publicKey == null
+          ? null
+          : base64.encode(identity.publicKey!),
     ),
   );
 
-  // 호스트 전용: 이 링크의 방 멤버가 targetId에게 낸 (전송, attempt)
-  // offer를 못 넘겼다고(대상이 방에 없음/전달 실패) 그 멤버에게 알림
-  // 받은 발신자는 그 수신자 몫만 재시도 가능한 실패로 돌림 (수신자의 취소를 뜻하는 file_cancel로 위장하지 않음)
-  // 통지가 못 나가면 이 링크를 닫아 발신자가 영영 기다리지 않게 함
+  // 호스트 전용: 멤버가 targetId에게 낸 offer를 못 넘겼다고 그 멤버에게 알림 (수신자 취소인 file_cancel로 위장 안 함). 못 나가면 링크를 닫음
   Future<bool> sendFileUnavailable(
     String transferId, {
     required String attemptId,
@@ -60,10 +58,8 @@ extension PeerLinkOutboundFile on PeerLink {
     ),
   );
 
-  // 호스트 전용: 방 멤버가 낸 대상 지정 offer를 정책상 거부했다고(남의
-  // 경로/전송 id와 충돌, 다른 기기 주소, 자기 자신 대상, 경로 상한)
-  // 그 멤버에게 알림. 수신자 대신 file_cancel을 보내 그 수신자 몫을 끝냄. 네트워크 실패는 sendFileUnavailable
-  // 못 나가면 링크를 닫음. targetAlias는 표시용
+  // 호스트 전용: 멤버의 대상 지정 offer를 정책상 거부했다고 알림 (남의 경로·id 충돌, 다른 기기 주소, 자기 대상, 경로 상한).
+  // 수신자 대신 file_cancel로 그 몫을 끝냄. 못 나가면 링크를 닫음
   Future<bool> sendOfferRefusal(
     String transferId, {
     required String attemptId,
@@ -75,8 +71,7 @@ extension PeerLinkOutboundFile on PeerLink {
     'from': ?targetAlias,
   });
 
-  // pushToken은 방금 발급한 POST /api/transfer 인가 토큰: AEAD로 잠긴 이 링크로만 전달됨
-  // (핸드셰이크 전이면 다른 inner frame처럼 큐잉되고 평문으로는 절대 안 나감)
+  // pushToken은 방금 발급한 POST 인가 토큰: 암호화된 이 링크로만 감 (핸드셰이크 전이면 큐에 들어가고 평문으론 절대 안 나감)
   Future<void> sendFileAccept(
     String transferId, {
     required String attemptId,
@@ -91,26 +86,23 @@ extension PeerLinkOutboundFile on PeerLink {
   Future<void> sendFileCancel(String transferId, {required String attemptId}) =>
       _sendInner(InnerFrame.fileCancel(transferId, attempt: attemptId));
 
-  // 실패한 시도(attemptId)를 다시 받고 싶다고 보내는 쪽에 요청: 옛
-  // 토큰을 재사용하지 않고 보내는 쪽이 새 attempt/토큰으로 다시 offer함
+  // 실패한 시도를 다시 받고 싶다고 요청: 보내는 쪽이 새 attempt·토큰으로 다시 offer함
   Future<void> sendFileRetry(String transferId, {required String attemptId}) =>
       _sendInner(InnerFrame.fileRetry(transferId, attempt: attemptId));
 
-  // 완전히 받아서(길이/AEAD 검증까지) 커밋/RAM 이전까지 마친 뒤 한 번
-  // 보냄. 보내는 쪽은 GET/POST EOF가 아니라 이 ACK로만 완료 처리함
+  // 길이·AEAD 검증과 커밋까지 다 끝난 뒤 한 번 보냄. 보내는 쪽은 EOF가 아니라 이 ACK로만 완료 처리. receipt는 선택 서명 영수증
   Future<void> sendFileReceived(
     String transferId, {
     required String attemptId,
-  }) => _sendInner(InnerFrame.fileReceived(transferId, attempt: attemptId));
+    Map<String, dynamic>? receipt,
+  }) => _sendInner(
+    InnerFrame.fileReceived(transferId, attempt: attemptId, receipt: receipt),
+  );
 
-  // 이 링크에 살아있는 크립토 세션이 있으면(1:1 앱 피어) true. 웹 게스트나 세션이 아직 안 끝났으면 false
-  // 호출부(OutgoingTransfers._offer)가 이걸 먼저 확인해 암호화
-  // 여부를 정하고 그다음에만 sealFileChunk/openFileChunk를
-  // 씀
+  // 1:1 앱 피어처럼 살아 있는 암호 세션이 있으면 true. 호출부가 이걸 먼저 보고 암호화 여부를 정함
   bool get canSealFileChunks => _crypto?.isReady ?? false;
 
-  // 이 링크의 파일 전송 서브키로 봉인. canSealFileChunks가 false일 때 부르면 던짐 (호출부가 먼저 확인)
-  // aad는 호출부(file_transfer_crypto.dart)가 만든 청크별 associated data
+  // 파일 서브키로 봉인. canSealFileChunks가 false면 던짐
   Future<({Uint8List nonce, Uint8List cipher, Uint8List mac})> sealFileChunk(
     Uint8List bytes, {
     required Uint8List aad,

@@ -8,7 +8,6 @@ import 'pacat_voice_clip.dart';
 import 'voice_wav.dart';
 import 'wave_out_voice_clip.dart';
 
-// 받은 음성 하나의 재생 상태. 위치는 재생 중에 주기적으로 갱신됨
 @immutable
 class VoiceProgress {
   const VoiceProgress({
@@ -22,8 +21,7 @@ class VoiceProgress {
   final Duration position;
 }
 
-// 메모리에 있는 WAV를 플랫폼 재생기에 바로 넘김. 디스크·캐시·로컬 HTTP 프록시를 거치지 않아서
-// 재생한 음성이 임시 폴더에 평문으로 남지 않음
+// 메모리의 WAV를 플랫폼 재생기에 바로 넘김. 디스크·캐시·로컬 HTTP 프록시를 안 거쳐서 들은 음성이 임시 폴더에 평문으로 안 남음
 abstract interface class VoiceClip {
   Duration get duration;
   Stream<VoiceProgress> get progress;
@@ -36,11 +34,11 @@ abstract interface class VoiceClip {
 
 typedef VoiceClipLoader = Future<VoiceClip> Function(PcmWav wav);
 
-// 위젯 테스트가 재생기를 갈아 끼우는 창. 프로덕션에선 항상 null
+// 테스트용 재생기 교체 자리 (프로덕션은 null)
 @visibleForTesting
 VoiceClipLoader? debugVoiceClipLoader;
 
-// 16비트 PCM WAV가 아니면 FormatException (호출부가 "재생할 수 없음"으로 보여 줌)
+// 16비트 PCM WAV가 아니면 FormatException (호출부가 '재생할 수 없음'을 띄움)
 Future<VoiceClip> loadVoiceClip(Uint8List bytes) async {
   final wav = parsePcm16Wav(bytes);
   if (wav == null) throw const FormatException('not a 16-bit PCM voice note');
@@ -54,7 +52,7 @@ Future<VoiceClip> loadVoiceClip(Uint8List bytes) async {
   return loader(wav);
 }
 
-// 플랫폼마다 출력을 다루는 법만 달라서 주기적 위치 확인·상태 방송·끝남 처리는 여기서 함
+// 플랫폼마다 출력만 다르고 위치 폴링·상태 방송·끝 처리는 여기서 같이 함
 abstract class PolledVoiceClip implements VoiceClip {
   PolledVoiceClip(this.duration);
 
@@ -69,7 +67,7 @@ abstract class PolledVoiceClip implements VoiceClip {
   bool _playing = false;
   bool _completed = false;
   bool _disposed = false;
-  // 출력을 여는 중(pacat 프로세스 뜨는 중 등). 그 사이 play는 무시하고 dispose는 끝나길 기다렸다 닫음
+  // 출력 여는 중(pacat 프로세스 뜨는 중 등). 그 사이 play는 무시하고 dispose는 끝나길 기다렸다 닫음
   Future<void>? _starting;
 
   @override
@@ -81,7 +79,7 @@ abstract class PolledVoiceClip implements VoiceClip {
   Future<void> pauseOutput();
   @protected
   Future<Duration> outputPosition();
-  // 폴링으로 끝을 아는 플랫폼만 true를 돌려줌 (이벤트로 아는 플랫폼은 markCompleted를 부름)
+  // 폴링으로 끝을 아는 플랫폼만 true (이벤트로 아는 쪽은 markCompleted를 부름)
   @protected
   Future<bool> outputFinished();
   @protected
@@ -120,6 +118,16 @@ abstract class PolledVoiceClip implements VoiceClip {
     _playing = false;
     _completed = true;
     _emit(duration);
+  }
+
+  // 출력이 끝까지 못 가고 죽음: 완료로 치지 않고 그 자리에서 멈춘 뒤 듣는 쪽에 오류를 알림
+  @protected
+  void markFailed(Duration position, Object error) {
+    if (_disposed || !_playing) return;
+    _stopTicker();
+    _playing = false;
+    _emit(position);
+    if (!_progress.isClosed) _progress.addError(error);
   }
 
   Future<void> _poll() async {

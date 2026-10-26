@@ -44,8 +44,6 @@ const Map<String, String> kStringsEnChat = {
   'transfer.errorTampered':
       "the file that arrived didn't match what was sent, so it was deleted — retry",
   'transfer.errorCancelled': 'Transfer was cancelled',
-  'transfer.errorInsecureLink':
-      "Link isn't encrypted yet — wait for the shield, then retry",
   'transfer.errorDiskFull':
       'not enough free space for {size} — free some up, then retry',
   'transfer.errorDiskFullDesktop':
@@ -77,8 +75,8 @@ const Map<String, String> kStringsEnChat = {
       'record voice messages.',
   'voice.couldNotStart': 'Could not start recording. Try again.',
   'voice.couldNotStartLinux':
-      'Could not start recording. On Linux, voice messages need parecord from '
-      'pulseaudio-utils (and pipewire-pulse on PipeWire systems).',
+      'Could not start recording. On Linux, enable a microphone and install '
+      'PipeWire tools (pw-record/pw-cat) or PulseAudio tools (parecord).',
   'picker.unavailable':
       "Couldn't open the file dialog. On Linux, install xdg-desktop-portal "
       'and a backend such as xdg-desktop-portal-gtk.',

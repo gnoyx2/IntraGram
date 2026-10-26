@@ -6,6 +6,7 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -13,36 +14,31 @@ import android.os.PersistableBundle
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
+import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-/**
- * 네 개의 MethodChannel을 붙임:
- *
- *  * `intragram/screenshot` — Android 14(API 34)+ 에서만
- *    `Activity.registerScreenCaptureCallback` 으로 스크린샷을 감지함
- *    (`DETECT_SCREEN_CAPTURE` 권한 필요). 그 아래 버전은 조용히 no-op.
- *    iOS 와 달리 캡처 자체를 막지는 못하고 알리기만 함.
- *  * `intragram/foreground` — [ConnectionService] 를 시작/중지해서 앱이
- *    백그라운드에 있는 동안 피어 링크를 살려둠 (설정에서 옵트인).
- *  * `intragram/privacy` — 민감 표시 클립보드 복사, 클립보드 비우기, 앱 정보 화면 열기
- *    (`clearIfOwn`은 우리 복사본일 때만).
- *  * `intragram/file_source` — 선택한 문서/사진의 바이트를 메모리에서 넘김.
- *  * `intragram/voice` — 받은 음성을 메모리에서 재생 ([VoicePlayerChannel]).
- *
- * FLAG_SECURE는 늘 켬 (최근 앱 썸네일/스크린샷/화면 녹화에 대화가 안 남게). 끄는 설정은 없음.
- * 최근 앱 스냅샷 끄기(API 33+)도 따로 켬.
- */
+// MethodChannel 다섯 개를 붙임
+//  - intragram/screenshot: Android 14(API 34)+에서만 registerScreenCaptureCallback으로 스크린샷을 감지함
+//    (DETECT_SCREEN_CAPTURE 권한). 그 밑은 아무 일도 안 하고, iOS와 달리 막지는 못하고 알리기만 함
+//  - intragram/foreground: ConnectionService를 켜고 꺼서 백그라운드에서도 피어 링크를 살려 둠 (설정에서 옵트인)
+//  - intragram/privacy: 민감 표시 클립보드 복사, 클립보드 비우기(clearIfOwn은 우리 복사본일 때만), 앱 정보 화면 열기
+//  - intragram/file_source: 고른 문서·사진의 바이트를 메모리에서 넘김
+//  - intragram/voice: 받은 음성을 메모리에서 재생 (VoicePlayerChannel)
+// FLAG_SECURE는 늘 켬 (최근 앱 썸네일·스크린샷·화면 녹화에 대화가 안 남게, 끄는 설정 없음). 최근 앱 스냅샷 끄기(API 33+)도 따로 켬
 class MainActivity : FlutterActivity() {
     private companion object {
         const val SENSITIVE_CLIP_LABEL = "IntraGram"
+        const val LOCAL_NETWORK_PERMISSION = "android.permission.ACCESS_LOCAL_NETWORK"
+        const val LOCAL_NETWORK_REQUEST = 37017
     }
 
     private var screenshotChannel: MethodChannel? = null
     private var foregroundChannel: MethodChannel? = null
     private var memoryFileSource: MemoryFileSource? = null
     private var voicePlayer: VoicePlayerChannel? = null
+    private val localNetworkResults = mutableListOf<MethodChannel.Result>()
 
     @get:RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private val screenCaptureCallback by lazy {
@@ -53,6 +49,8 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Flutter가 MediaQuery로 시스템 바·키보드 안전 영역을 처리함 (Android 15+ 강제 모드와 동일)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             setRecentsScreenshotEnabled(false)
@@ -64,6 +62,17 @@ class MainActivity : FlutterActivity() {
         val messenger = flutterEngine.dartExecutor.binaryMessenger
         MethodChannel(messenger, "intragram/privacy").setMethodCallHandler { call, result ->
             when (call.method) {
+                "checkLocalNetworkPermission" -> result.success(localNetworkGranted())
+                "requestLocalNetworkPermission" -> {
+                    if (localNetworkGranted()) {
+                        result.success(true)
+                    } else {
+                        localNetworkResults.add(result)
+                        if (localNetworkResults.size == 1) {
+                            requestPermissions(arrayOf(LOCAL_NETWORK_PERMISSION), LOCAL_NETWORK_REQUEST)
+                        }
+                    }
+                }
                 "copySensitive" -> {
                     copySensitive(call.arguments as? String ?: "")
                     result.success(null)
@@ -107,9 +116,8 @@ class MainActivity : FlutterActivity() {
         voicePlayer = VoicePlayerChannel(messenger)
         val channel = MethodChannel(messenger, "intragram/foreground")
         foregroundChannel = channel
-        // 서비스가 스스로(FGS 누적 시간 제한, Android 15+) 멈추면 Dart 쪽에
-        // 알림 — "백그라운드 연결 유지" 설정이 실제로는 안 도는데 켜진 것처럼
-        // 안 보이게 함.
+        // 서비스가 스스로 멈추면(FGS 누적 시간 제한, Android 15+) Dart에 알림: 백그라운드 연결 유지가 실제론 안 도는데
+        // 켜진 것처럼 보이면 안 됨
         ConnectionService.onTimedOut = { runOnUiThread { channel.invokeMethod("onTimeout", null) } }
         channel.setMethodCallHandler { call, result ->
             when (call.method) {
@@ -118,9 +126,8 @@ class MainActivity : FlutterActivity() {
                         ConnectionService.start(this)
                         result.success(null)
                     } catch (e: IllegalStateException) {
-                        // 백그라운드에서 포그라운드 서비스 시작 제한(Android 12+,
-                        // ForegroundServiceStartNotAllowedException 포함) 등 —
-                        // 앱을 죽이지 않고 Dart 쪽에 실패로 알림.
+                        // 백그라운드에서 포그라운드 서비스 시작 제한(Android 12+, ForegroundServiceStartNotAllowedException 포함) 등:
+                        // 앱을 죽이지 않고 Dart에 실패로 알림
                         result.error("foreground_start_failed", e.message, null)
                     } catch (e: SecurityException) {
                         result.error("foreground_start_failed", e.message, null)
@@ -138,6 +145,33 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (memoryFileSource?.onActivityResult(requestCode, resultCode, data) == true) return
         super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    // 문자열·정수만 써서 compileSdk 36에서도 빌드됨. target 36 이하는 OS가 LAN을 이미 허용함
+    private fun localNetworkGranted(): Boolean =
+        if (Build.VERSION.SDK_INT >= 37 && applicationInfo.targetSdkVersion >= 37) {
+            checkSelfPermission(LOCAL_NETWORK_PERMISSION) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != LOCAL_NETWORK_REQUEST) return
+        val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
+        val results = localNetworkResults.toList()
+        localNetworkResults.clear()
+        results.forEach { it.success(granted) }
+    }
+
+    override fun onDestroy() {
+        localNetworkResults.forEach { it.success(false) }
+        localNetworkResults.clear()
+        super.onDestroy()
     }
 
     override fun onStart() {

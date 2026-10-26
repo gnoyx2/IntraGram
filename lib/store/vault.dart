@@ -20,12 +20,10 @@ part 'vault/crypto.dart';
 part 'vault/io.dart';
 part 'vault/session.dart';
 
-// copyWith에서 "인자 안 줌"과 명시적 null을 구분하는 센티널
-// (VaultSettings.langOverride를 null로 되돌릴 수 있게)
+// copyWith에서 '안 줌'과 명시적 null을 가르는 센티널 (langOverride를 null로 되돌리려고)
 const Object _unset = Object();
 
-// 보호 모드인데 세션 PIN이 없어서 save가 거부됐을 때 던짐. 평문으로 자동 전환하지 않음
-// (호출부가 잠금 해제를 시키거나 실패를 보여줘야 함)
+// 보호 모드인데 세션 PIN이 없어서 저장을 거부함 (평문으로 몰래 안 바꿈)
 class VaultLockedException implements Exception {
   const VaultLockedException(this.message);
   final String message;
@@ -33,8 +31,7 @@ class VaultLockedException implements Exception {
   String toString() => 'VaultLockedException: $message';
 }
 
-// 파일 삭제/쓰기 실패 (권한 거부, 디스크 오류 등. 이미 없는 건 실패 아님)
-// 호출부가 "지웠다/저장했다"고 착각하지 않게 실패 원인들을 그대로 들고 있음 (경로는 안 담음)
+// 삭제·쓰기 실패 (이미 없는 건 실패 아님). 호출부가 지웠다고 착각하지 않게 원인을 들고 있음 (경로는 안 담음)
 class VaultIoException implements Exception {
   const VaultIoException(this.message, this.failures);
   final String message;
@@ -43,9 +40,9 @@ class VaultIoException implements Exception {
   String toString() => 'VaultIoException: $message (${failures.length})';
 }
 
-// 수신 파일 외에 앱에서 유일하게 디스크를 만지는 곳
+// 사용자가 켠 보관소 파일(vault.json)을 읽고 씀
 class Vault {
-  // resolveDir는 vault 디렉토리를 고르는 seam (프로덕션은 null = 앱 지원 디렉토리, 테스트는 임시 디렉토리 주입)
+  // resolveDir: 폴더를 고르는 seam (프로덕션은 앱 비공개 폴더, 테스트는 임시 폴더)
   Vault({Future<String> Function()? resolveDir})
     : _resolveDir = resolveDir ?? _defaultDir;
 
@@ -71,8 +68,7 @@ class Vault {
   String? _decoyPin;
   bool _decoyMode = false;
 
-  // 파일에서 읽은 dchk 원본. duress PIN이 없을 때 쓰는 난수 placeholder를 저장 간에 안정적으로
-  // 유지함 (안 그러면 매 저장마다 바뀌어 "duress 없음"이 티남)
+  // 파일에서 읽은 dchk. duress가 없을 때의 난수 자리값도 저장마다 그대로 둠 (바뀌면 duress가 없는 게 티남)
   String? _dchk;
   int _dchkIterations = kVaultPbkdf2Iterations;
 
@@ -81,22 +77,17 @@ class Vault {
 
   final Chacha20 _aead = Chacha20.poly1305Aead();
 
-  // 테스트 seam: 쓰기(path/sealed/tmp)와 로드(read/decrypted/decoy-checked)의 각 단계 경계에서,
-  // epoch/decoy/전이 재확인 직전에 호출됨. 테스트가 그 순간에 duress 전이나 erase를 끼워 넣어
-  // 어느 단계에서 끼어들어도 아카이브/세션 상태가 안 바뀌는지 결정적으로 검사함. 프로덕션에선 null
+  // 테스트 seam: 저장·로드의 단계마다 재확인 직전에 불림. 테스트가 그 순간 duress 전이나 erase를 끼워 봄 (프로덕션은 null)
   @visibleForTesting
   Future<void> Function(String stage)? debugStageHook;
 
-  // 디스크 작업(저장/삭제) 큐의 꼬리. 다음 작업은 항상 뒤에 붙어 순서대로 돌아서
-  // save -> erase -> save가 겹쳐 서로 밟지 않음. 실패한 작업이 꼬리를 끊지 않게 catchError로 감쌈
+  // 디스크 작업 큐의 꼬리. 다 줄 서서 돌아서 저장·삭제가 겹쳐 밟지 않음
   Future<void> _ioTail = Future<void>.value();
 
-  // erase/load/unlock마다 증가. 큐에 있던(아직 안 돈) save가 붙잡은 epoch가 현재와 다르면
-  // 실행 시 조용히 스킵함: 세션 전이 도중 옛 저장이 실제 archive를 되살리는 걸 막음
+  // erase·load·unlock마다 오름. 큐에서 기다리던 저장이 잡은 값과 다르면 건너뜀 (전이 중 옛 저장이 아카이브를 되살리면 안 됨)
   int _epoch = 0;
 
-  // load/unlock이 세션 전이를 시작한 뒤 real/decoy/실패로 확정되기 전까진 true
-  // 이 동안의 save는 결과를 모르니 무조건 거부함
+  // load·unlock이 진짜·duress·실패로 정해지기 전까지 true. 이 동안 저장은 다 거부
   bool _transitioning = false;
 
   bool get isDecoyMode => _decoyMode;
@@ -123,11 +114,8 @@ class Vault {
 
   Future<VaultSnapshot?> unlock(String pin) => load(pin: pin);
 
-  // null이면 이후 save가 평문으로 씀. duress 세션에선 no-op
-  // (강요당해 "새 PIN"을 설정해도 실제 보호 상태는 안 바뀜)
-  // duress PIN과 같으면 거부(false). 재시작 뒤처럼 duress 원문이 없을 땐 호출부가
-  // isDecoyPin으로 먼저 걸러야 함
-  // duress 세션에선 성공한 척 true (거부 문구가 뜨면 duress인 게 티남)
+  // null이면 이후 평문으로 저장. duress PIN과 같으면 false (재시작 뒤엔 원문이 없어서 호출부가 isDecoyPin으로 먼저 거를 것).
+  // duress 세션에선 아무것도 안 바꾸고 성공한 척 true (거부가 뜨면 duress인 게 티남)
   bool setPin(String? pin) {
     if (_decoyMode) return true;
     if (pin != null && pin == _decoyPin) return false;
@@ -176,12 +164,9 @@ class Vault {
     return true;
   }
 
-  // 없거나 깨졌거나 디스크를 못 쓰면 null (호출자는 빈 세션으로 시작)
-  // PIN 봉인이면 pin(또는 세션 PIN)이 필요하고 없거나 틀리면 null
-  // 구현은 _VaultSession._load로 위임 (private 확장은 라이브러리 밖에서 직접 호출 불가)
+  // 없거나 깨졌거나 못 읽으면 null (빈 세션으로 시작). 봉인이면 PIN이 맞아야 함
   Future<VaultSnapshot?> load({String? pin}) => _load(pin: pin);
 
-  // private 확장 메서드는 라이브러리 밖에서 못 불러서 이 한 줄 위임이 공개 진입점
   Future<void> save(VaultSnapshot snapshot) => _save(snapshot);
 
   Future<void> erase() => _erase();

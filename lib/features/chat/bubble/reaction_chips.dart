@@ -1,8 +1,6 @@
 part of '../message_bubble.dart';
 
-// Center 없이 Row(min)만 씀: Center는 가로폭을 최대로 늘려서 Wrap 안에서
-// 칩 하나가 한 줄을 먹고 세로로 쌓이며 가운데로 떠 보임
-// 반응이 없어도 말풍선과 같이 마운트해 둠. 그래야 첫 반응도 새로 붙은 반응으로 잡혀 튀어나옴
+// 반응이 없어도 말풍선과 같이 마운트해 둠: 그래야 첫 반응도 새로 붙은 걸로 잡혀 튀어나옴
 class _ReactionChips extends ConsumerStatefulWidget {
   const _ReactionChips({
     required this.message,
@@ -196,6 +194,7 @@ class _ReactionChipState extends State<_ReactionChip>
           child: InkWell(
             onTap: _handleTap,
             customBorder: const StadiumBorder(),
+            // factor 1: 안 주면 Center가 폭을 다 먹어서 Wrap 안에서 칩이 한 줄씩 쌓임
             child: Center(
               widthFactor: 1,
               heightFactor: 1,

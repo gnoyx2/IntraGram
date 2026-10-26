@@ -47,10 +47,14 @@ extension _VoiceRecorderCapture on _VoiceRecorderButtonState {
         tapLocked: tapLocked,
       );
       if (_pendingSend != false) AppHaptics.lightImpact();
-      _amplitudeSub = capture.amplitudeStream.listen((level) {
-        _amplitude = level;
-        _banner?.markNeedsBuild();
-      });
+      _amplitudeSub = capture.amplitudeStream.listen(
+        (level) {
+          _amplitude = level;
+          _banner?.markNeedsBuild();
+        },
+        // 녹음 도구가 도중에 끝남: 손을 뗄 때까지 기다리지 않고 바로 멈춰 '저장하지 못함'을 알림
+        onError: (Object _) => unawaited(_stop(send: true)),
+      );
       _showBanner();
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
         final elapsed = stopwatch.elapsed;
@@ -62,7 +66,7 @@ extension _VoiceRecorderCapture on _VoiceRecorderButtonState {
       });
     } on Object {
       if (mounted) {
-        // Linux는 parecord 프로세스로 녹음해서 그 패키지가 없으면 여기로 옴
+        // Linux에서 쓸 수 있는 PipeWire/PulseAudio 녹음 도구가 없으면 여기로 옴
         final key = defaultTargetPlatform == TargetPlatform.linux
             ? 'voice.couldNotStartLinux'
             : 'voice.couldNotStart';
@@ -71,7 +75,7 @@ extension _VoiceRecorderCapture on _VoiceRecorderButtonState {
       await capture.dispose();
     } finally {
       _busy = false;
-      // 취소(false)가 대기 중이면 그게 최종 의사. true였어도 절대 안 덮으니 현재 _pendingSend를 그대로 존중
+      // 시작 중에 뗀 의사를 이제 실행함 (false는 한 번 오면 안 바뀜)
       final pending = _pendingSend;
       if (pending != null && _capture != null) {
         _pendingSend = null;

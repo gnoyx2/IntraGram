@@ -16,9 +16,9 @@ abstract final class AppHaptics {
     try {
       await feedback();
     } on MissingPluginException {
-      // Optional feedback must not interrupt the action on unsupported devices.
+      // 진동 지원 안 하는 기기라고 동작이 끊기면 안 됨
     } on PlatformException {
-      // The OS may decline feedback while the engine is losing focus.
+      // 엔진이 포커스를 잃는 중이면 OS가 거절하기도 함
     }
   }
 }

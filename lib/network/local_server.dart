@@ -22,9 +22,9 @@ part 'server_web_client.dart';
 // GET /                  단일 파일 웹 클라이언트 (브라우저 게스트)
 // GET /ws                WebSocket 업그레이드 -> 새 인바운드 PeerLink
 // POST /api/transfer     인커밍 파일 바이트 스트림 수락
-// GET /api/download/<id> 아웃고잉 파일을 브라우저 게스트로 스트리밍
+// GET /api/download/<id> 보내는 파일을 당겨 가는 쪽(방 멤버·브라우저)에 흘림
 // GET /health            생존 + 신원 프로브
-// link-local IPv4에만 바인딩. 기기가 네트워크에 없으면 start가 null을 리턴하고 아무것도 안 들음
+// 사설 LAN 주소(사설·링크로컬 IPv4, 없으면 IPv6 ULA)에만 바인딩. 그런 주소가 없으면 start가 null이고 아무것도 안 들음
 class LocalServer {
   LocalServer({
     required this.registry,
@@ -43,8 +43,7 @@ class LocalServer {
   // 테스트는 0을 넘겨 OS가 ephemeral 포트를 배정하게 함 (병렬 실행이 안 겹침)
   final int preferredPort;
 
-  // 넘기면 NetworkGuard.localBindAddress를 안 부르고 이 주소에 바로
-  // 바인딩. 테스트 전용 seam (프로덕션은 항상 null = 실제 LAN 인터페이스 탐지)
+  // 테스트 전용: 인터페이스를 안 찾고 이 주소에 바로 바인드 (프로덕션은 null)
   final InternetAddress? bindAddress;
 
   // 요청을 끝까지 안 보내는 연결을 닫기까지의 간격 (실제로는 이 값의 1~2배). 테스트는 짧게 줌
@@ -54,9 +53,7 @@ class LocalServer {
   String? _webClientCache;
   String? _webClientPolicy;
 
-  // 포털이 켜져 있는 동안만 세팅되는 256-bit RAM 전용 입장 토큰(base64url).
-  // ServerController.start가 서버가 뜬 직후 채우고 끄면 지움
-  // web_hello가 정확히 일치해야 하고, 링크엔 값 복사 대신 조회 콜백을 줘서 포털 OFF 직후 대기 링크도 거부함
+  // 포털이 켜진 동안만 있는 256비트 입장 토큰 (RAM). 링크엔 값 대신 조회 콜백을 줘서 포털을 끈 직후 대기 링크도 거부됨
   String? portalToken;
 
   bool get isRunning => _server != null;

@@ -69,7 +69,41 @@ void main() {
     final id = rig.remoteStores[0].transfers.single.id;
     expect(rig.store.transfer(id)!.digest, sha(content));
     expect(rig.remoteStores[1].transfer(id)!.digest, sha(content));
+    final senderKey = base64.encode(rig.remotes[0].identity.publicKey!);
+    expect(rig.store.transfer(id)!.senderPubKey, senderKey);
+    expect(rig.remoteStores[1].transfer(id)!.senderPubKey, senderKey);
   });
+
+  test(
+    'an offer cannot substitute a public key for its authenticated sender',
+    () async {
+      final pair = await connectedPair();
+      addTearDown(pair.storeA.dispose);
+      addTearDown(pair.storeB.dispose);
+      final offer = InnerFrame.fileOffer(
+        id: 'key-swap',
+        attempt: 'a1',
+        mode: 'push',
+        name: 'x.bin',
+        size: 4,
+        enc: true,
+        senderPubKey: base64.encode(pair.linkB.identity.publicKey!),
+      );
+      await pair.linkA.sendRawInner(offer);
+      await pumpEventQueue(times: 60);
+      expect(pair.storeB.transfer('key-swap'), isNull);
+      await pair.linkA.sendRawInner({
+        ...offer,
+        'sk': base64.encode(pair.linkA.identity.publicKey!),
+      });
+      await pumpEventQueue(times: 60);
+      expect(
+        pair.storeB.transfer('key-swap')!.senderPubKey,
+        base64.encode(pair.linkA.identity.publicKey!),
+      );
+      expect(pair.linkB.remoteIdentityKey, pair.linkA.identity.publicKey);
+    },
+  );
 
   group('a pull checks the bytes against the offered digest', () {
     late HttpServer server;
@@ -156,7 +190,11 @@ void main() {
       await offer(id, '$id-1');
       p.storeB.updateTransfer(
         id,
-        (t) => t.copyWith(state: TransferState.failed, error: error),
+        (t) => t.copyWith(
+          state: TransferState.failed,
+          error: error,
+          contentCommitment: sha(content),
+        ),
       );
       await offer(id, '$id-2');
       expect(p.storeB.transfer(id)!.state, TransferState.offered);

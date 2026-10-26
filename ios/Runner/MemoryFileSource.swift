@@ -3,17 +3,12 @@ import UIKit
 import PhotosUI
 import UniformTypeIdentifiers
 
-/// `intragram/file_source` MethodChannel — 모바일 문서/사진 선택을 캐시 복사
-/// 없이 Direct RAM 스트리밍으로 넘김. `UIDocumentPickerViewController`를
-/// `asCopy: false`로 열어 앱 캐시로 복사하지 않고, security-scoped URL을
-/// RAM(딕셔너리)에서만 들고 있다가 `release`에서 scope를 해제함.
-/// 사진은 `PHPickerViewController`(별도 프로세스라 사진 보관함 권한 팝업 없음)로
-/// 고른 것만 받아 바이트를 RAM에만 두고 `release`에서 버림.
-///
-/// 계약: `pick(imagesOnly) -> [{id,name,size}]`, `open(sourceId) -> readerId`,
-/// `read(readerId, maxBytes) -> bytes|nil(EOF)`, `close(readerId)`,
-/// `release(sourceId)`, `releaseAll()`. `read`는 Dart가 다음 조각을 요청할
-/// 때만 불리는 pull 방식이라 무제한 버퍼링이 없음.
+// intragram/file_source 채널: 모바일 문서·사진 선택을 캐시 사본 없이 RAM으로 흘려 넘김.
+// UIDocumentPickerViewController를 asCopy: false로 열어서 앱 캐시로 안 복사하고, security-scoped URL은
+// RAM(딕셔너리)에만 들고 있다가 release에서 scope를 놓음. 사진은 PHPickerViewController(별도 프로세스라
+// 사진 보관함 권한 팝업이 없음)로 고른 것만 받아 바이트를 RAM에만 두고 release에서 버림
+// 계약: pick(imagesOnly) -> [{id,name,size}], open(sourceId) -> readerId, read(readerId, maxBytes) -> bytes|nil(EOF),
+// close(readerId), release(sourceId), releaseAll(). read는 Dart가 다음 조각을 달라고 할 때만 불려서 버퍼가 끝없이 안 쌓임
 final class MemoryFileSource: NSObject, UIDocumentPickerDelegate, PHPickerViewControllerDelegate {
   private static let photoLimit = 10
   private static let photoBudget = 50 * 1024 * 1024
@@ -33,9 +28,8 @@ final class MemoryFileSource: NSObject, UIDocumentPickerDelegate, PHPickerViewCo
   private var readers: [String: FileHandle] = [:]
   private var pendingPick: FlutterResult?
 
-  /// releaseAll()마다 증가. pick/open이 그 순간 이미 진행 중이었으면 자기가
-  /// 시작할 때 캡처한 값과 나중에 비교해서, 다르면 방금 얻은 소스/핸들을
-  /// 등록하지 않고 바로 버림.
+  // releaseAll()마다 오름. 그 순간 도는 pick·open은 시작할 때 잡은 값과 나중에 비교해서
+  // 다르면 방금 얻은 소스·핸들을 등록 안 하고 바로 버림
   private var generation = 0
   private var pendingPickGeneration = 0
   private let ioQueue = DispatchQueue(
@@ -87,9 +81,7 @@ final class MemoryFileSource: NSObject, UIDocumentPickerDelegate, PHPickerViewCo
     }
   }
 
-  /// 현재 키 윈도우의 맨 위 뷰컨트롤러 — 이미 뭔가 모달로 떠 있으면 그 위에
-  /// 겹쳐 띄움. AppDelegate가 특정 뷰컨트롤러를 미리 안 들고 있어도 되게,
-  /// 호출 시점에 그때그때 찾음.
+  // 지금 키 윈도우의 맨 위 뷰컨트롤러 (모달이 떠 있으면 그 위에 띄움). 미리 들고 있지 않고 부를 때마다 찾음
   private func topViewController() -> UIViewController? {
     let keyWindow = UIApplication.shared.connectedScenes
       .compactMap { $0 as? UIWindowScene }
@@ -200,8 +192,7 @@ final class MemoryFileSource: NSObject, UIDocumentPickerDelegate, PHPickerViewCo
     let result = pendingPick
     pendingPick = nil
     guard pendingPickGeneration == generation else {
-      // releaseAll이 이 pick 도중에 돎 — scope를 아예 얻지 않고 빈 결과로
-      // 끝냄.
+      // 이 pick 도중에 releaseAll이 돎: scope를 아예 안 얻고 빈 결과로 끝냄
       result?([])
       return
     }
@@ -210,8 +201,7 @@ final class MemoryFileSource: NSObject, UIDocumentPickerDelegate, PHPickerViewCo
       guard url.startAccessingSecurityScopedResource() else { continue }
       let values = try? url.resourceValues(forKeys: [.fileSizeKey, .nameKey])
       guard let size = values?.fileSize else {
-        // 크기를 못 구하면(클라우드 전용, 로컬 미다운로드 등) scope를 바로
-        // 반납하고 건너뜀 — 네트워크 다운로드를 유도하지 않음.
+        // 크기를 못 구하면(클라우드 전용, 기기에 안 받은 파일 등) scope를 바로 놓고 건너뜀: 네트워크 다운로드를 안 일으킴
         url.stopAccessingSecurityScopedResource()
         continue
       }
@@ -248,8 +238,7 @@ final class MemoryFileSource: NSObject, UIDocumentPickerDelegate, PHPickerViewCo
       DispatchQueue.main.async {
         guard let self else { return }
         guard openGeneration == self.generation, self.sources[sourceId] != nil else {
-          // releaseAll이 open 도중에 돎 — 방금 연 핸들은 등록하지 않고 바로
-          // 닫음.
+          // open 도중에 releaseAll이 돎: 방금 연 핸들은 등록 안 하고 바로 닫음
           try? handle?.close()
           result(FlutterError(code: "released", message: "source was released during open", details: nil))
           return

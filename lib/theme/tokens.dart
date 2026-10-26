@@ -30,6 +30,7 @@ class AppBorder {
   const AppBorder._();
 
   static const double hairline = 0.5;
+  static const double defined = 1;
 }
 
 // 말풍선 위 보조 글씨(시각·크기·전송 상태)의 본문색 불투명도

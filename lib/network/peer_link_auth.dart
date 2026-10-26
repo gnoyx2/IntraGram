@@ -1,12 +1,9 @@
 part of 'peer_link.dart';
 
-// 앱 피어 핸드셰이크 + 신원 증명(프로토콜 v7, 커밋-후-공개)
-// 1) 다이얼러 hello: 신원키 + 임시키 커밋 (임시키 자체는 아직 안 보냄)
-// 2) 리스너 hello: 신원키 + 임시키 + 서명(커밋·리스너 임시키·양쪽 신원키)
-// 3) 다이얼러 auth: 임시키 공개 + 서명(양쪽 임시키·양쪽 신원키)
-// 리스너는 2)를 보낼 때 다이얼러 임시키를 모르고 다이얼러 키는 1)에서 이미 묶여서, 어느 자리의
-// 중간자도 상대 키를 본 뒤 6자리 SAS를 맞추는 키를 고를 수 없음
-// 증명 전엔 상대 peerId/이름을 링크에도 store에도 반영 안 함
+// 앱 피어 핸드셰이크 + 신원 증명 (v7, 커밋 후 공개):
+// 1) 다이얼러 hello: 신원 키 + 임시키 커밋  2) 리스너 hello: 신원 키 + 임시키 + 서명(커밋·리스너 임시키·양쪽 신원 키)
+// 3) 다이얼러 auth: 임시키 공개 + 서명(양쪽 임시키·신원 키). 리스너는 다이얼러 키를 모른 채 자기 키를 내고 다이얼러 키는 1)에서
+// 묶여서 어느 쪽 중간자도 SAS 맞추는 키를 못 고름. 증명 전엔 상대 peerId·이름을 어디에도 안 씀
 extension _PeerLinkAuth on PeerLink {
   String _helloFrame(CryptoSession crypto, Uint8List idKey, {String? sig}) =>
       OuterFrame.hello(
@@ -27,8 +24,7 @@ extension _PeerLinkAuth on PeerLink {
         port: localPort,
       );
 
-  // 증명 실패한 앱 피어 hello: 인바운드면 방금 만든 placeholder 대화도 치움 (다이얼한 링크의 대화는 사용자 것이라 둠)
-  // 방으로 옮겨진 링크의 대화(방 기록)는 절대 안 지움
+  // 증명 실패: 인바운드면 방금 만든 임시 대화도 치움 (다이얼한 대화는 사용자 거라 둠, 방 기록은 절대 안 지움)
   Future<void> _failPeerHello([
     SystemEventKind reason = SystemEventKind.handshakeFailed,
   ]) {
@@ -38,10 +34,8 @@ extension _PeerLinkAuth on PeerLink {
     return _shutdown();
   }
 
-  // 역할과 무관한 구조 검사 (서명 전에 거름). 밝힌 peerId는 신원 키의 해시여야 하고, 다이얼한 링크는
-  // 기대한 peerId여야 함 (DHCP 재할당 등으로 다른 기기가 있으면 예전 대화에 조용히 안 이어붙임)
-  // 내 peerId를 밝히는 hello는 중간자가 내 hello를 되돌린(반사) 것이고, 작은 위수 점 키는 서명 위조가
-  // 가능해서 신원 키가 될 수 없음
+  // 서명 전 구조 검사: peerId는 신원 키 해시여야 하고, 다이얼한 링크면 기대한 peerId여야 함 (DHCP로 다른 기기가 그 주소면 안 이어붙임).
+  // 내 peerId를 밝히는 hello는 중간자가 내 hello를 되돌린 것, 작은 위수 키는 서명 위조가 돼서 둘 다 거부
   bool _acceptableHello(HelloOuter hello) =>
       hello.peerId != identity.peerId &&
       !isSmallOrderKey(hello.identityKey) &&
@@ -51,7 +45,7 @@ extension _PeerLinkAuth on PeerLink {
   Future<void> _onPeerHello(HelloOuter hello) async {
     final crypto = _crypto;
     final ownKey = identity.publicKey;
-    // 키 없는 신원은 증명을 못 함. 기대한 peerId가 아니면 이 주소에 다른 기기가 있는 것(DHCP 재할당 등)
+    // 기대한 peerId가 아니면 이 주소에 다른 기기가 있는 것
     if (crypto == null || ownKey == null || !_acceptableHello(hello)) {
       final elsewhere = (expectedPeerId ?? hello.peerId) != hello.peerId;
       await _failPeerHello(
@@ -114,8 +108,7 @@ extension _PeerLinkAuth on PeerLink {
     await _finishPeerHello(hello);
   }
 
-  // 리스너 쪽: 다이얼러는 커밋만 보냄. 내 임시키·서명을 먼저 보내고 auth의 공개를 기다림
-  // 공개키/서명은 비밀이 아니라 상대 증명 전에 보내도 안전. identity/store 변경은 증명 성공 뒤로 미룸
+  // 리스너 쪽: 다이얼러는 커밋만 보냄. 내 임시키·서명을 먼저 보내고(비밀 아님) auth 공개를 기다림. 신원·store 변경은 증명 뒤로 미룸
   Future<void> _onDialerHello(
     HelloOuter hello,
     CryptoSession crypto,
@@ -141,7 +134,7 @@ extension _PeerLinkAuth on PeerLink {
     _sendOuter(_helloFrame(crypto, ownKey, sig: base64.encode(signature)));
     _awaitingAuth = (auth) async {
       final revealed = auth.ephemeralKey;
-      // 공개한 임시키가 커밋과 다르면 내 키를 본 뒤 키를 바꿔치기한 것 (SAS를 맞추려는 중간자)
+      // 공개한 임시키가 커밋과 다르면 내 키를 본 뒤 바꿔치기한 것 (SAS 맞추려는 중간자)
       final opened = ephemeralCommitment(
         ephemeral: revealed,
         identityKey: peerKey,
@@ -169,8 +162,7 @@ extension _PeerLinkAuth on PeerLink {
     };
   }
 
-  // 키 합의. 깨진 키/all-zero shared secret/자기 공개키 반사는 거부
-  // 워치독/오류로 이미 닫혔거나 동시 호출과 합류해 준비가 안 됐으면 false라 phase/onSecure/room join/store 변경을 건너뜀
+  // 키 합의. 워치독·오류로 이미 닫혔거나 준비가 안 됐으면 false라 뒤 단계(phase, onSecure, 방 합류, store)를 건너뜀
   Future<bool> _agree(CryptoSession crypto, Uint8List peerEphemeral) async {
     try {
       await crypto.completeHandshake(base64.encode(peerEphemeral));
@@ -181,7 +173,7 @@ extension _PeerLinkAuth on PeerLink {
     return !_closed && crypto.isReady;
   }
 
-  // 기대하지 않은 auth(리스너가 아니거나 hello 전이거나 이미 끝난 링크)는 프로토콜 위반: 다운그레이드/재생 시도로 보고 닫음
+  // 기대 안 한 auth(리스너가 아님, hello 전, 이미 끝난 링크)는 프로토콜 위반이라 닫음
   Future<void> _onAuthOuter(AuthOuter auth) async {
     final pending = _awaitingAuth;
     if (_phase != _LinkPhase.handshaking || pending == null) {
