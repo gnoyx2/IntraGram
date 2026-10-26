@@ -200,10 +200,16 @@ jobs:
 
   apple:
     needs: verify
-    runs-on: macos-15
+    runs-on: xcode-27
     timeout-minutes: 60
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Show Apple SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -221,7 +227,7 @@ jobs:
           hdiutil create -volname IntraGram -srcfolder "$APP" -ov -format UDZO dist/intragram-macos.dmg
           {
             echo "commit: $GITHUB_SHA"
-            echo "flutter: $FLUTTER_VERSION, runner: macos-15"
+            echo "flutter: $FLUTTER_VERSION, runner: xcode-27, Xcode 27.1"
             echo "macOS app codesign (Signature=adhoc and no TeamIdentifier means not notarizable):"
             codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Signature|Authority|TeamIdentifier' || true
             echo "macOS entitlements (get-task-allow must not appear in a distribution build):"

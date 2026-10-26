@@ -6,9 +6,9 @@ repository: `*.jks`, `*.keystore`, `key.properties`, `*.p12`, `*.p8`, `*.pfx`,
 token or certificate into a commit, an issue, a log or a release note.
 
 Public source baseline: app `1.0.0+7`, wire protocol `7`, from development
-HEAD `c5b247b` plus the current desktop/web work. Only selected project files
-are exported into the separate public history; development Git history,
-local build state and signing material are excluded.
+HEAD `c5b247b` plus the current desktop/web work and Apple CI toolchain update.
+Only selected project files are exported into the separate public history;
+development Git history, local build state and signing material are excluded.
 
 ## 1. Gates (run on the exact commit you will build)
 
@@ -45,19 +45,23 @@ appears depends on the build:
   xcodebuild disables simulator support; the macOS build is unaffected.
 
 No app (Runner) warning appeared. These warnings are not suppressed and no
-dependency or signing team setting changed. The code, tests and build
-configuration match private CI snapshot `95a1db6` (branch
-`desktop-web-20261026`, tree `508b1c4`); documentation changed afterward.
-This public snapshot has not yet run in GitHub Actions. In the private snapshot:
+dependency or signing team setting changed. The application code and tests
+match private CI snapshot `95a1db6` (branch `desktop-web-20261026`,
+tree `508b1c4`); documentation and Apple CI configuration changed afterward.
+Check this commit's own Actions runs before release. In the private snapshot:
 `native` run 40309070215 passed windows (windows-2022 debug, no compiler
 warnings), linux (ubuntu-24.04: Linux desktop logic test, CMake debug build and
 link, bundle `install.sh` syntax) and the macOS debug step, and `ci` run
 40309070292 passed verify (1,411 tests on Linux) and the Android debug APK. The
 `apple` job's iOS debug step failed: the macos-15 runner's Xcode has no
 `UIHinge` (iOS 27.1 SDK) used by `ios/Runner/DisplayRegions.swift` from c5b247b.
-Use a runner with Xcode 27.1, or compile the probe only with that SDK, before
-relying on that job or the release workflow for iOS. Headless Firefox 158 checks
-are browser automation, not device QA. Large-transfer and physical target-OS QA
+The current `native` and `release` Apple jobs use `xcode-27` with
+`DEVELOPER_DIR=/Applications/Xcode_27.1.app/Contents/Developer` and log the
+selected Xcode version and iOS SDK. Run both workflows on the release commit
+before relying on their results. The [runner image lists Xcode 27.1](https://github.com/actions/runner-images/releases/tag/xcode-27-arm64%2F20261023.0307);
+[Apple requires macOS 26.6 or later](https://developer.apple.com/xcode/system-requirements),
+so `macos-15` cannot supply this toolchain. Headless Firefox 158 checks are
+browser automation, not device QA. Large-transfer and physical target-OS QA
 were not run.
 
 Desktop/Web scope: live accessibility and native menus on macOS 27 (requested

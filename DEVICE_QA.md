@@ -22,8 +22,10 @@
 실기기 QA가 아님. 헤드리스 창은 문서 포커스가 없어 `:focus`·`:focus-within`과 버튼의
 Enter/Space 기본 실행은 확인하지 못함. Windows·Linux·macOS 디버그 빌드와 Android 디버그
 APK는 비공개 CI에서 통과(iOS 디버그는 러너 Xcode에 iOS 27.1 `UIHinge`가 없어 실패).
-이번 공개 스냅샷의 코드·테스트·빌드 설정은 비공개 CI의 개발 스냅샷 `95a1db6`과 같고
-그 뒤 문서만 바뀌었음. 이번 공개 스냅샷에서는 GitHub Actions를 아직 실행하지 않았음.
+이번 공개 스냅샷의 앱 코드·테스트는 비공개 CI의 개발 스냅샷 `95a1db6`과 같음.
+그 뒤 문서와 Apple CI 설정을 바꿨음: native·release Apple 잡은 `xcode-27`에서
+Xcode 27.1을 `DEVELOPER_DIR`로 고정하고 버전·SDK를 기록함. 출시 전에
+해당 커밋의 Actions 실행 결과를 확인할 것.
 대용량 테스트·아래 실기기 QA는 미실시.
 
 데스크톱·웹 추가 점검 대상(모두 실기기 NOT RUN):

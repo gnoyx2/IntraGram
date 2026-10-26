@@ -9,6 +9,10 @@ different protocol versions refuse to talk to each other.
 Protocol 7. Not a supported release yet: device QA is pending on every
 platform (see `DEVICE_QA.md`).
 
+- Fixed: native and release Apple CI jobs select the `xcode-27` runner and
+  pin Xcode 27.1 through `DEVELOPER_DIR` for the iOS 27.1 hinge APIs; the
+  selected Xcode version and iOS SDK are logged.
+
 - iOS 27 Liquid Glass accessibility: live Reduce Transparency/high contrast,
   opaque surfaces and defined borders, Safari fallbacks, and resizing privacy
   covers on every iOS scene/window without chat indexing.
@@ -85,9 +89,8 @@ platform (see `DEVICE_QA.md`).
   warnings and a local CoreSimulator version diagnostic. Headless Firefox 158
   ran the served page under its CSP and real-input browser checks. Private CI
   built Windows, Linux and macOS debug apps and an Android debug APK from
-  development snapshot `95a1db6`, whose code, tests and build configuration
-  match this public snapshot. This public snapshot has not yet run in GitHub
-  Actions. The private snapshot's iOS debug build failed on a runner Xcode
+  development snapshot `95a1db6`, whose application code and tests
+  match this public snapshot. Check this commit's own Actions runs before release. The private snapshot's iOS debug build failed on a runner Xcode
   without iOS 27.1's
   `UIHinge`. Large-transfer tests and physical QA remain pending. Capture
   APIs cannot guarantee ScreenCaptureKit/Visual Intelligence or absolute Windows
