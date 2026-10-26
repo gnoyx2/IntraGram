@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// IgnorePointer라 드롭 이벤트를 안 먹고 밑의 DropTarget으로 그대로 감. 모양은 웹 포털의 드래그 강조와 맞춤
+// IgnorePointer로 감싸 드롭 이벤트를 소비하지 않고 하위 DropTarget으로 전달함. 외형은 웹 포털의 드래그 강조 스타일과 통일함
 class DropOverlay extends StatelessWidget {
   const DropOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // Positioned.fill은 호출부가 씌움: 호출부가 페이드로 감싸서 여기 두면 Stack의 직계 자식이 아니게 됨
-    // (Incorrect use of ParentDataWidget)
+    // Positioned.fill은 호출부에서 적용함. 호출부가 페이드로 감싸므로 내부에 두면 Stack 직계 자식이 아니게 되어 ParentDataWidget 오류가 발생함
     return IgnorePointer(
       child: Container(
         margin: const EdgeInsets.all(AppSpacing.md),

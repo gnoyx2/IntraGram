@@ -8,8 +8,7 @@ final List<TextInputFormatter> kPinInputFormatters = [
   FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
 ];
 
-// PIN 입력칸. Cupertino는 라벨을 위 Text로 따로 두고 테두리 상자 CupertinoTextField
-// (네이티브 iOS엔 떠 있는 라벨이 없음), Material은 떠 있는 라벨 TextField
+// 네이티브 iOS에는 플로팅 라벨이 없어서 Cupertino면 라벨을 상단 Text로 분리함
 Widget pinField(
   BuildContext context, {
   required bool cupertino,

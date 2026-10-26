@@ -12,8 +12,8 @@ import 'support/handshake_pair.dart' show conv;
 import 'support/link_registry_fixtures.dart' show identity;
 import 'support/test_identities.dart';
 
-// 차단한 기기는 어느 방향으로도 핸드셰이크를 못 마치고, '내가 연 대화만 받기'를 켜면 이번 세션에
-// 대화한 적 없는 기기가 여는 연결을 거절함. 둘 다 RAM에만 있음 (신원 키가 실행마다 바뀜)
+// 차단한 기기는 다시 대화를 열지 못하고(신원 키가 실행마다 바뀌므로 차단 목록은 RAM에만 유지),
+// '내가 연 대화만 받기'(설정 보관 대상)를 켜면 이번 세션에 대화 기록이 없는 기기의 인바운드 연결을 거절함
 
 Conversation _known(String id, String peerId) =>
     conv(id, 'alice').copyWith(peerId: peerId, online: false);

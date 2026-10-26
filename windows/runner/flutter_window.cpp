@@ -45,7 +45,7 @@ bool RevealFile(HWND window, const flutter::EncodableValue* arguments) {
   if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path->c_str(), -1,
                           wide.data(), length)) return false;
   wide.pop_back();
-  // PIDL APIs receive a path, never an Explorer command string.
+  // PIDL API는 탐색기 명령줄 문자열이 아닌 유효한 경로만 전달받아야 함
   if (!(wide.size() > 2 && wide[1] == L':' &&
         (wide[2] == L'\\' || wide[2] == L'/')) &&
       wide.rfind(L"\\\\", 0) != 0) return false;
@@ -153,7 +153,7 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
-  // Settings and focus changes must reach privacy even if a plugin consumes them.
+  // 플러그인이 메시지를 소비하더라도 설정 및 포커스 변경은 프라이버시 처리에 도달해야 함
   if (message == WM_SETTINGCHANGE || message == WM_SYSCOLORCHANGE) {
     NotifyAccessibility();
   } else if (message == WM_ACTIVATE && LOWORD(wparam) != WA_INACTIVE) {

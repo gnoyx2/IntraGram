@@ -15,7 +15,7 @@ import 'translations/strings_ko_audit.dart';
 import 'translations/strings_ko_integrity.dart';
 import 'translations/strings_ko_org.dart';
 
-// en이 기준 언어. 새 키는 항상 영어 테이블(kStringsEn*)에 먼저 추가
+// en이 기준 언어임. 새 키는 항상 영어 테이블(kStringsEn*)에 먼저 추가해야 함
 enum AppLang { en, ko }
 
 // 코드 생성·intl 없이 Map 두 개로 씀. 예: S.of(context).t('sys.memberJoined', {'alias': name}). LocaleScope가 없으면 영어
@@ -28,7 +28,7 @@ class S {
       context.dependOnInheritedWidgetOfExactType<LocaleScope>()?.strings ??
       const S(AppLang.en);
 
-  // 없으면 영어, 영어에도 없으면 key 그대로. args의 {name} 자리표시자를 치환
+  // 현재 언어에 없으면 영어, 영어에도 없으면 key를 그대로 씀. args의 {name} 자리표시자를 치환함
   String t(String key, [Map<String, String>? args]) {
     var value = _table[lang]?[key] ?? _en[key] ?? key;
     if (args != null) {
@@ -37,7 +37,7 @@ class S {
     return value;
   }
 
-  // 영어만 단/복수를 가름. 한국어는 항상 other. 템플릿의 {n}을 count로 치환
+  // 영어만 단/복수를 구분하고 한국어는 항상 other임. 템플릿의 {n}을 count로 치환함
   String plural(int count, {required String one, required String other}) {
     final template = lang == AppLang.en && count == 1 ? one : other;
     return template.replaceAll('{n}', '$count');

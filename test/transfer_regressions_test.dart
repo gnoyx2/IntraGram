@@ -12,7 +12,6 @@ import 'package:intragram/network/registry/transfer_gate.dart';
 import 'package:intragram/store/in_memory_store.dart';
 import 'package:intragram/store/models.dart';
 
-// 보안 회귀 테스트: 결함이 되살아나면 실패함
 void main() {
   late Directory dir;
   late InMemoryStore store;

@@ -23,7 +23,7 @@ void main() {
       expect(view.getUint32(24, Endian.little), 16000); // 샘플레이트
       expect(view.getUint32(28, Endian.little), 16000 * 2); // 바이트레이트
       expect(view.getUint16(32, Endian.little), 2); // block align
-      expect(view.getUint16(34, Endian.little), 16); // bits per sample
+      expect(view.getUint16(34, Endian.little), 16); // 샘플당 비트 수
       expect(view.getUint32(40, Endian.little), 4); // data 청크 크기
 
       expect(wav.sublist(44), [1, 2, 3, 4]);

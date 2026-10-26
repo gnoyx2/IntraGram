@@ -108,7 +108,7 @@ extension _PeerLinkDispatchFile on PeerLink {
     );
     store.addMessage(
       EphemeralMessage(
-        // transferId를 메시지 id로 씀 (보내는 쪽도 같음): 읽음·'모두에게서 삭제'가 상대 메시지에 정확히 맞으려면 필요
+        // transferId를 메시지 id로 씀 (보내는 쪽도 같음): 읽음·'모두에게서 삭제'가 상대 메시지에 정확히 맞으려면 필요함
         id: inner.id,
         conversationId: conversationId,
         direction: MessageDirection.incoming,
@@ -131,7 +131,7 @@ extension _PeerLinkDispatchFile on PeerLink {
   }
 }
 
-// 망가졌으면 null (미리보기만 없어짐)
+// 형식이 잘못되었으면 null을 반환함 (미리보기만 생략됨)
 Uint8List? _decodeThumbBytes(String b64) {
   try {
     return base64.decode(b64);

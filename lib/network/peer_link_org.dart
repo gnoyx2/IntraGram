@@ -1,6 +1,6 @@
 part of 'peer_link.dart';
 
-// 암호 링크가 선 뒤의 선택적 승격: 핸드셰이크도 일반 채팅도 조직 자격을 기다리지 않음 (안 낸 옛 앱과도 그대로 대화)
+// 암호 링크 성립 후의 선택적 승격: 핸드셰이크나 일반 채팅은 조직 자격을 요구하지 않음 (자격이 없는 이전 버전 앱과도 정상 대화함)
 extension _PeerLinkOrg on PeerLink {
   void _startOrgAttestation() {
     if (_orgListening) return;
@@ -71,7 +71,7 @@ extension _PeerLinkOrg on PeerLink {
   }
 
   // 검사는 한 번에 하나만 돌리고 그사이 온 건 마지막 것만 남김: 자격을 몇 번 바꿔 내도 끝에 낸 것이 보이고,
-  // 프레임을 퍼부어도 서명 검사가 겹쳐 쌓이지 않음. 자격 없는 org_cred는 상대가 제시를 멈춘 것
+  // 프레임을 퍼부어도 서명 검사가 겹쳐 쌓이지 않음. 자격 없는 org_cred는 상대가 제시를 멈춘 상태임
   Future<void> _receiveOrgCredential(Map<String, dynamic> raw) async {
     final remote = remotePeerId;
     if (!isSecure ||

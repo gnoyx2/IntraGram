@@ -14,7 +14,7 @@ import 'support/file_transfer_crypto_pair.dart';
 
 // FileStreamer.receive가 어떤 이유로 중단돼도(크기 초과, 짧은 EOF,
 // 취소, 복호화 실패, handle close 실패, 삭제 실패) 앱이 소유한 .part를
-// 끝까지 지우거나 실패를 드러내고, 정지한 소스 앞의 취소가 stall timeout(25s) 없이 곧바로 끝나는지
+// 끝까지 지우거나 실패를 드러내고, 정지한 소스 앞의 취소가 stall timeout(25s) 없이 곧바로 끝나는지 검증함
 
 // 진짜 handle을 감싸되 close()가 끝난 직후 afterClose를 돌리는
 // handle: FileStreamer.debugOpenPartial에 끼워
@@ -104,7 +104,7 @@ void main() {
     final (a, b) = await pairSessions();
     final plain = Uint8List.fromList(List<int>.generate(64, (i) => i));
     final wire = await encryptForTest(a, plain);
-    wire[wire.length - 1] ^= 0xff; // 마지막 tag/cipher 바이트 변조
+    wire[wire.length - 1] ^= 0xff; // 마지막 암호문 바이트 변조
 
     await expectLater(
       receive(Stream.value(wire), size: 64, decrypt: b.openBytes),

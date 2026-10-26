@@ -41,8 +41,8 @@ part 'link_registry/chat.dart';
 part 'link_registry/facade.dart';
 part 'link_registry/test_seams.dart';
 
-// UI는 PeerLink 말고 이걸 부름. 화면 상태의 정본은 InMemoryStore고 파일 메서드는 TransferCoordinator로 넘기는 얇은 위임
-// (호출부·테스트가 API 하나만 보게). 상태는 _LinkRegistryState, 동작은 link_registry/ 믹스인
+// UI는 PeerLink 대신 이 객체를 호출함. 화면 상태의 정본은 InMemoryStore이고 파일 메서드는 TransferCoordinator로 넘기는 얇은 위임 레이어임
+// (호출부·테스트가 API 하나만 보게 함). 상태는 _LinkRegistryState, 동작은 link_registry/ 믹스인으로 구성함
 class LinkRegistry extends _LinkRegistryState
     with
         _LinkRegistryRoom,

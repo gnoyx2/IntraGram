@@ -111,7 +111,7 @@ void main() {
       );
       expect(preview, findsNothing);
 
-      // 권한 창이 닫히며 오는 복귀만으론 다시 안 물음 (Android가 연달아 묻지 않게)
+      // 권한 창 종료로 인한 복귀 시에는 재요청하지 않음 (Android에서 반복 권한 요청 팝업이 발생하는 것을 방지함)
       final attempts = camera.attempts;
       lifecycle(tester, AppLifecycleState.inactive);
       lifecycle(tester, AppLifecycleState.resumed);

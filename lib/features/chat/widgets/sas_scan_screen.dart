@@ -6,8 +6,8 @@ import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 import 'package:intragram/widgets/scanner_view.dart';
 
-// 일치하면 true, 숫자가 다른 보안 코드면 false로 pop (호출부가 확인이나 불일치 경고로 이어감).
-// 보안 코드가 아닌 QR은 무시하고 계속 스캔. 모바일만 (데스크톱은 소리 내어 읽기)
+// 일치하면 true, 숫자가 다른 보안 코드면 false로 pop함 (호출부가 확인이나 불일치 경고로 이어감).
+// 보안 코드가 아닌 QR은 무시하고 계속 스캔함. 모바일 전용임 (데스크톱은 소리 내어 대조함)
 class SasScanScreen extends StatefulWidget {
   const SasScanScreen({required this.expected, super.key});
 

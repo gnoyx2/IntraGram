@@ -1,8 +1,8 @@
 part of 'incoming_transfers.dart';
 
 extension _IncomingReceipt on IncomingTransfers {
-  // 크기·무결성 검증과 커밋까지 끝난 전송의 수신 영수증: 내 신원 키로 서명해 로컬 증적에 남기고 file_received에 실음.
-  // 앱 링크로 받은 것만 (브라우저 게스트는 묶을 신원 키가 없음). 커밋먼트를 못 쟀거나 서명 키가 없으면 null이라 ACK만 감
+  // 크기·무결성 검증과 커밋까지 완료된 전송의 수신 영수증: 자체 신원 키로 서명해 로컬 증적에 기록하고 file_received에 첨부함.
+  // 앱 링크로 수신된 전송에만 해당함 (브라우저 게스트는 연결할 신원 키가 없음). 커밋먼트 산출 실패나 서명 키 부재 시 null로 처리되어 기본 ACK만 전송됨
   Future<Map<String, dynamic>?> _receiptFor(
     FileTransfer transfer,
     String attemptId,

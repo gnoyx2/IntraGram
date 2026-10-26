@@ -1,6 +1,6 @@
 part of '../room_integrity.dart';
 
-// 연속 번호는 한 구간으로 압축. 재접속 때 무작위 시작 번호나 순서가 뒤집힌 글도 따로 보존함.
+// 연속 번호는 단일 구간으로 압축함. 재연결 시 무작위 시작 번호나 역순 도착 메시지도 분리 보존함.
 // 구간 상한에서 새 구간은 거부하며, 과거 번호를 잊어서 재생을 허용하지 않음.
 final class _SeenAuthorCounters {
   final List<({String peer, int first, int last})> _ranges = [];

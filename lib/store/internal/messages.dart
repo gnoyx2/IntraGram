@@ -2,7 +2,7 @@ part of '../in_memory_store.dart';
 
 mixin _StoreMessages on _InMemoryStoreState, _StoreCore {
   void addMessage(EphemeralMessage message) {
-    // 대화가 없으면(지운 방에 뒤늦게 온 프레임 등) 받지 않음: 화면에 없는 기록이 RAM·Vault에 남지 않게
+    // 대화가 없으면(지운 방에 뒤늦게 온 프레임 등) 받지 않음: 화면에 없는 기록이 RAM·Vault에 남지 않게 함
     if (_disposed || !_conversations.containsKey(message.conversationId)) {
       return;
     }
@@ -52,7 +52,7 @@ mixin _StoreMessages on _InMemoryStoreState, _StoreCore {
     _emitRoom(conversationId);
   }
 
-  // 읽음으로 바꾼 id를 돌려줘서 호출부가 read를 보냄. 타이머 달린 메시지는 카운트다운도 시작
+  // 읽음으로 바꾼 id를 돌려줘서 호출부가 read를 보냄. 타이머 달린 메시지는 카운트다운도 시작함
   List<String> markIncomingRead(String conversationId) {
     final room = _messages[conversationId];
     if (room == null) return const <String>[];

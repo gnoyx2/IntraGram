@@ -64,7 +64,7 @@ class _IntraGramAppState extends ConsumerState<IntraGramApp>
         ref.read(vaultSettingsProvider.notifier).setStayConnected(false),
       );
     };
-    // 네이티브 쪽 FGS 시작 실패(권한 거부 등)도 같은 방식으로 설정 롤백
+    // 네이티브 쪽 FGS 시작 실패(권한 거부 등)도 같은 방식으로 설정을 롤백함
     ref.read(foregroundServiceProvider).onStartFailed = () {
       unawaited(
         ref.read(vaultSettingsProvider.notifier).setStayConnected(false),
@@ -87,7 +87,7 @@ class _IntraGramAppState extends ConsumerState<IntraGramApp>
     _opener.gateCleared();
   }
 
-  // 다음 프레임에 push. 잠금 해제 직후의 트리 재빌드와 충돌 방지
+  // 다음 프레임에 push함. 잠금 해제 직후의 트리 재빌드와 충돌하는 것을 방지함
   void _pushConversation(String conversationId) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final navigator = navigatorKey.currentState;
@@ -112,7 +112,7 @@ class _IntraGramAppState extends ConsumerState<IntraGramApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // 자동 재연결은 일부러 안 함 (오프라인 배너에서 수동으로만): 동시 재연결 폭주 방지
+    // 동시 재연결 폭주를 막기 위해 자동 재연결은 하지 않음 (오프라인 배너에서 수동으로만 처리함)
     _handleAutoLock(state);
     final foreground = state == AppLifecycleState.resumed;
     ref.read(inMemoryStoreProvider).appInForeground = foreground;
@@ -136,12 +136,12 @@ class _IntraGramAppState extends ConsumerState<IntraGramApp>
               ref.read(vaultSettingsProvider).stayConnectedInBackground,
         );
 
-    // 디바운스 저장이 최신이어도 백그라운드 진입 시 안전망으로 한 번 더 저장
+    // 디바운스 저장이 최신이어도 백그라운드 진입 시 안전망으로 한 번 더 저장함
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       _persistIfEnabled();
     }
-    // detached는 OS가 엔진을 곧 없앤다는 신호. RAM 스크럽 마지막 기회
+    // detached는 OS가 엔진을 곧 종료한다는 신호이며 RAM 스크럽의 마지막 기회임
     if (state == AppLifecycleState.detached) {
       _wipe();
     }
@@ -170,7 +170,7 @@ class _IntraGramAppState extends ConsumerState<IntraGramApp>
 
   @override
   Widget build(BuildContext context) {
-    // void provider들은 watch로 살려둠 (알림 / mDNS room 힌트 / 스크린샷 브리지)
+    // void provider들은 watch로 살려 둠 (알림 / mDNS room 힌트 / 스크린샷 브리지)
     ref.watch(notificationBridgeProvider);
     ref.watch(roomHintBridgeProvider);
     ref.watch(screenshotBridgeProvider);

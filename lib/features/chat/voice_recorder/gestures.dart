@@ -68,7 +68,7 @@ extension _VoiceRecorderGestures on _VoiceRecorderButtonState {
     if (_capture != null || _busy) {
       unawaited(_stop(send: true));
     } else if (wasPending && hadDown) {
-      // 홀드 임계를 못 채우고 뗀 빠른 탭은 핸즈프리 탭-고정 모드로 시작
+      // 홀드 임계를 못 채우고 뗀 빠른 탭은 핸즈프리 탭-고정 모드로 시작함
       unawaited(_start(tapLocked: true));
     }
   }

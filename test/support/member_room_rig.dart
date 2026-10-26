@@ -106,7 +106,7 @@ class MemberRoomRig {
   }
 
   // 호스트가 i번째 멤버와 쥐고 있는 링크(열려 있는 것 중 가장 최근): 닫기
-  // 시작하면 목록에서 빠지니 닫히는 중인 링크를 다루려면 그 전에 잡아 둘 것
+  // 시작하면 목록에서 빠지니 닫히는 중인 링크를 다루려면 그 전에 잡아 둬야 함
   PeerLink hostLinkOf(int i) => rig.registry
       .linksForTransfer(rig.registry.appRoomId!)
       .lastWhere((link) => link.remotePeerId == memberId(i));

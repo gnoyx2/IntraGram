@@ -66,7 +66,7 @@ mixin _StoreMutations on _InMemoryStoreState, _StoreCore {
   void setConversationAutoAccept(String id, {required bool value}) =>
       updateConversation(id, (c) => c.copyWith(autoAcceptFiles: value));
 
-  // 새 세션이라 확인은 늘 false로 리셋 (키가 바뀌었는데 '확인됨'이 남으면 중간자 방어가 뚫림). sas는 setRoomMemberSas가 다시 채움
+  // 새 세션이라 확인 상태는 늘 false로 초기화함 (키가 바뀌었는데 '확인됨'이 남으면 중간자 방어가 무력화됨). sas는 setRoomMemberSas가 다시 채움
   void upsertRoomMember(
     String id,
     String peerId, {

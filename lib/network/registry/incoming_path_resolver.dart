@@ -39,11 +39,11 @@ class IncomingPathResolver {
     _sessionSaveDir = null;
   }
 
-  // 데스크톱은 폴더 대화상자, 모바일은 앱 문서 폴더의 IntraGram/. 음성 수동 저장 버튼도 써서 public
+  // 데스크톱은 폴더 선택 창을 띄우고, 모바일은 앱 문서 디렉터리 내 IntraGram/을 사용함. 음성 수동 저장 기능에서도 호출함
   static Future<String?> defaultChooseDirectory(String suggestedName) async {
     final mobileDir = await mobileSaveDir();
     if (mobileDir != null) return mobileDir;
-    // 창 제목은 언어 상관없는 파일 이름만 (네트워크 계층엔 번역이 없음)
+    // 창 제목은 로케일에 의존하지 않는 파일 이름만 사용함 (네트워크 계층에는 번역 문자열이 없음)
     final String? picked;
     try {
       picked = await FilePicker.getDirectoryPath(dialogTitle: suggestedName);
@@ -61,9 +61,9 @@ class IncomingPathResolver {
     return p.join(docs.path, 'IntraGram');
   }
 
-  // 이번 시도 전용 .part를 exclusive create로 예약. 같은 이름을 동시에 받는 다른 시도와 안 섞이게 이름에 attempt를 넣고
-  // 최종 이름은 commitDestination이 정함. 폴더는 심링크를 푼 진짜 경로 기준이고 name이 그 밖으로 못 나가는 걸 미리 확인함.
-  // attemptId는 상대가 보낸 값이라 영숫자·-·_만 남겨 자르고 로컬 난수를 붙임
+  // 이번 시도 전용 .part 파일을 배타적 생성(exclusive create)으로 예약함. 동일한 이름을 동시에 수신하는 다른 시도와 섞이지 않도록 attempt를 포함하고,
+  // 최종 파일명은 commitDestination에서 결정함. 디렉터리는 심링크를 해소한 실제 경로 기준이며 파일명이 상위 경로를 벗어나지 않는지 사전에 검증함.
+  // attemptId는 피어가 보낸 값이므로 영숫자·하이픈·언더스코어만 남기고 로컬 난수를 덧붙임
   static Future<({File partial, String finalName})> reserveDestination({
     required String directory,
     required String name,
@@ -101,9 +101,9 @@ class IncomingPathResolver {
           FileSystemEntityType.notFound ||
       error?.errorCode == _kFileExistsErrno;
 
-  // 끝난 .part를 finalName으로 커밋 (성공한 전송만). 최종 이름을 exclusive create로 먼저 잡고 충돌하면 (n)을 붙여 다시,
-  // 잡은 자리에 rename함 (파일 위 rename은 원자적으로 덮음). 진짜 이름 충돌만 다음 이름으로 넘기고 나머진 바로 던짐
-  // (아니면 권한 거부·디스크 꽉 참이 이름만 바꾸며 100번 돎). rename이 실패하면 이번에 만든 빈 자리만 지움 (사용자 파일은 절대 안 지움)
+  // 완료된 .part 파일을 finalName으로 커밋함 (성공한 전송에만 적용). 최종 파일명을 배타적 생성으로 선점하고 중복되면 (n) 접미사를 붙여 재시도한 뒤,
+  // 선점한 위치로 rename함 (기존 파일 위 rename은 원자적으로 대체됨). 실제 파일명 충돌만 다음 번호로 재시도하고 기타 I/O 오류는 즉시 던짐
+  // (권한 오류나 디스크 용량 부족 시 불필요한 재시도를 방지함). rename 실패 시 이번에 생성한 빈 자리만 정리함 (사용자 기존 파일은 보존함)
   static Future<String> commitDestination(
     File partial,
     String finalName,
@@ -154,8 +154,8 @@ class IncomingPathResolver {
     }
   }
 
-  // RAM 바이트를 고른 폴더에 저장 (음성 수동 저장). 받기와 같은 예약 → 쓰기 → 커밋이고 커밋 못 한 .part는 finally가 지움.
-  // isStillWanted는 await마다 다시 물음 (그사이 소각돼 바이트가 지워졌으면 0 바이트를 음성인 척 저장하면 안 됨)
+  // 메모리 상의 바이트를 선택된 폴더에 저장함 (음성 수동 저장). 수신과 동일하게 예약 → 쓰기 → 커밋 단계를 거치며 미커밋 .part 파일은 finally에서 삭제함.
+  // isStillWanted는 await 지점마다 호출됨 (그사이 데이터 소각이 발생했을 때 빈 파일을 정상 음성으로 저장하지 않도록 방지함)
   static Future<String?> saveBytes({
     required String directory,
     required String name,
@@ -169,7 +169,7 @@ class IncomingPathResolver {
       final reserved = await reserveDestination(
         directory: directory,
         name: name,
-        // 로컬 저장 하나를 구분하는 이름일 뿐이라 타임스탬프면 충분
+        // 단일 로컬 저장을 식별하기 위한 값이므로 타임스탬프로 지정함
         attemptId: 'local-save-${DateTime.now().microsecondsSinceEpoch}',
       );
       partial = reserved.partial;
@@ -198,9 +198,9 @@ class IncomingPathResolver {
   }
 }
 
-// POSIX EEXIST. osError.errorCode가 플랫폼 그대로의 errno라
-// macOS·Linux에선 이 값으로 '그 이름이 이미 있었다'를 구분함
-// (Windows는 typeSync 재확인으로 충분)
+// POSIX EEXIST. osError.errorCode가 플랫폼 네이티브 errno이므로
+// macOS·Linux에서는 이 값으로 기존 파일명 중복을 식별함
+// (Windows는 typeSync 재확인으로 처리함)
 const int _kFileExistsErrno = 17;
 
 // 최종 이름이 계속 충돌할 때 commitDestination이 시도할 (n) 접미사 개수 상한

@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-// 음성 메시지 형식은 녹음기가 만드는 16비트 PCM WAV 하나뿐
+// 음성 메시지 형식은 녹음기가 만드는 16비트 PCM WAV 하나뿐임
 class PcmWav {
   const PcmWav({
     required this.samples,

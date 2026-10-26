@@ -5,7 +5,7 @@ const String _kDirHighToLow = 'h2l';
 
 extension CryptoSessionHandshake on CryptoSession {
   // 동시 호출은 진행 중인 Future 하나를 같이 기다림. 피어 키가 low-order라 공유 비밀이 0이거나 우리 공개키를 그대로 돌려보내면
-  // SecurityException, 키가 깨졌으면 FormatException
+  // SecurityException, 키가 깨졌거나 길이가 틀리면 FormatException을 던짐
   Future<void> completeHandshake(String peerPublicKeyBase64) {
     if (_destroyed || _msgSendKey != null) return Future<void>.value();
     return _handshakeInFlight ??= _completeHandshakeOnce(
@@ -42,7 +42,7 @@ extension CryptoSessionHandshake on CryptoSession {
     SecretKey? fileLowToHigh;
     SecretKey? fileHighToLow;
     try {
-      // 피어가 low-order point를 주면 공유 비밀이 전부 0 (RFC 7748 §6.1): 거부
+      // 피어가 low-order point를 주면 공유 비밀이 전부 0임 (RFC 7748 §6.1): 거부함
       final sharedBytes = await sharedSecret.extractBytes();
       if (sharedBytes.every((b) => b == 0)) {
         throw SecurityException(

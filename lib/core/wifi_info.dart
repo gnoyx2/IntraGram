@@ -56,7 +56,7 @@ Future<WifiInfo?> _macWifiInfo() async {
   if (current is! Map) return null;
   final ssid = current['_name'];
   if (ssid is! String) return null;
-  // macOS 14.4+는 위치 권한 없는 앱에 이름을 '<redacted>'로 줌: 그대로 안 보이고 이유를 띄움
+  // macOS 14.4+는 위치 권한 없는 앱에 이름을 '<redacted>'로 줌: 그대로 표시하지 않고 null로 비워 UI가 사유를 띄우게 함
   final hidden = ssid == '<redacted>';
   return WifiInfo(
     ssid: hidden ? null : ssid,
@@ -68,8 +68,8 @@ Future<WifiInfo?> _macWifiInfo() async {
   );
 }
 
-// wlanapi.dll을 직접 안 부름: Windows 11 24H2부터 현재 연결 조회에 위치 권한 창이 뜸 (위치 권한 안 쓰는 설계랑 충돌).
-// System32의 netsh는 창을 안 띄우고, 위치가 꺼져 있으면 안내문만 내서 null이 됨. Windows 실기기 검증은 아직
+// wlanapi.dll을 직접 안 부름: Windows 11 24H2부터 현재 연결 조회에 위치 권한 창이 뜸 (위치 권한 안 쓰는 설계와 충돌).
+// System32의 netsh는 창을 안 띄우고, 위치가 꺼져 있으면 안내문만 내서 null이 됨. Windows 실기기 검증은 아직 거치지 않음
 Future<WifiInfo?> _windowsWifiInfo() async {
   final result = await Process.run('netsh', ['wlan', 'show', 'interfaces']);
   if (result.exitCode != 0) return null;
@@ -98,7 +98,7 @@ WifiInfo? parseNetshInterfaces(String output) {
   if (ssid == null) return null;
   String? labeled(List<String> keys) =>
       keys.map((key) => map[key]).nonNulls.firstOrNull;
-  // 네트워크 이름은 사용자가 정해서 그 값(SSID·프로필 줄)은 빼고 찾음 ('50%'라는 이름이 신호 칸에 안 들어가게)
+  // 네트워크 이름은 사용자가 임의 지정하므로 SSID·프로필 줄은 제외하고 탐색함 ('50%' 형태의 이름이 신호 강도 필드로 오인되는 현상을 방지함)
   String? shaped(RegExp shape) => map.values
       .where((value) => value != ssid && shape.hasMatch(value))
       .firstOrNull;
@@ -112,7 +112,7 @@ WifiInfo? parseNetshInterfaces(String output) {
   );
 }
 
-// nmcli 없는 배포판이면 조용히 null
+// nmcli 없는 배포판이면 조용히 null을 반환함
 Future<WifiInfo?> _linuxWifiInfo() async {
   final result = await Process.run('nmcli', [
     '-t',

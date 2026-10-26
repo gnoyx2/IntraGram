@@ -12,9 +12,8 @@ import 'support/handshake_pair.dart' show conv;
 import 'support/scripted_peer.dart';
 import 'support/test_identities.dart';
 
-// 앱 피어 링크의 신원 증명(프로토콜 v7): 리스너 쪽: 다이얼러가 hello로 밝힌 peerId를 실제로 가진 쪽임이
-// 증명되기 전엔 그 peerId를 링크·store·registry 어디에도 반영하지 않고, 위조된 증명은 링크를 닫음
-// 다이얼러는 hello에 임시키 커밋만 싣고, 공개한 임시키가 커밋과 다르면 거절함
+// 앱 피어 링크의 신원 증명 거절·타임아웃(리스너 쪽): 요청 전이거나 중복된 auth 프레임,
+// 서명 키가 없는 리스너 신원, 핸드셰이크 시한까지 도착하지 않는 auth 증명은 모두 링크를 닫음
 
 void main() {
   late InMemoryStore store;

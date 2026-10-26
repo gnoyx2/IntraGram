@@ -11,7 +11,7 @@ extension OutgoingTransfersRelay on OutgoingTransfers {
     return link.remotePeerId == hostId ? link : null;
   }
 
-  // 명단에서 나 빼고 전원(호스트 포함)을 수신자로 등록해 하나씩 offer. 호스트 링크나 명단이 안 맞으면 실패
+  // 명단에서 본인을 제외한 전원(호스트 포함)을 수신자로 등록해 순차적으로 offer를 발송함. 호스트 링크나 멤버 명단이 올바르지 않으면 실패 처리함
   Future<void> _offerViaRelayHost(
     String transferId,
     OutgoingFileSource source, {
@@ -53,7 +53,7 @@ extension OutgoingTransfersRelay on OutgoingTransfers {
     if (undelivered) _syncTransfer(transferId);
   }
 
-  // 명단 갱신: 빠진(나간·끊긴) 수신자는 실패로 돌림 (돌아오면 재시도 가능). 빈 목록은 정보가 없는 거라 무시
+  // 멤버 명단 갱신: 제외된(퇴장·연결 종료) 수신자는 실패로 전환함 (재입장 시 재시도 가능함). 빈 목록은 정보 부재로 간주해 무시함
   void handleRoomRoster(String conversationId, List<String> peerIds) {
     if (peerIds.isEmpty) return;
     for (final entry in _outgoing.entries.toList()) {

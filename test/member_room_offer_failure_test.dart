@@ -7,10 +7,8 @@ import 'package:intragram/store/models.dart';
 
 import 'support/member_room_rig.dart';
 
-// 호스트가 방 멤버 사이로 중계한 파일 제어 프레임의 전달 결과를 봄: 나가면
-// 그대로 끝, 못 나가면(false, 열린 링크의 봉인 예외) 받을 링크를 닫아
-// 링크 종료 정리가 전송을 실패로 돌림 (offered/transferring에 영영
-// 안 남고, 처리 안 된 비동기 오류도 없고, 그 링크와 무관한 경로는 그대로)
+// 호스트의 방 파일 중계 경계 케이스: 이미 닫히는 중인 링크로는 오류 없이 프레임을 버린 뒤 종료 정리에서
+// 실패 처리하고, 살아있는 대상 링크에 offer를 못 쓰면 발신자에게 file_unavailable을 알리고 대상 링크를 닫음
 
 void main() {
   final m2 = MemberRoomRig.memberId(1);
@@ -34,7 +32,7 @@ void main() {
     expect(r.routeCount, 2);
   });
 
-  // M2가 M3에게 내는 별개 전송의 경로 (M1의 링크와 무관): 그 accept가 M2에 닿았는지 got에 남김
+  // M2가 M3에게 내는 별개 전송 경로를 세워 M1 링크와 무관한 경로 수를 함께 확인함
   Future<List<String>> routeM2toM3() async {
     final got = <String>[];
     r.rig.remotes[1].onFileAccepted = (id, at, token, actor) =>

@@ -1,6 +1,6 @@
 #!/bin/sh
-# IntraGram을 이 사용자 계정의 앱 메뉴에 등록함 (관리자 권한 필요 없음). 압축을 푼 폴더에서 실행
-# 메뉴에서 빼려면: ./install.sh --uninstall   (폴더를 옮기면 다시 실행)
+# IntraGram을 현재 사용자 계정의 앱 메뉴에 등록함 (관리자 권한 불필요, 압축을 푼 폴더에서 실행해야 함)
+# 등록 해제: ./install.sh --uninstall (폴더 위치를 옮기면 다시 실행해야 함)
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
 data="${XDG_DATA_HOME:-$HOME/.local/share}"
@@ -24,7 +24,7 @@ for size in $sizes; do
 done
 
 # 메뉴 항목이 PATH가 아니라 이 폴더의 실행 파일을 직접 부르게 Exec를 절대 경로로 바꿈
-# 경로에 | 나 " 가 있으면 sed 치환이 깨짐: 그런 폴더면 옮겨서 실행
+# 경로에 | 나 " 가 있으면 sed 치환이 깨지므로 다른 경로로 옮겨서 실행해야 함
 mkdir -p "$data/applications"
 sed "s|^Exec=.*|Exec=\"$here/intragram\"|" \
   "$here/share/applications/$app_id.desktop" > "$data/applications/$app_id.desktop"

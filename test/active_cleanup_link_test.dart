@@ -92,7 +92,7 @@ void main() {
       Process.runSync('chmod', ['555', rig.dir.path]);
       addTearDown(() => Process.runSync('chmod', ['755', rig.dir.path]));
 
-      rig.incoming.cancelTransfer('t'); // 배경 정리가 삭제를 시도하지만 거부당함
+      rig.incoming.cancelTransfer('t'); // 백그라운드 정리가 삭제를 시도하지만 거부당함
       await Future<void>.delayed(const Duration(milliseconds: 200));
       expect(rig.parts(), hasLength(1), reason: 'the delete was refused');
 

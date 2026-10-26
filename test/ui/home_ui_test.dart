@@ -48,9 +48,7 @@ void main() {
     await tester.tap(find.byTooltip('Connect by IP'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    // AlertDialog.adaptive()는 실행 시점 플랫폼에 따라 내부적으로
-    // _AdaptiveAlertDialog(런타임 타입이 AlertDialog와 다름)를 만들 수도
-    // 있어서: 정확한 위젯 타입 대신 타이틀 텍스트로 확인
+    // AppAlertDialog는 플랫폼에 따라 CupertinoAlertDialog와 AlertDialog로 갈리므로 제목 문구로 확인함
     expect(find.text('Connect by IP'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).first, '8.8.8.8');

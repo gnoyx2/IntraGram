@@ -18,7 +18,7 @@ Future<void> main() async {
   registerAppLicenses();
 
   // Android 15+는 edge-to-edge가 강제라, 명시적으로 켜야 테마의
-  // systemOverlayStyle(투명 내비바)이 먹힘
+  // systemOverlayStyle(투명 내비바)이 적용됨
   if (!kIsWeb && Platform.isAndroid) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
@@ -41,9 +41,9 @@ Future<void> main() async {
     debugPrint('temp sweep failed: $e');
   }
 
-  // 신원 키는 메모리에만 둠. 컨테이너를 직접 쥐는 건 종료 시그널에서 RAM을 지우려는 것
+  // 신원 키는 메모리에만 둠. 컨테이너를 직접 쥐는 건 종료 시그널에서 RAM을 지우려는 목적임
   final identity = await AppIdentity.create();
-  // iOS 27.1+가 접힘선을 알려 주는지 첫 화면 전에 정함 (안 알려 주면 펼친 iPhone은 화면 크기로 짐작)
+  // iOS 27.1+가 접힘선을 알려 주는지 첫 화면 전에 정함 (알려 주지 않으면 펼친 iPhone은 화면 크기로 짐작함)
   await OsPrivacy.refreshDisplayRegions();
   await OsPrivacy.refreshAccessibility();
   final container = ProviderContainer(

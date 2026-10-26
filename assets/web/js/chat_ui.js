@@ -181,7 +181,7 @@ function addBubble(opts) {
     updateJump();
   }
 
-  // 카운트다운은 앱과 같이 '읽은 뒤'부터: 내 글은 상대 읽음이 올 때, 받은 글은 내가 볼 때 beginBurn
+  // 카운트다운은 앱과 같이 '읽은 뒤'부터 시작함: 내 글은 상대 읽음이 올 때, 받은 글은 내가 볼 때 beginBurn을 호출함
   if (opts.ttl > 0) pendingBurns[opts.id] = { ttl: opts.ttl, span: burnSpan, body: body };
   return bubble;
 }
@@ -234,7 +234,7 @@ function applyReaction(id, from, emoji, on) {
   });
 }
 
-var timers = {}; // messageId -> intervalId
+var timers = {}; // 메시지 ID별 소각 타이머 ID
 function startBurn(id, ttl, span) {
   var deadline = Date.now() + ttl * 1000;
   function tick() {

@@ -28,7 +28,7 @@ class _AttachSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 데스크톱엔 진짜 사진첩이 없어서 모바일만 (호출부도 데스크톱에선 시트를 건너뜀)
+            // 데스크톱엔 진짜 사진첩이 없어서 모바일에서만 보임 (호출부도 데스크톱에선 시트를 건너뜀)
             if (isMobileTarget)
               _AttachOption(
                 icon: Icons.photo_library_outlined,

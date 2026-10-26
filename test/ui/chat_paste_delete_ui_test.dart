@@ -58,8 +58,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Delete for everyone'), findsOneWidget);
 
-    // "나에게서 삭제"가 추가되면서 시트가 이 작은 테스트 뷰포트 밖으로 늘어남
-    //: 탭 전에 스크롤해서 보이게 함
+    // 기본 테스트 뷰포트(800×600)에선 시트 하단 항목이 화면 밖으로 밀려 스크롤이 필요함
     await tester.ensureVisible(find.text('Delete for everyone'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete for everyone'));

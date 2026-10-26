@@ -53,8 +53,8 @@ String boundedAlias(String alias, {int maxUtf8Bytes = 256}) {
   return out.toString();
 }
 
-// 상대가 밝힌 플랫폼 이름 (hello, mDNS os). 목록 부제·스크린 리더·보관소로 그대로 가서
-// 앱이 쓰는 이름만 받고 나머진 Unknown (길이 제한 없는 아무 글이나 양방향 제어 문자가 화면에 안 뜸)
+// 상대가 밝힌 플랫폼 이름 (hello, mDNS os). 목록 부제·스크린 리더·보관소로 그대로 전달됨.
+// 앱이 인식하는 이름만 허용하고 나머지는 'Unknown'으로 처리함 (길이 제한 없는 임의 문자열이나 양방향 제어 문자 노출을 차단함)
 const Set<String> _kPlatformNames = <String>{
   'iOS',
   'iPadOS',
@@ -76,7 +76,7 @@ class _BadField implements Exception {
 String _reqId(Map<String, dynamic> j, String key) =>
     wireId(j[key]) ?? (throw _BadField(key));
 
-// 없거나 null이면 null. 값이 있는데 틀리면 프레임째 거부 (틀린 선택 필드만 버리고 정상 프레임인 척 안 함)
+// 없거나 null이면 null을 반환함. 값이 있는데 형식이 맞지 않으면 프레임 전체를 거부함
 String? _optId(Map<String, dynamic> j, String key) =>
     j[key] == null ? null : _reqId(j, key);
 
@@ -111,8 +111,8 @@ bool _reqBool(Map<String, dynamic> j, String key) {
 bool _optBool(Map<String, dynamic> j, String key) =>
     j[key] == null ? false : _reqBool(j, key);
 
-// 중첩 객체 필드(영수증·작성자 서명·자격 증명): 여기선 객체인지만 봄. 속은 그 값을 쓰는 증적·자격 단계가 엄격하게 파싱하고
-// 중계 전 정규화(_canonicalWire)가 아는 필드만 다시 써서 끼워 넣은 키가 안 넘어감
+// 중첩 객체 필드: 객체 타입 여부만 확인함. 세부 검증은 해당 데이터를 사용하는 증적 단계에서 엄격히 수행함
+// 중계 전 정규화(_canonicalWire)가 아는 필드만 다시 작성하므로 임의로 삽입된 키는 전달되지 않음
 Map<String, dynamic>? _optObject(Map<String, dynamic> j, String key) {
   final value = j[key];
   if (value == null) return null;

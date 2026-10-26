@@ -26,7 +26,7 @@ abstract final class WindowsClipboard {
   // 우리가 쓴 직후의 시퀀스 번호: 내용을 안 읽고 아직 우리 사본인지 비교함
   static int? _sequence;
 
-  // 테스트가 CloseClipboard 때 번호가 바뀌는 Windows 동작을 흉내 낸 모형으로 바꿔 끼움
+  // 테스트에서 CloseClipboard 때 번호가 바뀌는 Windows 동작을 흉내 낸 모형으로 교체함
   @visibleForTesting
   static User32 Function() user32Override = User32.new;
 
@@ -79,7 +79,7 @@ abstract final class WindowsClipboard {
         api.closeClipboard();
       }
     } on Object {
-      // 확인 못 하면 남의 내용일 수 있어 건드리지 않음
+      // 확인하지 못하면 다른 앱의 내용일 수 있어 건드리지 않음
     }
   }
 
@@ -96,7 +96,7 @@ abstract final class WindowsClipboard {
     }
   }
 
-  // 클립보드 이미지를 메모리에서 바로 .bmp 바이트로 (임시 파일 없음). CF_DIB는 다른 비트맵 형식에서도 OS가 만들어 줌
+  // 클립보드 이미지를 메모리에서 바로 .bmp 바이트로 읽음 (임시 파일 없음). CF_DIB는 다른 비트맵 형식에서도 OS가 합성해 줌
   static Uint8List? readImage() {
     try {
       final api = user32Override();

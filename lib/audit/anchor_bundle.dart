@@ -8,14 +8,14 @@ import 'package:intragram/network/protocol.dart' show wireBytes, wireInt;
 
 const String kAnchorBundleFormat = 'intragram-audit-anchor-bundle/v1';
 
-// 붙여 넣은 글이 이보다 크면 파싱 전에 거절 (기기 하나가 RAM을 다 쓰게 못 함)
+// 붙여 넣은 문자열이 이보다 크면 파싱 전에 거절함 (단일 입력이 RAM을 과도하게 쓰지 못하게 막음)
 const int _kMaxBundleChars = 4 * 1024 * 1024;
 
-// 배치 하나에 든 증적 상한 (이 앱 장부가 한 배치에 담는 최대치). 넘으면 서명 검사를 수천 번 시키는 번들이라 바로 거절
+// 배치 하나에 든 증적 상한 (이 앱 장부가 한 배치에 담는 최대치). 넘으면 서명 검증을 과도하게 유발하므로 바로 거절함
 const int _kMaxBundleEntries = EvidenceStore.maxEntries;
 
-// 봉인한 배치 하나를 감사 번들(JSON)로: LAN 감사 게이트웨이나 오프라인 반출용. only를 주면 그 증적만 담는 선택 공개이고
-// 나머지 사건은 salt 친 형제 해시로만 남아 내용을 짐작 못 함
+// 봉인한 배치 하나를 LAN 감사 게이트웨이나 오프라인 반출용 감사 번들(JSON)로 내보냄. only를 주면 해당 증적만 선택 공개하고
+// 나머지 사건은 salt를 섞은 형제 해시로만 남아 내용을 짐작할 수 없음
 String exportAnchorBundle(
   EvidenceStore store,
   MerkleBatch batch, {
@@ -46,7 +46,7 @@ String exportAnchorBundle(
   });
 }
 
-// 번들 검증 결과. ok는 배치 서명·모든 증적의 서명과 Merkle 증명·(있으면) 증인 앵커가 다 맞을 때만
+// 번들 검증 결과. ok는 배치 서명·포함된 모든 증적의 서명과 Merkle 증명·(있으면) 증인 앵커가 다 맞을 때만 true임
 @immutable
 final class BundleVerdict {
   const BundleVerdict({

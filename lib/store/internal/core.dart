@@ -62,7 +62,7 @@ mixin _StoreCore on _InMemoryStoreState {
     yield* _transferEvents.stream;
   }
 
-  // 안 읽혀도 after 뒤엔 소각 (읽으면 _startBurn이 넘겨받음)
+  // 안 읽혀도 after 뒤엔 소각함 (읽으면 _startBurn이 넘겨받음)
   void _armBurnCeiling(String messageId, Duration after) {
     if (_ceilingTimers.containsKey(messageId)) return;
     _ceilingTimers[messageId] = Timer(after, () {
@@ -80,7 +80,7 @@ mixin _StoreCore on _InMemoryStoreState {
   EphemeralMessage? _findMessage(String messageId) =>
       _messages[_messageRooms[messageId]]?[messageId];
 
-  // cause는 소각 증적에 남는 이유 (상대 요청·사용자 삭제·타이머). 기본은 내 쪽만 지우기
+  // cause는 소각 증적에 남는 사유임 (상대 요청·사용자 삭제·타이머). 기본값은 내 기기에서만 지움
   void burnMessage(
     String messageId, {
     BurnCause cause = BurnCause.deletedForMe,

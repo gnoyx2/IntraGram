@@ -24,7 +24,7 @@ class _ReceivedActions extends StatelessWidget {
     }
   }
 
-  // 실행 파일과 인터넷에 닿는 형식은 바로 안 열고 묻기. 기본 선택은 폴더 보기
+  // 실행 파일과 인터넷에 닿는 형식은 바로 열지 않고 먼저 물음. 기본 선택은 폴더 보기로 둠
   Future<void> _open(BuildContext context) async {
     final executable = NativeOpen.isExecutable(path);
     if (!executable && !NativeOpen.reachesNetwork(path)) {

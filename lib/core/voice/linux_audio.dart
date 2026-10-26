@@ -61,7 +61,7 @@ Future<LinuxAudio> startLinuxAudio({
   }
 }
 
-// PipeWire's stdout and stderr must both be consumed, even for playback.
+// 재생 중에도 PipeWire의 진단 출력(stderr)을 모두 소비해야 함
 void drainAudioDiagnostics(Process process) {
   process.stderr.drain<void>().ignore();
 }

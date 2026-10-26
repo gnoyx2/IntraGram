@@ -8,7 +8,7 @@ extension CryptoSessionFileRecords on CryptoSession {
     required Uint8List aad,
   }) async {
     final key = _requireFileSendKey();
-    // 올리기 전에 상한 검사: 2^53 청크는 사실상 불가능해도 닿기 전에 던져서 nonce가 감기는 일은 원천 차단
+    // 카운터를 올리기 전에 상한을 검사함: 2^53 청크는 사실상 불가능해도 도달하기 전에 예외를 던져 nonce 재사용을 차단함
     if (_fileSendCounter >= kMaxCryptoSequence) {
       throw SecurityException(
         'rejected sealBytes: file crypto sequence exhausted',
@@ -29,7 +29,7 @@ extension CryptoSessionFileRecords on CryptoSession {
     );
   }
 
-  // tag가 틀리면(변조, 키 불일치, 다른 전송·시도·청크의 AAD) 던짐: 쓰레기가 파일 바이트인 척 디스크에 안 감
+  // tag가 틀리면(변조, 키 불일치, 다른 전송·시도·청크의 AAD) 예외를 던짐: 위조 데이터가 디스크에 기록되지 않게 막음
   Future<Uint8List> openBytes({
     required Uint8List nonce,
     required Uint8List cipher,

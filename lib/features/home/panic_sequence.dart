@@ -32,7 +32,6 @@ final class PanicStepFailure {
   String toString() => 'PanicStepFailure($step, timedOut: $timedOut)';
 }
 
-// failures가 비어야만 완전 소각
 final class PanicWipeResult {
   const PanicWipeResult(this.failures);
 
@@ -84,8 +83,8 @@ Future<PanicWipeResult> executePanicWipe({
   final voice = voiceProducers ?? VoiceProducerRegistry.instance;
 
   // admission 차단: 여기서 첫 await 전까지 다 동기로 돎
-  store.stopPersisting(); // 디바운스 저장부터 끊음 (소각 중간값이 안 나가게)
-  // 아직 안 읽힌 vault 스냅샷 참조부터 버림: 소각 뒤 provider가 다시 만들어져도 옛 내용으로 못 채우게
+  store.stopPersisting(); // 디바운스 저장부터 중단함 (소각 중간 상태가 저장되지 않게 막음)
+  // 미반영 vault 스냅샷 참조를 먼저 해제함 (소각 후 provider가 재생성되어도 이전 데이터로 복원되는 현상을 방지함)
   vaultAccess.clearPendingSnapshot();
   voice.closeAdmission();
 
@@ -105,7 +104,7 @@ Future<PanicWipeResult> executePanicWipe({
     ]);
     // 링크가 다 닫힌 뒤에 갈아야 핸드셰이크 도중인 링크가 옛 키로 서명하다 어긋나지 않음
     await guarded('identityKey', identity.rotateKey);
-    // native 첨부 소스는 링크·전송 reader가 drain된 뒤에 무효화. 그 뒤 늦게 오는 pick·open 결과는 native 쪽 generation 검사가 등록부터 막음
+    // native 첨부 소스는 링크·전송 reader가 drain된 뒤에 무효화함. 그 뒤 늦게 오는 pick·open 결과는 native 쪽 generation 검사가 등록부터 막음
     await guarded(
       'nativeSources',
       releaseNativeSources ?? MobileFileSource.releaseAll,
@@ -122,7 +121,7 @@ Future<PanicWipeResult> executePanicWipe({
     if (deleteReceivedFiles) {
       await guarded('receivedFiles', IncomingSessionFiles.deleteReceived);
     }
-    // 못 지운 파일이 남았으면 다음 패닉이 다시 시도하게 기록 유지
+    // 못 지운 파일이 남았으면 다음 패닉이 다시 시도하게 기록을 유지함
     if (!deleteReceivedFiles || IncomingSessionFiles.receivedCount == 0) {
       IncomingSessionFiles.forget();
     }

@@ -16,8 +16,8 @@ class TransferConcurrencyGate {
   bool _closed = false;
   final Queue<Completer<void>> _waiters = Queue<Completer<void>>();
 
-  // 슬롯 하나를 기다림. 꼭 release와 짝을 맞출 것. 타임아웃이면 대기열에서 자기를 빼고 던짐 (포기한 대기자에게 슬롯이 안 감).
-  // 기다리는 중에 취소되면 바로 빠짐 (취소를 눌렀는데 타임아웃까지 붙들리지 않게)
+  // 슬롯 하나를 기다림. 반드시 release와 짝을 맞춰 호출해야 함. 타임아웃이면 대기열에서 자신을 제외하고 예외를 던짐 (취소된 대기자에게 슬롯이 배정되지 않음).
+  // 대기 중 취소되면 즉시 반환됨 (취소 시 타임아웃까지 대기하지 않음)
   Future<void> acquire({Duration? timeout, CancelToken? cancelToken}) {
     if (_closed) {
       return Future<void>.error(const TransferCancelledException());

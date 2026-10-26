@@ -29,9 +29,9 @@ class DiscoveryController extends Notifier<List<PeerDevice>> {
   static BroadcastSession Function(BonsoirService service) createBroadcast =
       _BonsoirBroadcastSession.new;
 
-  // peerId로 키: 서비스 name엔 alias가 들어가서 이름을 바꿀 때마다 새 항목이 생겨 옛 이름이 최대 60초 같이 떴음
+  // peerId를 키로 사용함. 서비스 name에 alias가 포함되어 이름 변경 시 이전 이름이 최대 60초간 함께 남던 문제를 방지함
   final Map<String, PeerDevice> _peers = <String, PeerDevice>{};
-  // peerId → 지금 서비스 name. Lost 이벤트는 name만 줘서 그게 최신일 때만 지움 (옛 이름의 늦은 goodbye가 새 항목을 못 지우게)
+  // peerId → 현재 서비스 name. Lost 이벤트는 name만 전달하므로 최신 name과 일치할 때만 삭제함 (이전 이름의 지연 goodbye 수신으로 새 항목이 삭제되는 현상을 방지함)
   final Map<String, String> _serviceNames = <String, String>{};
   String? _selfPeerId;
 
@@ -40,7 +40,7 @@ class DiscoveryController extends Notifier<List<PeerDevice>> {
   int? _port;
   bool _hostsRoom = false;
 
-  // 호스트든 멤버든 방 안인지. _hostsRoom은 '탭하면 합류'라 멤버는 안 켜져서 따로 둠
+  // 호스트 또는 멤버로서 방 참여 여부임. _hostsRoom은 호스트 참여 유도용이라 일반 멤버 참여 상태와 구분하려 별도 관리함
   bool _inRoom = false;
 
   @override
@@ -54,7 +54,7 @@ class DiscoveryController extends Notifier<List<PeerDevice>> {
   // stop·재시작마다 오름. 그사이 바뀌었으면 방금 만든 것도 버리고 물러남
   int _generation = 0;
 
-  // 다시 불러도 안전 (예: 서버 포트가 바뀐 뒤 재시작)
+  // 다시 불러도 안전함 (예: 서버 포트가 바뀐 뒤 재시작)
   Future<void> start({required AppIdentity identity, required int port}) async {
     final generation = ++_generation;
     await _stopInternal(bumpGeneration: false);
@@ -94,7 +94,7 @@ class DiscoveryController extends Notifier<List<PeerDevice>> {
     if (ref.mounted) state = const <PeerDevice>[];
   }
 
-  // 스캔만 다시 시작 (광고·목록은 그대로): mDNS 리스폰더가 스캔을 놓쳤을 때용. isRunning은 안 봄 (죽은 스캐너도 새로고침이 되살려야 함)
+  // 스캔만 다시 시작함 (광고·목록은 그대로 둠): mDNS 리스폰더가 스캔을 놓쳤을 때 사용함 (중단된 스캐너도 새로고침이 되살려야 함)
   Future<void> refresh() async {
     if (_identity == null) return;
     await _restartScan(_generation);
@@ -108,7 +108,7 @@ class DiscoveryController extends Notifier<List<PeerDevice>> {
     await _discovery?.stop();
     _discovery = null;
 
-    // 스캔에서도 DefunctConnection이 터질 수 있어서 1초 쉬고 한 번 더. 그래도 안 되면 광고는 두고 스캔만 포기 (isRunning이 false로 남음)
+    // 스캔에서도 DefunctConnection이 발생할 수 있어 1초 대기 후 한 번 더 시도함. 그래도 실패하면 광고는 유지하고 스캔만 중단함
     var started = false;
     for (var attempt = 0; attempt < 2 && !started; attempt++) {
       if (attempt > 0) await Future<void>.delayed(const Duration(seconds: 1));

@@ -27,7 +27,7 @@ mixin _ChatRoomSearch on _ChatRoomScreenStateBase {
     });
   }
 
-  // Dart의 %는 양수 제수일 때 항상 0 이상이라 양방향 순환이 공짜
+  // Dart의 %는 양수 제수일 때 항상 0 이상이라 음수 보정 없이 양방향으로 순환됨
   void _moveHit(int delta) {
     if (_hits.isEmpty) return;
     setState(() => _hitIndex = (_hitIndex + delta) % _hits.length);

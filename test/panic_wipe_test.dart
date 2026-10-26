@@ -17,7 +17,7 @@ import 'support/in_memory_store_fixtures.dart';
 import 'support/panic_fakes.dart';
 import 'support/test_identities.dart';
 
-// 패닉 시퀀스의 순서/타임아웃/admission 불변식: 각 정지 단계를 테스트가 Completer로
+// 패닉 시퀀스의 순서/타임아웃/예외 격리 불변식: 각 정지 단계를 테스트가 Completer로
 // 직접 쥐고 있어서 진짜 시간/플랫폼 채널에 안 기대고 결정적으로 돎
 
 class _NoVault extends Vault {
@@ -147,7 +147,7 @@ void main() {
 
   test('a throwing step is recorded and the later steps still run', () async {
     final future = panic();
-    await pumpEventQueue(); // 리스너가 붙은 뒤에 에러로 끝냄: 미처리 에러 방지
+    await pumpEventQueue(); // 리스너가 붙은 뒤에 에러로 끝냄: 미처리 에러를 방지함
     steps
       ..voice.complete()
       ..foreground.complete(true)

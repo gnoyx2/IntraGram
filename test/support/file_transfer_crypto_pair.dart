@@ -16,7 +16,7 @@ Future<(CryptoSession, CryptoSession)> pairSessions() async {
   return (a, b);
 }
 
-// chunks를 그대로 한 조각씩 내보내는 스트림 (밑 전송이 원본 청킹과 무관한 크기로 바이트를 넘기는 상황을 흉내)
+// chunks를 그대로 한 조각씩 내보내는 스트림 (하위 전송 계층이 원본 청킹과 무관한 크기로 바이트를 넘기는 상황 재현)
 Stream<List<int>> streamOf(List<List<int>> chunks) async* {
   for (final c in chunks) {
     yield c;

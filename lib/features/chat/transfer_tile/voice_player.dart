@@ -118,7 +118,7 @@ class _VoicePlayerState extends State<_VoicePlayer> {
         return;
       }
       if (!mounted) {
-        // 로드를 기다리는 동안 화면이 사라짐: 아무도 안 쓸 재생기를 필드에 안 남기고 바로 정리
+        // 로드를 기다리는 동안 화면이 사라짐: 아무도 안 쓸 재생기를 필드에 안 남기고 바로 정리함
         await clip.dispose();
         return;
       }

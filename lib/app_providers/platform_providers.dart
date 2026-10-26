@@ -1,6 +1,6 @@
 part of '../app_providers.dart';
 
-// 패닉이 플러그인 임시 사본을 지우는 단계. 위젯 테스트는 플랫폼 채널 없이 돌도록 바꿔 끼움
+// 패닉 시 플러그인 임시 사본을 지우는 함수를 공급함. 위젯 테스트는 플랫폼 채널 없이 돌도록 교체함
 final tempSweepProvider = Provider<Future<void> Function()>(
   (ref) => sweepAppTemp,
 );
@@ -22,7 +22,7 @@ final foregroundServiceProvider = Provider<ForegroundService>(
   (ref) => ForegroundService(),
 );
 
-// 열려 있는 대화에만 로컬 줄 + 피어 통지. 열린 대화가 없으면 무시함
+// 열려 있는 대화에만 로컬 시스템 줄을 남기고 피어에 통지함. 열린 대화가 없으면 무시함
 final screenshotBridgeProvider = Provider<void>((ref) {
   final detector = ref.watch(screenshotDetectorProvider);
   final sub = detector.onScreenshot.listen((_) {
@@ -51,7 +51,7 @@ final notificationBridgeProvider = Provider<void>((ref) {
   final haptic = ref.watch(foregroundMessageHapticProvider);
   final sub = store.inboundActivity.listen((event) {
     if (store.appInForeground) {
-      // 포그라운드에선 OS 알림 대신 짧은 햅틱만. 알림 권한은 이때 처음 물음 (첫 실행 화면에서 안 물음)
+      // 포그라운드에선 OS 알림 대신 짧은 햅틱만 울림. 알림 권한은 이때 처음 물음 (첫 실행 화면에서 안 물음)
       unawaited(haptic());
       unawaited(service.requestPermissionOnce());
       return;

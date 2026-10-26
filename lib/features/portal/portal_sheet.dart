@@ -76,7 +76,7 @@ class PortalSheet extends ConsumerWidget {
               // 두 줄로 접히면 42pt라 iOS 터치 영역(44pt)에 모자라서 높이 하한을 둠
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 48),
-                // 선택 복사는 클립보드 기록·클라우드 제외 표시를 안 거쳐서 입장 토큰(#t=)이 남을 수 있음: 복사는 옆 버튼(OsPrivacy)으로만
+                // 선택 복사는 클립보드 기록·클라우드 제외 표시를 안 거쳐서 입장 토큰(#t=)이 남을 수 있음: 복사는 옆 버튼(OsPrivacy)으로만 함
                 child: Text(
                   url,
                   style: const TextStyle(fontFamily: 'monospace'),

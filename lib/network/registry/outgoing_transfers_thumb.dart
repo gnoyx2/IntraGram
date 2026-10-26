@@ -1,7 +1,7 @@
 part of 'outgoing_transfers.dart';
 
 extension _OutgoingTransfersThumb on OutgoingTransfers {
-  // 12 MiB 이하 이미지면 작은 PNG 썸네일(base64). 파일을 한 번 통째로 읽음
+  // 12 MiB 이하 이미지면 축소된 PNG 썸네일(base64)을 생성함. 파일을 전체 1회 읽음
   Future<String?> _thumbForPath(String? path, String name, int size) async {
     if (path == null) return null;
     if (!(_mimeFor(name)?.startsWith('image/') ?? false)) return null;
@@ -16,7 +16,7 @@ extension _OutgoingTransfersThumb on OutgoingTransfers {
 
 String? _mimeFor(String fileName) => lookupMimeType(safeBasename(fileName));
 
-// 96px 폭 PNG로 줄여 base64. 디코드가 안 되거나(SVG 등) 24 KB를 넘으면 null
+// 96px 폭 PNG로 축소하여 base64로 인코딩함. 디코딩 실패(SVG 등)나 24 KiB 초과 시 null을 반환함
 Future<String?> _imageThumb(Uint8List bytes) async {
   try {
     final codec = await ui.instantiateImageCodec(bytes, targetWidth: 96);

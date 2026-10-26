@@ -24,7 +24,7 @@ void main() {
   });
 
   testWidgets('settings open the license page', (tester) async {
-    // 설정 목록 끝까지 한 화면에 들어오게 세로로 길게
+    // 설정 목록 전체가 한 화면에 표시되도록 뷰포트 높이를 충분히 확보함
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);

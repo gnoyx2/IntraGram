@@ -1,6 +1,6 @@
 part of '../protocol.dart';
 
-// 실제 파싱: 필수 필드는 _req*로 보고 없거나 틀리면 _BadField로 프레임째 거부 (기본값으로 정상 프레임인 척 안 만듦). 값 있는 선택 필드가 틀려도 거부.
+// 실제 파싱: 필수 필드는 _req*로 확인하며 누락되거나 형식이 틀리면 _BadField로 프레임 전체를 거부함. 잘못된 선택 필드가 있어도 거부함
 // from/pid는 릴레이 표기라 신뢰 판단은 인가 단계가 인증된 링크 신원으로 덮어써서 함
 InboundInner _parseInner(Map<String, dynamic> j) {
   final from = _optText(j, 'from', 256);

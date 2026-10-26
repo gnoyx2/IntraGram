@@ -3,7 +3,7 @@ part of '../app_providers.dart';
 class VaultSettingsNotifier extends Notifier<VaultSettings> {
   @override
   VaultSettings build() {
-    // watch 대신 listen: watch면 게이트가 열리는 순간 notifier가 다시 만들어져서 호출자가 쥔 핸들이 죽음
+    // watch 대신 listen을 씀: watch하면 게이트가 열리는 순간 notifier가 재생성되어 호출자가 쥔 참조가 무효화됨
     ref.listen<VaultAccessState>(vaultAccessProvider, (_, next) {
       // settings만 읽고 snapshot 내용은 안 건드림
       if (next is VaultOpen) state = next.settings;
@@ -56,7 +56,7 @@ class VaultSettingsNotifier extends Notifier<VaultSettings> {
   Future<void> setStayConnected(bool value) =>
       _apply(state.copyWith(stayConnectedInBackground: value));
 
-  // 스토어 미러도 즉시 갱신 (링크 레이어가 인바운드 hello에서 읽음)
+  // 스토어 미러도 즉시 갱신함 (링크 레이어가 인바운드 hello에서 읽음)
   Future<void> setOnlyChatsIStart(bool value) {
     ref.read(inMemoryStoreProvider).onlyChatsIStart = value;
     return _apply(state.copyWith(onlyChatsIStart: value));
@@ -69,14 +69,14 @@ class VaultSettingsNotifier extends Notifier<VaultSettings> {
   Future<void> setLangOverride(String? code) =>
       _apply(state.copyWith(langOverride: code));
 
-  // 스토어 미러도 즉시 갱신 (링크 레이어가 거기서 읽음)
+  // 스토어 미러도 즉시 갱신함 (링크 레이어가 거기서 읽음)
   Future<void> setLargeMessageMode(LargeMessageMode mode) {
     ref.read(inMemoryStoreProvider).largeMessageMode = mode;
     return _apply(state.copyWith(largeMessageMode: mode));
   }
 
-  // pin 있으면 세션 PIN으로 등록 후 다음 저장부터 봉인, null이면 PIN을 잊고 평문 복귀
-  // duress PIN과 같으면 false (그대로 두면 진짜 PIN으로 열 때 duress가 죽음)
+  // pin이 있으면 세션 PIN으로 등록해 다음 저장부터 봉인하고, null이면 PIN을 잊고 평문으로 되돌림
+  // duress PIN과 같으면 false를 반환함 (그대로 두면 진짜 PIN으로 열 때 복호화가 먼저 성공해 duress 모드로 진입할 수 없음)
   Future<bool> setPinProtected({required bool value, String? pin}) async {
     if (!state.enabled) return true;
     final vault = ref.read(vaultProvider);
@@ -98,7 +98,7 @@ class VaultSettingsNotifier extends Notifier<VaultSettings> {
   }
 
   // 보관소 켜짐이면 vault 스냅샷의 일부라 decoy/erase 격리를 나머지와 똑같이 받음
-  // 꺼져 있으면 no-op (vault 독립 경로인 IdentityStore가 대신 씀)
+  // 꺼져 있으면 no-op임 (vault 독립 경로인 IdentityStore가 대신 씀)
   Future<void> setSavedAlias(String? alias) {
     if (!state.enabled) return Future<void>.value();
     return _apply(state.copyWith(savedAlias: alias));

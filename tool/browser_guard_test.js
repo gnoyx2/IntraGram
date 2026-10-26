@@ -14,7 +14,7 @@ const read = (f) => fs.readFileSync(path.join(JS_DIR, f), 'utf8');
 // vm 컨텍스트에서 만들어진 에러는 realm이 달라 instanceof가 안 맞아서 이름으로 봄
 const isTypeError = (e) => e && e.name === 'TypeError';
 
-/// socket.js가 로드 시점에 건드리는 DOM/브라우저 API를 최소한으로 흉내낸 컨텍스트
+/// socket.js가 로드 시점에 접근하는 DOM/브라우저 API를 최소한으로 흉내 낸 컨텍스트임
 function makeContext({ origin = 'http://192.168.1.2:7890', fetchImpl, hash = '', storage, timers } = {}) {
   const windowEvents = {};
   const sockets = [];
@@ -88,7 +88,7 @@ function memoryStorage() {
   };
 }
 
-// 소켓이 열린 것만으로 '온라인'이 아님: 호스트의 첫 프레임(입장 승인) 뒤에만 온라인·재시도 초기화
+// 소켓이 열린 것만으로 '온라인'이 아님: 호스트의 첫 프레임(입장 승인) 뒤에만 온라인으로 전환하고 재시도를 초기화함
 // 받아 주지 않고 닫히면(포털 끔·새 코드) 재시도 없이 안내하고 탭에 둔 코드를 지움
 function testEntryAcceptance() {
   const storage = memoryStorage();
@@ -165,14 +165,14 @@ function testConnectAndUrls() {
   assert.equal(ctx.endpointUrl({ host: '10.0.0.1', port: 80 }, '/ws', 'ws'), 'ws://10.0.0.1/ws');
   assert.equal(ctx.endpointUrl(null, '/ws', 'ws'), null);
 
-  // 다운로드 URL: 명시된 주소가 틀리면 호스트로 몰래 바꾸지 않고 null
+  // 다운로드 URL: 명시된 주소가 잘못되었으면 호스트로 대체하지 않고 null을 반환함
   assert.equal(ctx.resolveDownloadUrl('id', '010.0.0.1', 7890), null);
   assert.equal(ctx.resolveDownloadUrl('id', '8.8.8.8', 7890), null);
   assert.equal(ctx.resolveDownloadUrl('id', '127.0.0.1', 7890), null);
   assert.equal(ctx.resolveDownloadUrl('a/b', '10.0.0.5', 7890), 'http://10.0.0.5:7890/api/download/a%2Fb');
   assert.equal(ctx.resolveDownloadUrl('id', null, null), 'http://192.168.1.2:7890/api/download/id');
 
-  // 사설 IPv4가 없어 링크 로컬·ULA로 뜬 호스트: 자기 주소를 실은 offer는 같은 출처로 받음 (남의 그런 주소는 여전히 거부)
+  // 사설 IPv4가 없어 링크 로컬·ULA로 뜬 호스트: 자기 주소를 실은 offer는 같은 출처로 받음 (다른 호스트의 해당 주소는 여전히 거부함)
   const linkLocal = makeContext({ origin: 'http://169.254.3.4:7890' });
   assert.equal(linkLocal.resolveDownloadUrl('id', '169.254.3.4', 7890), 'http://169.254.3.4:7890/api/download/id');
   assert.equal(linkLocal.resolveDownloadUrl('id', '169.254.3.4', 7891), null);
@@ -201,10 +201,10 @@ async function testPeerFetchOptions() {
 }
 
 
-/// 브라우저 전송 흐름(v3 계약)을 실제 file_transfer.js/audio_player.js로 검사: offer는
+/// 브라우저 전송 흐름(v3 계약)을 실제 file_transfer.js/audio_player.js로 검사함: offer는
 /// at/md를 싣고, accept의 (id, at, tok)가 맞아야만 POST가 나가며(토큰·attempt·크기
 /// 헤더, redirect:error), 받은 offer는 pull만 받아 헤더와 함께 GET한 뒤 file_received
-/// ACK를 보냄. DOM은 접근성 속성·부모 관계·삭제만 기록하는 최소 스텁
+/// ACK를 보냄. DOM은 접근성 속성·부모 관계·삭제만 기록하는 최소 스텁임
 function makeAppContext(fetchImpl) {
   const created = [];
   const sent = [];
@@ -251,7 +251,7 @@ function makeAppContext(fetchImpl) {
   const ctx = {
     URL: FakeURL, Promise, Number, Math, Date, console, AbortController, btoa, unescape,
     encodeURIComponent, setTimeout: (fn, ms) => ms >= 40000 ? 0 : setTimeout(fn, ms), clearTimeout, String, JSON, Object, Blob, objectUrls, revokedUrls, Uint8Array, windowEvents, documentEvents,
-    // 소각 카운트다운은 등록만 기록 (실제 주기 실행은 안 함)
+    // 소각 카운트다운은 등록만 기록함 (실제 주기 실행은 안 함)
     intervals: [],
     setInterval(fn) { ctx.intervals.push(fn); return ctx.intervals.length; },
     clearInterval() {},
@@ -374,7 +374,7 @@ async function testBrowserFileFlows() {
   ctx.handleFileAccept({ id: offer.id, at: offer.at, tok: 'tok-1' });
   assert.equal(calls.length, 1, 'an accept can only start one upload');
 
-  // 받기: push offer는 즉시 거절, pull offer는 토큰·attempt·크기 헤더로 GET한 뒤 ACK
+  // 받기: push offer는 즉시 거절하고, pull offer는 토큰·attempt·크기 헤더로 GET한 뒤 ACK를 보냄
   ctx.sent.length = 0;
   ctx.incomingOffer({ id: 'p1', at: 'ap1', md: 'push', name: 'x', size: 1 });
   assert.deepEqual({ ...ctx.sent[0] }, { k: 'file_reject', id: 'p1', at: 'ap1' });

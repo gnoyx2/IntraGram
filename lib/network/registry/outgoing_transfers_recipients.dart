@@ -1,6 +1,6 @@
 part of 'outgoing_transfers.dart';
 
-// 수신자 한 명이 이번 attempt에서 어디까지 왔나. failed는 재시도할 수 있고 그 뒤 셋은 끝
+// 수신자별 현재 attempt의 진행 단계임. failed 상태는 재시도 가능하며 complete, rejected, cancelled는 최종 완료 상태임
 enum _RecipientPhase {
   offered,
   accepted,
@@ -33,13 +33,13 @@ class _OutgoingRecipient {
 
   _RecipientPhase phase = _RecipientPhase.offered;
 
-  // 이 attempt의 데이터 슬롯(pull이면 GET, push면 POST)을 이미 썼는가 (중복 GET/취소 뒤 재사용 방지)
+  // 이 attempt의 데이터 슬롯(pull이면 GET, push면 POST)을 이미 썼는지 여부 (중복 GET이나 취소 후 재사용을 방지함)
   bool tokenConsumed = false;
 
-  // 실제 wire EOF를 봤는가 (push: POST 200 완료, pull: 응답 body EOF)
+  // 실제 wire EOF 도달 여부임 (push: POST 200 완료, pull: 응답 body EOF)
   bool wireEof = false;
 
-  // 유효한 ACK를 받았나. EOF보다 먼저 올 수 있어서 wireEof와 둘 다 참이어야 완료
+  // 유효한 ACK 수신 여부임. wire EOF보다 먼저 도착할 수 있으므로 wireEof와 둘 다 참이어야 완료됨
   bool ackReceived = false;
 
   String? error;
@@ -104,7 +104,7 @@ extension _OutgoingTransfersRecipients on OutgoingTransfers {
     return source._recipients[actorKey];
   }
 
-  // 수신자에게 보낼 링크. 방 멤버로서 낸 제안은 늘 호스트 링크고, 명단에서 빠진(나간) 수신자면 null
+  // 수신자에게 전송할 링크를 반환함. 그룹 방 멤버로서 발신한 제안은 항상 호스트 링크이며, 명단에서 제외된 수신자면 null을 반환함
   PeerLink? _linkForRecipient(
     OutgoingFileSource source,
     _OutgoingRecipient recipient,
@@ -158,7 +158,7 @@ extension _OutgoingTransfersRecipients on OutgoingTransfers {
     if (all.every((r) => r.isTerminal)) _removeSource(transferId);
   }
 
-  // 쓸 수신자가 없는 source를 버림. 도는 작업이 있으면 끝난 뒤에 (먼저 지우면 그 정리를 기다릴 길이 없음)
+  // 유효한 수신자가 남아 있지 않은 source를 해제함. 진행 중인 작업이 있으면 완료 후 해제함 (사전 삭제 시 정리 대기가 불가함)
   void _removeSource(String transferId) {
     final source = _outgoing[transferId];
     if (source == null) return;
@@ -192,7 +192,7 @@ extension _OutgoingTransfersRecipients on OutgoingTransfers {
     return null;
   }
 
-  // _releaseSource를 기다리지 않고 시작하되 추적함 (clear/dispose가 끝까지 기다릴 수 있게)
+  // _releaseSource를 대기 없이 비동기로 실행하되 추적 목록에 등록함 (clear/dispose 단계에서 완료까지 대기할 수 있게 함)
   Future<Object?> _retireSource(String id, OutgoingFileSource source) {
     final previous = _retiring[id];
     if (previous != null) return previous;

@@ -83,7 +83,7 @@ final Set<BigInt> _smallOrderYs = <BigInt>{
 };
 
 // 작은 위수 점 키는 누구나 아무 메시지에 통하는 서명을 만들 수 있어서(항등원이면 R=[s]B, S=s) 그 peerId를 아무나 '증명'함.
-// 그래서 신원 키로 안 받음. y가 p 이상인 비정규 인코딩도 있어 p로 줄여 비교
+// 그래서 신원 키로 받지 않음. y가 p 이상인 비정규 인코딩도 있어 p로 줄여 비교함
 bool isSmallOrderKey(List<int> key) {
   var y = BigInt.zero;
   for (var i = 31; i >= 0; i--) {

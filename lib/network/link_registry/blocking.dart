@@ -5,7 +5,7 @@ part of '../link_registry.dart';
 mixin _LinkRegistryBlocking on _LinkRegistryState {
   bool isBlocked(String peerId) => _blockedPeers.contains(peerId);
 
-  // 1:1 상대만 (방은 호스트가 멤버를 관리)
+  // 1:1 상대만 차단함 (방은 호스트가 멤버를 관리함)
   Future<void> blockPeer(String conversationId) async {
     final conversation = store.conversation(conversationId);
     final peerId = conversation?.peerId;

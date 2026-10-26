@@ -5,7 +5,6 @@ extension _VaultIo on Vault {
   // VaultLockedException. 큐에 줄 서서 앞선 저장·삭제가 끝난 뒤에만 파일을 건드림
   Future<void> _save(VaultSnapshot snapshot) {
     if (_transitioning) {
-      // 전이가 안 끝났으니 거부
       return Future<void>.error(
         const VaultLockedException(
           'vault session is transitioning (load/unlock in progress)',

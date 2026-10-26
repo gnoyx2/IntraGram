@@ -24,7 +24,7 @@ extension _PeerLinkAuth on PeerLink {
         port: localPort,
       );
 
-  // 증명 실패: 인바운드면 방금 만든 임시 대화도 치움 (다이얼한 대화는 사용자 거라 둠, 방 기록은 절대 안 지움)
+  // 증명 실패: 인바운드면 방금 생성한 임시 대화도 정리함 (다이얼한 대화는 사용자가 생성한 것이라 유지하고, 방 기록은 삭제하지 않음)
   Future<void> _failPeerHello([
     SystemEventKind reason = SystemEventKind.handshakeFailed,
   ]) {
@@ -34,8 +34,8 @@ extension _PeerLinkAuth on PeerLink {
     return _shutdown();
   }
 
-  // 서명 전 구조 검사: peerId는 신원 키 해시여야 하고, 다이얼한 링크면 기대한 peerId여야 함 (DHCP로 다른 기기가 그 주소면 안 이어붙임).
-  // 내 peerId를 밝히는 hello는 중간자가 내 hello를 되돌린 것, 작은 위수 키는 서명 위조가 돼서 둘 다 거부
+  // 서명 전 구조 검사: peerId는 신원 키 해시여야 하고, 다이얼한 링크면 기대한 peerId여야 함 (DHCP 등으로 다른 기기가 해당 주소를 쓰면 연결하지 않음).
+  // 자신의 peerId를 제시하는 hello나 작은 위수 키는 모두 거부함
   bool _acceptableHello(HelloOuter hello) =>
       hello.peerId != identity.peerId &&
       !isSmallOrderKey(hello.identityKey) &&
@@ -45,7 +45,7 @@ extension _PeerLinkAuth on PeerLink {
   Future<void> _onPeerHello(HelloOuter hello) async {
     final crypto = _crypto;
     final ownKey = identity.publicKey;
-    // 기대한 peerId가 아니면 이 주소에 다른 기기가 있는 것
+    // 기대한 peerId가 아니면 이 주소에 다른 기기가 있는 상태임
     if (crypto == null || ownKey == null || !_acceptableHello(hello)) {
       final elsewhere = (expectedPeerId ?? hello.peerId) != hello.peerId;
       await _failPeerHello(
@@ -134,7 +134,7 @@ extension _PeerLinkAuth on PeerLink {
     _sendOuter(_helloFrame(crypto, ownKey, sig: base64.encode(signature)));
     _awaitingAuth = (auth) async {
       final revealed = auth.ephemeralKey;
-      // 공개한 임시키가 커밋과 다르면 내 키를 본 뒤 바꿔치기한 것 (SAS 맞추려는 중간자)
+      // 공개된 임시키가 커밋과 다르면 내 키를 확인한 뒤 바꿔치기한 중간자 공격으로 간주함 (SAS 일치 유도 방어)
       final opened = ephemeralCommitment(
         ephemeral: revealed,
         identityKey: peerKey,

@@ -18,7 +18,7 @@ const roomAuthorKeys = <String>{
   'authorSig',
 };
 
-// 서명이 묶는 글 내용. 표시 이름(from)은 중계 호스트가 찍는 값이라 범위 밖: 작성자는 peerId로만 믿음
+// 서명이 바인딩하는 메시지 페이로드임. 표시 이름(from)은 중계 호스트가 지정하는 값이므로 제외하며 작성자는 peerId로만 검증함
 String roomPayloadCommitment(
   Map<String, dynamic> wire, {
   required String salt,

@@ -45,7 +45,7 @@ extension CryptoSessionMessageRecords on CryptoSession {
       throw SecurityException('rejected open: seq $seq out of range');
     }
     final key = _requireRecvKey();
-    // 받는 쪽도 nonce = seq를 강제함 (보내는 쪽은 늘 정규 base64라 그냥 비교)
+    // 받는 쪽도 nonce = seq를 강제함 (보내는 쪽은 늘 정규 base64라 그대로 비교함)
     final nonce = _nonceFromSeq(seq);
     if (nonceB64 != base64.encode(nonce)) {
       throw SecurityException('rejected open: nonce does not match seq $seq');

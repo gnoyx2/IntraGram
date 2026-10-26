@@ -23,7 +23,7 @@ import io.flutter.plugin.common.MethodChannel
 //  - intragram/screenshot: Android 14(API 34)+에서만 registerScreenCaptureCallback으로 스크린샷을 감지함
 //    (DETECT_SCREEN_CAPTURE 권한). 그 밑은 아무 일도 안 하고, iOS와 달리 막지는 못하고 알리기만 함
 //  - intragram/foreground: ConnectionService를 켜고 꺼서 백그라운드에서도 피어 링크를 살려 둠 (설정에서 옵트인)
-//  - intragram/privacy: 민감 표시 클립보드 복사, 클립보드 비우기(clearIfOwn은 우리 복사본일 때만), 앱 정보 화면 열기
+//  - intragram/privacy: 로컬 네트워크 권한 확인·요청, 민감 표시 클립보드 복사·비우기·종류 조회, 앱 설정 화면 열기
 //  - intragram/file_source: 고른 문서·사진의 바이트를 메모리에서 넘김
 //  - intragram/voice: 받은 음성을 메모리에서 재생 (VoicePlayerChannel)
 // FLAG_SECURE는 늘 켬 (최근 앱 썸네일·스크린샷·화면 녹화에 대화가 안 남게, 끄는 설정 없음). 최근 앱 스냅샷 끄기(API 33+)도 따로 켬
@@ -189,7 +189,7 @@ class MainActivity : FlutterActivity() {
     }
 
     // API 33+는 클립보드 미리보기 토스트/키보드 제안에 내용이 안 뜸
-    // 라벨은 clearIfOwn이 내용을 안 읽고 우리 복사본인지 알아보는 표식
+    // 라벨은 clearIfOwn이 내용을 안 읽고 우리 복사본인지 알아보는 표식임
     private fun copySensitive(text: String) {
         val clip = ClipData.newPlainText(SENSITIVE_CLIP_LABEL, text)
         clip.description.extras = PersistableBundle().apply {

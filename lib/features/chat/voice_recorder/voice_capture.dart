@@ -175,7 +175,7 @@ class RecordVoiceCapture implements VoiceCapture {
     try {
       await _stopRecorder();
     } on Object {
-      // 어차피 버릴 거라 무시
+      // 버릴 녹음이라 정지 오류는 무시함
     }
     await _drainStream();
     _wipePcm();
@@ -204,7 +204,7 @@ class RecordVoiceCapture implements VoiceCapture {
     _pcmLength = 0;
   }
 
-  // record 계약: stop 뒤에도 스트림 close까지 기다려야 마지막 샘플이 들어옴. close가 안 오는 이상 상황에 대비해 2초 상한
+  // record 계약: stop 뒤에도 스트림 close까지 기다려야 마지막 샘플이 들어옴. close가 안 오는 이상 상황에 대비해 2초 상한을 둠
   Future<void> _drainStream() async {
     final done = _streamDone;
     if (done != null) {

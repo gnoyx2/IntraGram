@@ -27,7 +27,7 @@ assert.match(css, /\.meta\s*\{[^}]*flex-wrap:\s*wrap/);
 assert.match(css, /max-width:\s*min\(240px,\s*100%\)/);
 assert.match(css, /prefers-reduced-motion:\s*no-preference/);
 assert.match(css, /\.state\.failed\s*\{[^}]*color:\s*var\(--burn\)/);
-// 글자 크기는 rem(브라우저 기본 글꼴 크기 설정을 따름). 입력창만 iOS 확대 방지용 16px 하한
+// 글자 크기는 rem(브라우저 기본 글꼴 크기 설정을 따름). 입력창만 iOS 확대 방지용 16px 하한을 둠
 assert.deepEqual([...css.matchAll(/font(?:-size)?:\s*(\d+)px/g)].map(m => m[0]), [], 'font sizes must be rem');
 assert.match(css, /font-size:\s*max\(16px,\s*1rem\)/);
 // 노치 가로 모드, 강제 색상, 낮은 높이, 가상 키보드

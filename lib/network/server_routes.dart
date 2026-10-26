@@ -1,7 +1,7 @@
 part of 'local_server.dart';
 
 extension LocalServerRoutes on LocalServer {
-  // 모든 응답에 no-store와 보안 헤더를 붙임. Host가 바인드 주소와 다르면 421: DNS 리바인딩으로 남의 페이지가 이 서버를 못 부름
+  // 모든 응답에 no-store와 보안 헤더를 설정함. Host 헤더가 바인드 주소와 다르면 421을 반환함 (DNS 리바인딩으로 외부 출처가 로컬 서버를 호출하는 공격을 차단함)
   Middleware _noStore() => (Handler inner) {
     return (Request request) async {
       final expected = boundHost == null
@@ -14,7 +14,7 @@ extension LocalServerRoutes on LocalServer {
           headers: _securityHeaders,
         );
       }
-      // absolute-form 요청(GET http://다른곳/...)은 dart:io가 URI 쪽 호스트를 씀: Host와 다르면 거절
+      // absolute-form 요청(GET http://외부호스트/...)은 dart:io가 URI 쪽 호스트를 사용하므로 Host와 다르면 거절함
       if (request.requestedUri.authority != expected) {
         return Response(400, body: 'Bad Request', headers: _securityHeaders);
       }
@@ -84,7 +84,7 @@ extension LocalServerRoutes on LocalServer {
         : '0.0.0.0';
     final remotePort = info is HttpConnectionInfo ? info.remotePort : null;
 
-    // 브라우저는 같은 출처여도 WS 핸드셰이크에 Origin을 실음. 앱 피어(Dart 클라이언트)는 안 실어서 null이면 통과
+    // 브라우저는 동일 출처여도 WS 핸드셰이크에 Origin 헤더를 포함함. 앱 피어(Dart 클라이언트)는 미포함하므로 null이면 허용함
     final origin = request.headers['origin'];
     if (origin != null && !_isOwnOrigin(origin)) {
       return Response.forbidden('origin not allowed');
@@ -115,7 +115,7 @@ extension LocalServerRoutes on LocalServer {
     );
   }
 
-  // 브라우저 WebSocket은 이 서버가 서빙한 같은 origin만 허용
+  // 브라우저 WebSocket은 이 서버가 제공한 동일 origin만 허용함
   bool _isOwnOrigin(String origin) {
     final host = boundHost;
     final port = boundPort;
@@ -155,7 +155,7 @@ extension LocalServerRoutes on LocalServer {
           );
   }
 
-  // 헤더가 없으면 400. 인가·봉인·EOF 기록은 다 레지스트리가 하고 여긴 결과를 Response로 쌀 뿐 (평문 source를 직접 안 읽음)
+  // 헤더 누락 시 400을 반환함. 인가·봉인·EOF 기록은 레지스트리가 전담하며 여기서는 결과를 Response로 감싸 반환함 (평문 소스를 직접 읽지 않음)
   Future<Response> _downloadFile(
     String transferId,
     Map<String, String> headers,
@@ -206,8 +206,8 @@ extension LocalServerRoutes on LocalServer {
   }
 }
 
-// RFC 6266: 옛 클라이언트용 ASCII 이름(제어 문자·비ASCII·따옴표·역슬래시는 _)과 UTF-8 원래 이름
-// filename*는 RFC 8187 attr-char 밖(작은따옴표·괄호·별표 포함)을 전부 퍼센트 인코딩
+// RFC 6266: 레거시 클라이언트용 ASCII 파일명(제어 문자·비ASCII·따옴표·역슬래시는 _ 대체)과 UTF-8 원본 파일명을 제공함
+// filename*는 RFC 8187 attr-char 외 문자(작은따옴표·괄호·별표 포함)를 퍼센트 인코딩함
 @visibleForTesting
 String contentDisposition(String name) {
   final ascii = name.replaceAll(RegExp(r'[^\x20-\x7E]|["\\]'), '_');

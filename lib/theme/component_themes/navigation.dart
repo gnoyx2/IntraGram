@@ -21,7 +21,7 @@ AppBarTheme _appBarTheme(
       : null,
   titleTextStyle: AppType.scale.titleMedium?.copyWith(color: scheme.onSurface),
   toolbarTextStyle: AppType.scale.bodyMedium?.copyWith(color: scheme.onSurface),
-  // 안 박으면 AppBar가 전경색을 스스로 계산해서 iOS에서 아이콘이 흰색으로 뜬 적 있음
+  // 명시하지 않으면 AppBar가 전경색을 스스로 계산해서 iOS에서 아이콘이 흰색으로 뜬 적 있음
   foregroundColor: scheme.onSurface,
   iconTheme: IconThemeData(color: scheme.onSurface),
   actionsIconTheme: IconThemeData(color: scheme.onSurface),
@@ -33,7 +33,7 @@ AppBarTheme _appBarTheme(
           .copyWith(systemNavigationBarColor: Colors.transparent),
 );
 
-// iOS는 스와이프 뒤로 가기, Android는 predictive back, 데스크톱(macOS 포함)은 페이드 (Mac 창에서 옆으로 밀려 들어오는 건 Mac 관례가 아님)
+// iOS는 스와이프 뒤로 가기, Android는 predictive back, 데스크톱(macOS 포함)은 페이드를 씀 (Mac 창에서 옆으로 밀려 들어오는 건 Mac 관례가 아님)
 PageTransitionsTheme _pageTransitionsTheme() => PageTransitionsTheme(
   builders: <TargetPlatform, PageTransitionsBuilder>{
     TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),

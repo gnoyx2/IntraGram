@@ -40,7 +40,7 @@ class FileTransfer {
   final int transferredBytes;
   final String? mimeType;
 
-  // 방에서 들어온 제안이면 원래 보낸 멤버의 사설 IPv4와 서버 포트. 받는 쪽이 GET /api/download/<id>를 그 멤버에게 바로 침.
+  // 방에서 들어온 제안이면 원래 보낸 멤버의 사설 IPv4와 서버 포트. 받는 쪽이 GET /api/download/<id>를 그 멤버에게 바로 요청함.
   // RAM 전용 (라우팅 정보라 직렬화 안 함)
   final String? srcHost;
   final int? srcPort;
@@ -71,11 +71,11 @@ class FileTransfer {
   // 받는 쪽이 바이트를 가져오는 방식 (FileOfferInner.mode를 타입으로 고정). RAM 전용. null이면(옛 vault 기록) 옛 프레임처럼 push로 봄
   final FileTransferMode? mode;
 
-  // 들어온 전송: offer를 보낸 쪽의 인증된 peerId (1:1이면 링크 상대, 방이면 호스트가 도장 찍은 원래 보낸 사람).
-  // 같은 id의 재offer·취소·재시도가 그 사람한테서만 오게 묶음 (다른 멤버가 남의 전송 id를 가로채지 못하게). 보내는 쪽은 null, RAM 전용
+  // 들어온 전송: offer를 보낸 쪽의 인증된 peerId (1:1이면 링크 상대, 방이면 호스트가 확인해 기록한 원발신자).
+  // 같은 id의 재offer·취소·재시도가 같은 발신자에게서만 오게 묶음 (다른 멤버가 타인의 전송 id를 가로채지 못하게 함). 보내는 쪽은 null, RAM 전용
   final String? senderPeerId;
 
-  // offer에 실려 온 내용 SHA-256(base64). 있으면 받은 바이트가 다를 때 지우고 실패. RAM 전용
+  // offer에 실려 온 내용 SHA-256(base64). 있으면 받은 바이트가 다를 때 파일을 지우고 실패 처리함. RAM 전용
   final String? digest;
 
   // 직접 잰 내용 해시와 발신자 공개키(base64). 증적 전용 RAM 값이며 offer dg·Vault와 별개.

@@ -80,7 +80,7 @@ import UniformTypeIdentifiers
     }
   }
 
-  // vault.json/identity.json과 그 폴더: iCloud/Finder 백업 제외 + 잠금 중엔 못 읽게
+  // vault.json/identity.json과 상위 폴더를 iCloud·Finder 백업에서 제외하고 기기 잠금 중 읽기를 막음
   private static func protectFile(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     guard call.method == "protect", let path = call.arguments as? String else {
       result(FlutterMethodNotImplemented)
@@ -108,7 +108,7 @@ import UniformTypeIdentifiers
   // iOS 27.1+ 접힘선·힌지 상태의 마지막 값 (DisplayRegions.swift). Dart가 뜨기 전에 잰 값도 남겨 둠
   private static var displayRegions: [String: Any]?
 
-  // copySensitive: 이 기기에서만 (Universal Clipboard로 다른 기기에 안 넘어감), 60초 뒤 OS가 만료
+  // copySensitive: 이 기기에만 복사하고(Universal Clipboard 전파 차단) 60초 뒤 OS가 만료시킴
   private static func handlePrivacy(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
     case "copySensitive":
@@ -133,7 +133,7 @@ import UniformTypeIdentifiers
     case "reduceTransparency":
       result(UIAccessibility.isReduceTransparencyEnabled)
     case "displayRegions":
-      // nil이면 접힘선을 안 알려 주는 iOS라 Dart가 화면 크기로 짐작함. 지원하면 아직 못 쟀어도 빈 목록
+      // nil이면 접힘선 API가 없는 iOS이므로 Dart가 화면 크기로 추정함. 지원 버전이면 측정 전이어도 빈 목록을 반환함
       if #available(iOS 27.1, *) {
         result(displayRegions ?? ["status": 0, "regions": [[Double]]()])
       } else {

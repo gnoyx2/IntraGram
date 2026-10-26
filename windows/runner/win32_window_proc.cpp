@@ -24,7 +24,6 @@ void EnableFullDpiSupportIfAvailable(HWND hwnd) {
 
 }  // namespace
 
-// static
 LRESULT CALLBACK Win32Window::WndProc(HWND const window,
                                       UINT const message,
                                       WPARAM const wparam,
@@ -111,7 +110,7 @@ Win32Window::MessageHandler(HWND hwnd,
 
     case WM_GETMINMAXINFO: {
       // 최소 420x560 논리 픽셀: 두 줄 채팅 앱바 제목과 오른쪽 액션, 오프라인 배너, 말풍선 3개, 입력창이
-      // 글자 배율 1.0에서 안 찌그러지는 최소치
+      // 글자 배율 1.0에서 안 찌그러지는 최소치임
       auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
       const double scale_factor = GetDpiForWindow(hwnd) / 96.0;
       info->ptMinTrackSize.x = Scale(420, scale_factor);

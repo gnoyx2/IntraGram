@@ -15,7 +15,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
-  // 라이브러리·플러그인이 COM을 쓸 수 있게 초기화
+  // 라이브러리·플러그인이 COM을 쓸 수 있게 초기화함
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");

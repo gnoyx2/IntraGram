@@ -74,7 +74,6 @@ void main() {
 
   test('retryTransfer is a no-op for an unknown transfer id', () async {
     await registry.retryTransfer('ghost');
-    // 그냥 조용히 아무 일도 안 함: 던지지 않음
   });
 
   test(

@@ -2,7 +2,7 @@ part of 'incoming_transfers.dart';
 
 // 배치·취소·재시도·정리 구현 (공개 메서드는 IncomingTransfers에 있고 여기로 넘김)
 
-// 배치에서 아직 offered인 것만 수락 (따로 수락·거절한 건 안 건드림)
+// 배치에서 offered 상태인 전송만 수락함 (개별 수락·거절된 항목은 유지함)
 Future<void> _acceptBatch(
   IncomingTransfers self,
   String conversationId,
@@ -143,7 +143,7 @@ Future<void> _discard(IncomingTransfers self, String transferId) async {
   await self._deleteOwnedPartials(transferId);
 }
 
-// 상대가 무름. offered도 포함 (답하기 전에 상대가 접었을 수 있음). 상대에게 다시 알리진 않음
+// 피어 측에서 취소한 경우임. offered 상태도 포함됨 (응답 전에 피어가 취소했을 수 있음). 피어에게 다시 전송하지는 않음
 void _handleCancelledByPeer(
   IncomingTransfers self,
   String transferId,
@@ -154,7 +154,7 @@ void _handleCancelledByPeer(
   if (transfer == null || transfer.direction != TransferDirection.incoming) {
     return;
   }
-  // 실제 발신자가 지금 시도를 무를 때만 (다른 멤버나 옛 attempt의 취소가 남의 전송을 못 끊게)
+  // 실제 발신자가 현재 attempt를 취소한 경우에만 처리함 (다른 멤버나 이전 attempt의 취소 신호로 인한 오동작을 방지함)
   if (transfer.senderPeerId != senderPeerId ||
       (transfer.attemptId ?? transferId) != attemptId) {
     return;
@@ -171,7 +171,7 @@ void _handleCancelledByPeer(
   );
 }
 
-// 옛 토큰·attempt는 안 쓰고 file_retry로 재offer를 부탁함. 같은 id에 새 attempt로 오면 PeerLink가 알아서 받음
+// 이전 토큰과 attempt는 폐기하고 file_retry로 재제안을 요청함. 동일 ID에 새로운 attempt가 수신되면 PeerLink가 처리함
 Future<void> _retryTransfer(IncomingTransfers self, String transferId) async {
   final transfer = self.store.transfer(transferId);
   if (transfer == null ||

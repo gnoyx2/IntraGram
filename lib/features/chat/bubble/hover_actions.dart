@@ -70,7 +70,7 @@ class _HoverActionsState extends State<_HoverActions> {
 
   @override
   Widget build(BuildContext context) {
-    // 자리는 늘 차지하고 보이기만 바꿈: 올릴 때마다 말풍선 폭이 바뀌어 글이 다시 흐르지 않게
+    // 자리는 늘 차지하고 보이기만 바꿈: 올릴 때마다 말풍선 폭이 바뀌어 글이 다시 흐르지 않게 함
     final bar = ExcludeFocus(
       child: ExcludeSemantics(
         child: IgnorePointer(

@@ -168,7 +168,7 @@ class IncomingTransfers {
   @visibleForTesting
   String? debugPushTokenFor(String transferId) => _incoming[transferId]?.token;
 
-  // 암호화 전송이면 이 대화 링크의 복호화 함수. 세션이 없는데 암호화라면 평문으로 넘기지 않고 던짐
+  // 암호화 전송이면 이 대화 링크의 복호화 함수를 반환함. 세션이 없는데 암호화 설정인 경우 평문으로 처리하지 않고 예외를 던짐
   OpenChunk? _decryptorFor(FileTransfer transfer) {
     if (!transfer.encrypted) return null;
     final link = _linkFor(transfer.conversationId);

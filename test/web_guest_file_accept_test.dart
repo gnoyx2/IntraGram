@@ -9,7 +9,7 @@ import 'package:intragram/store/models.dart';
 
 import 'support/portal_guest.dart';
 
-// 웹 게스트 → 호스트 파일 전송(push)은 방 파일 라우팅 개편 뒤에도 그대로여야 함
+// 웹 게스트 → 호스트 파일 제안의 수락·거절 라우팅과 발신 주소 일치를 검증함
 void main() {
   late InMemoryStore store;
   late LinkRegistry registry;

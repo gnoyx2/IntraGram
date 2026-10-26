@@ -32,7 +32,7 @@ extension _PeerLinkInbound on PeerLink {
           if (authorized != null) _deliver(authorized);
         }
       case VersionMismatchOuter():
-        // 평문으로 계속하는 척 안 하고 닫음. 안내 줄은 내가 다이얼한 대화에만 남김 (모르는 기기가 버전만 바꿔 빈 대화를 쌓지 못하게)
+        // 평문 통신을 이어가지 않고 연결을 닫음. 안내 메시지는 직접 다이얼한 대화에만 남김 (임의 기기가 버전만 바꿔 빈 대화를 누적하지 못하게 막음)
         _failReason = SystemEventKind.protocolVersionMismatch;
         await _shutdown();
       case MalformedOuter():
@@ -69,7 +69,7 @@ extension _PeerLinkInbound on PeerLink {
     }
     final required = requiredWebToken?.call();
     if (required == null || !constantTimeEquals(outer.token ?? '', required)) {
-      // 포털 꺼짐·토큰 없음·틀림: 채팅 금지. 임시 'peer' 대화를 유령으로 안 남기고 지움
+      // 포털 비활성화·토큰 불일치 시 연결을 종료함. 임시 'peer' 대화가 남지 않도록 삭제함
       store.wipeConversation(conversationId);
       await _shutdown();
       return;
@@ -84,7 +84,7 @@ extension _PeerLinkInbound on PeerLink {
     peerPlatform = 'Web';
     transport = PeerTransport.web;
 
-    // 브라우저는 X25519를 못 해서 이 링크는 LAN 평문
+    // 브라우저는 X25519 핸드셰이크를 지원하지 않으므로 이 링크는 LAN 평문으로 통신함
     _crypto?.destroy();
     _crypto = null;
 
@@ -116,7 +116,7 @@ extension _PeerLinkInbound on PeerLink {
         await _shutdown();
         return;
       }
-      // 인증 통과한 프레임만 워터마크를 올림 (위조한 큰 seq로 워터마크를 태워 진짜 프레임을 막는 걸 방지)
+      // 인증 통과한 프레임만 워터마크를 갱신함 (위조된 큰 seq로 워터마크를 조작해 정상 프레임 수신을 방해하는 행위를 방지함)
       _lastSeenSeq = frame.seq;
       // 거부(null)면 dispatch도 중계도 안 함. 통과하면 같은 정규화 결과를 둘 다에 씀
       if (inner['k'] == 'org_cred') {
@@ -134,7 +134,7 @@ extension _PeerLinkInbound on PeerLink {
         }
       }
     } on Object {
-      // 나쁜 tag는 조용히 버림: 쓰레기를 보내는 LAN 공격자가 링크를 못 죽이게
+      // 유효하지 않은 tag는 조용히 무시함 (비정상 데이터를 보내는 LAN 공격자가 링크를 강제 종료하지 못하게 막음)
     }
   }
 }

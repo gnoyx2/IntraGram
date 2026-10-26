@@ -128,7 +128,7 @@ void main() {
         final autoAccepted = <String>[];
         rig.linkB.onAutoAcceptOffer = autoAccepted.add;
         await rig.sendFromA(authOffer('f5'));
-        await rig.sendFromA(authOffer('f5')); // 같은 attempt 재전송
+        await rig.sendFromA(authOffer('f5')); // 같은 attempt로 재전송함
         expect(
           rig.storeB.messages('cB').where((m) => m.transferId == 'f5'),
           hasLength(1),

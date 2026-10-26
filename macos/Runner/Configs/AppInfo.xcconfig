@@ -1,10 +1,6 @@
-// Runner 타깃의 앱 단위 설정
-
-// 앱 이름 (Flutter 창 제목도 됨)
+// 앱 이름 (기본 창 제목으로도 쓰임)
 PRODUCT_NAME = IntraGram
 
-// 번들 ID
 PRODUCT_BUNDLE_IDENTIFIER = com.yonghun0310.intragram
 
-// 앱 정보에 뜨는 저작권 표시
 PRODUCT_COPYRIGHT = Copyright © 2026 IntraGram contributors. MIT License.

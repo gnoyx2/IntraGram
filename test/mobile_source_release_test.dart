@@ -10,9 +10,9 @@ import 'package:intragram/store/models.dart';
 import 'support/mobile_source_rig.dart';
 import 'support/transfer_rig.dart';
 
-// 모바일 native 소스(OutgoingFileSource.releaseSource)가
-// 소스가 전송이 끝나 reader가 다 닫힌 뒤 정확히 한 번 놓이고, 재시도할 수 있는 실패에선 남아 있다가 재시도가 같은 소스를
-// 다시 여는지 봄. 방(pull) 두 명을 실제 서버·링크로 돌리고 가짜 MethodChannel의 호출 기록으로 순서·횟수를 검사
+// 모바일 native 소스(OutgoingFileSource.releaseSource)가 전송이 끝나 reader가 다 닫힌 뒤
+// 정확히 한 번 놓이고, 재시도할 수 있는 실패에선 남아 있다가 재시도가 같은 소스를 다시 여는지 봄.
+// 방(pull) 두 명을 실제 서버·링크로 돌리고 가짜 MethodChannel의 호출 기록으로 순서·횟수를 검사함
 // (teardown은 mobile_source_teardown_test.dart)
 void main() {
   late MobileSourceRig m;

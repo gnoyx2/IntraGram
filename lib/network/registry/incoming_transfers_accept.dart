@@ -1,6 +1,6 @@
 part of 'incoming_transfers.dart';
 
-// 제안을 수락: 목적지를 잡고 상대에게 알림. 데스크톱은 사용자가 폴더를 고르고 모바일은 앱 문서 폴더의 IntraGram/
+// 파일 전송 제안을 수락함: 저장 경로를 확보하고 피어에게 알림. 데스크톱은 사용자가 폴더를 선택하고 모바일은 앱 문서 디렉터리 내 IntraGram/을 사용함
 Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
   final transfer = self.store.transfer(transferId);
   if (transfer == null ||
@@ -22,7 +22,7 @@ Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
     safeBasename(transfer.fileName),
   );
   if (directory == null) return; // 사용자가 취소함
-  // 폴더를 고르는 사이 정리·소각·새 attempt가 왔으면 물러남 (늦은 선택이 끝난 세션에 .part를 못 만들게)
+  // 폴더 선택 중 정리·소각·신규 attempt가 발생했으면 작업을 중단함 (종료된 세션에 지연된 .part 파일이 생성되는 문제를 방지함)
   if (!self._isCurrent(transferId, attemptId)) return;
   // 남은 공간보다 크면 받기 전에 멈춤. 보낸 쪽엔 취소로 알려서, 공간을 비운 뒤 재시도가 새 offer를 받게 함
   final free = freeBytesAt(directory);
@@ -79,7 +79,7 @@ Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
     name: transfer.fileName,
     attemptId: attemptId,
   );
-  // 예약 직후 await 전에 소유 등록. 예약을 기다리는 사이 세션이 정리됐으면 방금 만든 .part를 바로 치움
+  // 예약 완료 직후 await 지점 전에 소유권을 등록함. 예약 대기 중 세션이 정리되었으면 방금 생성된 .part 파일을 즉시 삭제함
   self._ownPartial(transferId, transfer.conversationId, attemptId, partial);
   if (!self._isCurrent(transferId, attemptId)) {
     await self._deleteOwnedPartialsRecorded(transferId);

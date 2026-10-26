@@ -2,7 +2,7 @@ part of '../chat_input.dart';
 
 mixin _ChatInputCompose on _ChatInputStateBase {
   // 계속 입력 중이면 이 주기로 true를 다시 보냄. 수신 쪽 표시에 자체 backstop 타임아웃이 있어서
-  // 안 다시 보내면 계속 타이핑해도 "입력 중" 점이 먼저 꺼짐
+  // 다시 보내지 않으면 계속 타이핑해도 "입력 중" 점이 먼저 꺼짐
   Timer? _typingRefresh;
 
   void _onChanged(String value) {

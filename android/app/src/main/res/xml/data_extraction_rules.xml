@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 12+ ignores allowBackup="false" for device-to-device transfer.
-     Exclude every domain from both cloud backup and D2D so vault.json and
-     identity.json never leave the device. -->
+<!-- Android 12 이상에서는 기기 간 전송(D2D) 시 allowBackup="false"가 무시됨.
+     vault.json과 identity.json이 기기 밖으로 유출되지 않도록 클라우드 백업과
+     기기 간 전송 양쪽에서 모든 도메인을 제외함 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" />

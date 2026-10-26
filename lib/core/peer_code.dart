@@ -21,7 +21,7 @@ String deviceCode({
 String portalCodeWithPeer(String portalUrl, String peerId) =>
     '$portalUrl&p=$peerId';
 
-// 사설 IPv4가 아니거나 peerId가 이상하면 null (틀린 p만 빼고 넘기지 않고 코드째 버림)
+// 사설 IPv4가 아니거나 peerId 형식이 맞지 않으면 null을 반환함 (잘못된 p만 빼고 넘기지 않고 코드 전체를 버림)
 PeerCode? parsePeerCode(String raw) {
   final text = raw.trim();
   final uri = Uri.tryParse(text);

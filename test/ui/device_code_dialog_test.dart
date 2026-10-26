@@ -4,7 +4,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:intragram/features/home/widgets/device_code_dialog.dart';
 
-// 기기 코드는 사설 주소일 때만 QR로, 아니면 이유 문구로 보임
 void main() {
   const peerId = '0123456789abcdef0123456789abcdef';
 

@@ -54,7 +54,7 @@ final class OrgCredentialBook extends ChangeNotifier {
         : status;
   }
 
-  // 같은 링크가 같은 자격을 다시 내면 검증을 또 돌리지 않음 (프레임을 되풀이해 서명 검사를 시키지 못하게)
+  // 동일 링크가 동일 자격을 재전송하면 추가 검증을 생략함 (반복 프레임 전송으로 불필요한 서명 검사 부하가 생기는 것을 방지함)
   bool alreadyChecked(String peerId, String digest, Object owner) {
     final known = _peers[peerId];
     return known != null &&

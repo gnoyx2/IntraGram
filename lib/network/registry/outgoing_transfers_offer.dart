@@ -39,8 +39,8 @@ Future<void> _runOffer(
   final transferId = newId();
   final firstAttemptId = newId();
 
-  // 방 파일과 음성은 받는 쪽이 여기서 직접 당김 (offer에 이 기기 서버 주소를 찍음). 서버가 꺼졌으면 음성은 push로,
-  // 방 파일은 실패로 감. 평범한 1:1 파일은 늘 push
+  // 그룹 방 파일과 음성은 수신 측에서 직접 풀(pull) 방식으로 가져옴 (offer에 로컬 서버 주소를 포함함). 서버가 비활성화된 경우 음성은 push로,
+  // 방 파일은 실패 처리됨. 일반 1:1 파일은 push 방식으로 전송함
   final endpoint = (conversation.isRoom || voice)
       ? self._localEndpoint?.call()
       : null;
@@ -48,7 +48,7 @@ Future<void> _runOffer(
       ? FileTransferMode.pull
       : FileTransferMode.push;
 
-  // 1:1은 늘 암호화. 방만 평문 (멤버끼리 직접 당겨서 둘 사이 공유 키가 없음)
+  // 1:1 전송은 항상 암호화함. 그룹 방 파일만 평문임 (멤버 간 직접 수신하므로 상호 공유 키가 없음)
   final encrypt = !conversation.isRoom;
 
   final source = OutgoingFileSource(
@@ -110,7 +110,7 @@ Future<void> _runOffer(
 
   // 썸네일은 내 쪽 행이 뜬 다음에 만듦 (먼저 만들면 디코드가 끝날 때까지 행이 안 뜸)
   final thumb = await thumbFactory?.call();
-  // 그사이 소각·정리가 이 source를 치웠으면 죽은 전송에 offer를 안 보냄
+  // 그사이 데이터 소각이나 세션 정리가 발생했으면 종료된 전송에 offer를 발송하지 않음
   if (self._closed || !identical(self._outgoing[transferId], source)) return;
   source.spec = OutgoingOfferSpec(
     mime: resolvedMime,
@@ -137,8 +137,8 @@ Future<void> _runOffer(
   );
 }
 
-// 링크마다 수신자를 등록하고 각자 attempt·토큰으로 offer (pull 토큰은 수신자별이라 남의 걸 못 씀).
-// 방 멤버로서 내는 offer는 호스트 링크로 (_offerViaRelayHost). 못 실은 수신자는 바로 실패 (offered로 두지 않음)
+// 링크마다 수신자를 등록하고 개별 attempt 및 토큰으로 offer를 발송함 (pull 토큰은 수신자별로 분리 발급됨).
+// 그룹 방 멤버로서 발신하는 offer는 호스트 링크로 중계함 (_offerViaRelayHost). 발송에 실패한 수신자는 즉시 실패 처리함
 Future<void> _offerToLinks(
   OutgoingTransfers self,
   String transferId,
@@ -196,7 +196,7 @@ void _failOffer(OutgoingTransfers self, String transferId) =>
       (t) => t.copyWith(state: TransferState.failed, error: 'network'),
     );
 
-// 수신자 한 명에게 지금 attempt·토큰으로 offer. 못 내보내면 false
+// 개별 수신자에게 현재 attempt와 토큰으로 offer를 발송함. 발송 실패 시 false를 반환함
 Future<bool> _sendOffer(
   OutgoingFileSource source,
   PeerLink link,

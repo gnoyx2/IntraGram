@@ -30,7 +30,7 @@ extension OutgoingTransfersFrames on OutgoingTransfers {
     _syncTransfer(transferId);
   }
 
-  // 그 수신자만 rejected (다 끝나면 _syncTransfer가 source를 버림)
+  // 해당 수신자만 rejected 상태로 전환함 (모든 수신자 종료 시 _syncTransfer가 source를 정리함)
   void handleRejected(
     String transferId, {
     required String attemptId,
@@ -46,7 +46,7 @@ extension OutgoingTransfersFrames on OutgoingTransfers {
     _syncTransfer(transferId);
   }
 
-  // 상대가 무름: 그 수신자만 cancelled (다시 알리진 않음)
+  // 피어 측에서 취소함: 해당 수신자만 cancelled 상태로 전환함 (피어에게 재통보하지 않음)
   void handleCancelledByPeer(
     String transferId, {
     required String attemptId,
@@ -62,8 +62,8 @@ extension OutgoingTransfersFrames on OutgoingTransfers {
     _syncTransfer(transferId);
   }
 
-  // file_received ACK는 지금 attempt이고 데이터가 이미 흐르기 시작했을 때만 인정. EOF보다 먼저 올 수 있어서
-  // 둘 다 봐야 완료함 (_onWireEof와 여기서 만남)
+  // file_received ACK는 현재 attempt이며 데이터 전송이 시작된 상태일 때만 처리함. 바이트 EOF보다 먼저 도착할 수 있으므로
+  // 두 조건이 모두 충족될 때 전송 완료로 확정함 (_onWireEof와 상호 합치)
   void handleFileReceived(
     String transferId, {
     required String attemptId,
@@ -81,7 +81,7 @@ extension OutgoingTransfersFrames on OutgoingTransfers {
     if (recipient.wireEof) _completeRecipient(transferId, recipient);
   }
 
-  // 호스트가 그 수신자에게 offer를 못 넘김: 그 수신자만 재시도할 수 있는 실패로 (방 중계 전송의 지금 attempt일 때만)
+  // 호스트가 대상 수신자에게 offer를 전달하지 못함: 해당 수신자만 재시도 가능한 실패 상태로 전환함 (그룹 방 중계 전송의 현재 attempt에만 적용)
   void handleUnavailable(
     String transferId, {
     required String attemptId,
@@ -98,7 +98,7 @@ extension OutgoingTransfersFrames on OutgoingTransfers {
     _syncTransfer(transferId);
   }
 
-  // 받는 쪽이 다시 받고 싶어 함: 그 수신자만 새 attempt로 다시 offer
+  // 수신 측에서 재전송을 요청함: 해당 수신자만 신규 attempt로 재제안함
   Future<void> handleRetryRequested(
     String transferId, {
     required String attemptId,

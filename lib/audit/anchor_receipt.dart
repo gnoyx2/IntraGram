@@ -53,7 +53,7 @@ final class AnchorReceipt {
     ]),
   );
 
-  // 이 배치 머리를 가리키는가 (번호·잎 수·루트·요청자 키가 다 같아야 함)
+  // 이 배치 머리를 가리키는지 확인함 (번호·잎 수·루트·요청자 키가 다 같아야 함)
   bool binds(BatchHeader header) =>
       header.no == batchNo &&
       header.leafCount == leafCount &&

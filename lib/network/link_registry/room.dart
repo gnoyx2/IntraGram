@@ -98,7 +98,7 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
     _broadcastRoomState(roomId, except: link, joined: joiner);
   }
 
-  // 열려 있는 1:1 앱 대화를 그 자리에서 앱 그룹 방으로 승격 (기록 보존). 앱 그룹 방이 아직 없을 때만
+  // 열려 있는 1:1 앱 대화를 그 자리에서 앱 그룹 방으로 승격함 (기록 보존). 앱 그룹 방이 아직 없을 때만 실행함
   void _promoteToRoom(PeerLink link) {
     final id = link.conversationId;
     final priorTrust = store.conversation(id);
@@ -184,7 +184,7 @@ mixin _LinkRegistryRoom on _LinkRegistryState {
     return id;
   }
 
-  // 멤버 프레임 중계: 텍스트 등은 방 전체로, 파일 협상은 대상별 경로로만 (바이트는 수신자가 보낸 멤버한테서 직접 당김)
+  // 멤버 프레임 중계: 텍스트 등은 방 전체로, 파일 협상은 대상별 경로로만 전달함 (바이트는 수신자가 보낸 멤버에게서 직접 당겨 옴)
   void _relayRoomFrame(PeerLink from, Map<String, dynamic> innerJson) {
     final kind = innerJson['k'];
     if (kind is String && kind.startsWith('file_')) {

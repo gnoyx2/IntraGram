@@ -54,7 +54,7 @@ Future<void> _migrateFromDocuments(String target) async {
   await migratePrivateFiles(from: p.join(docs.path, 'IntraGram'), to: target);
 }
 
-// 옛 위치 파일을 옮기고 원본은 지움. 복사가 끝나야 지워서 중간에 죽어도 한쪽엔 남음. 새 쪽이 있으면 그게 최신이라 옛 것만 지움
+// 옛 위치 파일을 옮기고 원본은 지움. 복사가 끝나야 지워서 도중에 비정상 종료돼도 한쪽엔 남음. 새 위치에 있으면 최신본이라 옛 파일만 지움
 @visibleForTesting
 Future<void> migratePrivateFiles({
   required String from,

@@ -6,7 +6,7 @@ import 'package:intragram/core/haptics.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 1초마다 틱하고 0에서 멈춤. 실제 소각은 store 타이머가 authoritative라
+// 1초마다 갱신되며 0에서 멈춤. 실제 소각은 store 타이머가 기준이므로
 // 이 위젯은 그 시점을 앞당기거나 늦추지 않음
 class BurnCountdown extends StatefulWidget {
   const BurnCountdown({required this.burnAt, required this.color, super.key});
@@ -22,8 +22,8 @@ class _BurnCountdownState extends State<BurnCountdown> {
   Timer? _ticker;
   int _seconds = 0;
 
-  // 올림 계산으로 남은 초를 다시 잡고, 0에 막 도달하면 햅틱 한 번 + 티커 정지
-  // setState는 호출부 책임
+  // 올림 계산으로 남은 초를 다시 잡고, 0에 막 닿을 때만 햅틱을 울리고 티커를 멈춤.
+  // setState는 호출부가 감쌈
   void _recompute() {
     final remainingMs = widget.burnAt.difference(DateTime.now()).inMilliseconds;
     final next = remainingMs <= 0 ? 0 : (remainingMs / 1000).ceil();
@@ -80,7 +80,7 @@ class _BurnCountdownState extends State<BurnCountdown> {
         children: [
           Icon(
             Icons.hourglass_bottom_rounded,
-            // 아이콘은 텍스트 스케일을 자동으로 안 따라가서 직접 스케일
+            // 아이콘은 텍스트 스케일을 자동으로 안 따라가서 직접 키움
             size: MediaQuery.textScalerOf(context).scale(12),
             color: widget.color,
           ),

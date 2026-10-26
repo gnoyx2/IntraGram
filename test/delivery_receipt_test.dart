@@ -111,7 +111,7 @@ void main() {
           );
           await _until(() => receipts(rig, t.id).isNotEmpty);
           expect(receipts(rig, t.id).single.status, EvidenceStatus.rejected);
-          // 영수증이 틀려도 완료는 예전처럼 ACK로 정함
+          // 영수증이 거부돼도 전송 완료 자체는 ACK로 결정됨
           expect(rig.store.transfer(t.id)!.state, TransferState.complete);
         }
       },

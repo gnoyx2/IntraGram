@@ -1,6 +1,6 @@
 part of 'incoming_transfers.dart';
 
-// 수락한 POST /api/transfer 바디를 받음. 찾기 → 검증 → 소비 순이고 사이에 await가 없음: 틀린 토큰이나 크기로는 정상 슬롯이 안 닳음
+// 수락된 POST /api/transfer 바디를 수신함. 조회 → 검증 → 소비 순서이며 중간에 await가 없음: 잘못된 토큰이나 크기로는 유효 슬롯이 소모되지 않음
 Future<bool> _receiveIncoming(
   IncomingTransfers self, {
   required String transferId,
@@ -15,16 +15,16 @@ Future<bool> _receiveIncoming(
   if (destination == null || transfer == null) return false;
   // accept 때 발급한 토큰이어야 함 (아니면 id만 알면 아무나 바이트를 밀어 넣음)
   if (!constantTimeEquals(token, destination.token)) return false;
-  // 옛 시도의 업로드가 새 슬롯을 못 쓰게
+  // 이전 attempt의 업로드가 신규 슬롯을 점유하지 못하게 막음
   if (attemptId != destination.attemptId ||
       attemptId != (transfer.attemptId ?? transferId)) {
     return false;
   }
-  // 헤더 크기는 offer 크기와 딱 같아야 함 (작은 헤더로 받을 크기를 몰래 줄이지 못하게)
+  // 헤더 크기는 offer 크기와 일치해야 함 (작은 헤더로 수신 대상 크기를 임의 축소하지 못하게 막음)
   if (headerDeclaredSize != transfer.totalBytes) return false;
   final declaredSize = transfer.totalBytes;
 
-  // 검증이 다 끝났으니 여기서 슬롯을 씀 (await 전에)
+  // 검증 완료 후 슬롯을 즉시 확보함 (await 전 슬롯 소비)
   self._incoming.remove(transferId);
 
   final cancelToken = CancelToken();

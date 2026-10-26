@@ -1,7 +1,7 @@
 part of '../in_memory_store.dart';
 
 mixin _StorePersistence on _InMemoryStoreState, _StoreCore {
-  // 절대 안 담음: 소각된 메시지, 시스템 줄, 안 끝난 전송 (재시작하면 의미 없음). 대화는 담을 게 있을 때만
+  // 절대 안 담음: 소각된 메시지, 시스템 줄, 안 끝난 전송 (재시작하면 의미 없음). 대화는 담을 항목이 있을 때만 포함함
   VaultSnapshot toSnapshot(VaultSettings settings) {
     // 방이거나 사용자가 "저장 안 함"을 고른 대화, 대화가 없는 기록(지운 대화의 잔여)은 통째로 뺌
     bool skip(String conversationId) {
@@ -43,7 +43,7 @@ mixin _StorePersistence on _InMemoryStoreState, _StoreCore {
     );
   }
 
-  // 앱 시작 시 한 번 호출. 되살린 대화는 오프라인 아카이브이고 라이브 링크는 나중에 새 대화로 붙음
+  // 앱 시작 시 한 번 호출함. 되살린 대화는 오프라인 아카이브이고 라이브 링크는 나중에 새 대화로 붙음
   // 소각 시각이 지난 메시지는 되살리지 않고, 안 끝난 카운트다운은 남은 시간으로 다시 걺
   void hydrate(VaultSnapshot snap, {DateTime? now}) {
     if (_disposed) return;

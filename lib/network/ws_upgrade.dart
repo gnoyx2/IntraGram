@@ -8,7 +8,7 @@ import 'package:web_socket_channel/web_socket_channel.dart'
 
 import 'capped_socket.dart';
 
-// shelf_web_socket webSocketHandler와 같은 헤더 검사·101 응답. 다른 점은 업그레이드한 소켓을 CappedSocket으로 감싸 메시지가 다 모이기 전에 상한을 거는 것
+// shelf_web_socket webSocketHandler와 동일한 헤더 검사 및 101 응답을 처리함. 업그레이드된 소켓을 CappedSocket으로 래핑하여 메시지가 수신 완료되기 전에 바이트 상한을 적용함
 Response upgradeToCappedWebSocket(
   Request request, {
   required int Function(int messages) limit,

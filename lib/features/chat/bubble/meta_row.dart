@@ -88,7 +88,6 @@ class _MetaRow extends StatelessWidget {
   }
 }
 
-// sending은 시계, sent는 체크 하나, delivered는 회색 이중 체크, read는 액센트 이중 체크
 // 글리프 크기를 숫자 높이에 맞춘 한 단계로 통일해서 상태가 바뀌어도 줄이 출렁이지 않음
 class _DeliveryIcon extends StatelessWidget {
   const _DeliveryIcon({

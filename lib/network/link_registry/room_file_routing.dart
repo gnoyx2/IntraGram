@@ -12,9 +12,9 @@ class _RoomFileRoute {
 }
 
 // 방 파일 협상 프레임의 대상별 중계 (호스트만). offer는 to 한 명에게만 넘기고 (전송 id, attempt) 경로를 등록함.
-// 대상이 없거나 자기 자신이거나 못 넘기면 발신자에게 file_unavailable (안 알리면 영영 offered).
-// accept·reject·received·retry는 그 경로 대상이 보낸 것만, cancel은 양쪽에서 반대편으로. 끝 프레임은 넘기기 전에 경로부터 지움.
-// 경로에 없는 (id, attempt)나 다른 멤버 프레임은 중계도 상태 변경도 안 함
+// 대상이 없거나 자기 자신이거나 전달하지 못하면 발신자에게 file_unavailable을 보냄 (알리지 않으면 수신 대기 상태가 영구히 남음).
+// accept·reject·received·retry는 그 경로 대상이 보낸 것만, cancel은 양쪽에서 반대편으로 전달함. 끝 프레임은 넘기기 전에 경로부터 지움.
+// 경로에 없는 (id, attempt)나 다른 멤버 프레임은 중계도 상태 변경도 하지 않음
 extension _RoomFileRouting on _LinkRegistryState {
   bool _canRouteRoomFileControl(
     PeerLink from,
@@ -66,7 +66,7 @@ extension _RoomFileRouting on _LinkRegistryState {
   ) async {
     final targetId = wire['to'];
     if (targetId is! String || wire['sh'] != from.remoteHost) return;
-    // 같은 peerId 링크가 둘이면(재접속 직후) 최신 것
+    // 같은 peerId 링크가 둘이면(재접속 직후) 최신 링크를 씀
     final target = _roomLinks.lastWhereOrNull(
       (link) =>
           link.conversationId == from.conversationId &&
@@ -82,7 +82,7 @@ extension _RoomFileRouting on _LinkRegistryState {
     }
     final key = (id, attempt);
     if (_conflictsWithRoomRoute(from, target, id, attempt)) {
-      // 남의 경로를 가로채거나 남이 쓰는 id를 선점하려는 offer: 중계 안 하고 접힘을 알림
+      // 타인의 경로를 가로채거나 다른 멤버가 쓰는 id를 선점하려는 offer: 중계하지 않고 취소됨을 알림
       unawaited(
         from.sendOfferRefusal(id, attemptId: attempt, targetId: targetId),
       );
@@ -156,7 +156,7 @@ extension _RoomFileRouting on _LinkRegistryState {
     );
   }
 
-  // 상한이면 그 발신자의 제일 오래된 경로를 버리고 접혔다고 알림 (안 알리면 그 수신자를 ACK 타임아웃까지 기다림)
+  // 상한이면 그 발신자의 제일 오래된 경로를 버리고 취소됨을 알림 (안 알리면 수신 측이 영구히 대기 상태에 머묾)
   void _makeRoomForRoute(PeerLink sender) {
     if (_roomFileRoutes.length < _maxRoomFileRoutesPerSender) return;
     final own = <MapEntry<(String, String), _RoomFileRoute>>[

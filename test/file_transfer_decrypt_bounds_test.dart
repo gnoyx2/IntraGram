@@ -10,7 +10,7 @@ import 'package:intragram/network/file_transfer_crypto.dart';
 import 'support/file_transfer_crypto_pair.dart';
 
 // decryptChunks가 레코드 하나 크기의 고정 버퍼로 wire를 재조립하면서 길이/개수/EOF를 본문을 버퍼링하기 전에 강제하고,
-// 실패 뒤엔 평문을 더 안 내보내며, 취소가 정지한 wire 앞에서도 곧바로 끝나는지
+// 실패 뒤엔 평문을 더 안 내보내며, 취소가 정지한 wire 앞에서도 곧바로 끝나는지 검증함
 
 Uint8List _prefix(int length) {
   final bytes = Uint8List(4);

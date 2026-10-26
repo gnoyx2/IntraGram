@@ -86,7 +86,6 @@ input::placeholder, textarea::placeholder {
 }
 
 #log-wrap { flex: 1; position: relative; display: flex; min-height: 0; }
-/* 드래그 앤 드롭: 파일이 올라와 있는 동안 액센트 링과 바깥 글로우가 숨 쉬듯 번짐 */
 body.drag-over #log-wrap::before {
   content: "";
   position: absolute;
@@ -139,7 +138,7 @@ body.drag-over #log-wrap::before {
   box-shadow: 0 2px 12px var(--bubble-shadow);
   word-wrap: break-word;
   white-space: pre-wrap;
-  /* 두 번 눌러 좋아요가 모바일에서 확대로 먹히지 않게 */
+  /* 두 번 눌러 좋아요가 모바일에서 더블 탭 확대로 인식되지 않게 막음 */
   touch-action: manipulation;
 }
 .row.mine .bubble {
@@ -176,7 +175,7 @@ body.drag-over #log-wrap::before {
 }
 .bubble a { color: inherit; text-decoration: underline; text-underline-offset: 2px; word-break: break-all; }
 .row.theirs .bubble a { color: var(--accent-ink); }
-/* 말풍선 글자색의 85%라 시각 줄이 양쪽 말풍선에서 7:1 이상 */
+/* 말풍선 글자색의 85%라 시각 줄이 양쪽 말풍선에서 7:1 이상임 */
 .bubble .meta {
   font-size: 0.6875rem;
   color: color-mix(in srgb, currentColor 85%, transparent);
@@ -306,7 +305,7 @@ footer textarea:focus-visible { border-color: var(--accent); }
   .xfer-label { flex-basis: 100%; }
 }
 
-/* 강제 색상(Windows 고대비 등): 배경이 시스템 색으로 바뀌어도 버튼 경계가 보이게 */
+/* 강제 색상(Windows 고대비 등): 배경이 시스템 색으로 바뀌어도 버튼 경계가 보이게 함 */
 @media (forced-colors: active) {
   .btn, .btn-icon, .jump { border: 1px solid ButtonText; }
   .bubble, header, footer, .plain-notice, textarea, select, .system, .date-sep {

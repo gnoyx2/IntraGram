@@ -61,7 +61,7 @@ abstract final class _PrivacyAccessibility {
     } on MissingPluginException {
       // OS가 접힘선을 안 알려 주면 화면 크기로 짐작함.
     } on PlatformException {
-      // 조회 실패도 짐작으로.
+      // 조회 실패 시 기존 값을 유지하며 초기 상태(null)면 화면 크기로 짐작함.
     }
   }
 }

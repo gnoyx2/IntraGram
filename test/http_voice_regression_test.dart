@@ -72,7 +72,7 @@ void main() {
       final res = await rig.get(t.id, rig.headers(t, overrides: overrides));
       expect(res.status, 400, reason: '$overrides');
     }
-    // 토큰이 안 타서 정상 요청은 여전히 통과함
+    // 토큰이 소모되지 않아 정상 요청은 여전히 통과함
     expect((await rig.get(t.id, rig.headers(t))).status, 200);
   });
 

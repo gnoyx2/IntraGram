@@ -12,7 +12,7 @@ export 'package:intragram/network/registry/outgoing_transfers.dart'
 
 // 보내기·받기를 묶음: 링크 종료·세션 초기화가 양쪽에 닿는 호출 하나가 됨
 class TransferCoordinator {
-  // 팩토리인 이유: 양쪽이 같은 게이트를 나눠 써야 하는데(합쳐서 kMaxConcurrentTransfers개) 초기화 리스트에선 서로를 못 봄
+  // 팩토리 생성자를 사용하는 이유: 송수신 양측이 동일한 게이트를 공유해야 하나 초기화 리스트에서는 새로 생성된 인스턴스를 공유할 수 없음
   factory TransferCoordinator({
     required InMemoryStore store,
     required AppIdentity identity,
@@ -55,7 +55,7 @@ class TransferCoordinator {
   final OutgoingTransfers outgoing;
   final IncomingTransfers incoming;
 
-  // 1:1이면 그 대화 전송을 다 버리고, 방 멤버 링크면 peerKey로 그 멤버와 오간 것만 정리. 도는 I/O가 끝난 뒤에만 자원을 지움
+  // 1:1 대화면 해당 대화의 전송을 모두 정리하고, 그룹 방 멤버 링크면 peerKey로 해당 멤버와 연관된 항목만 정리함. 진행 중인 I/O 완료 후 자원을 해제함
   Future<void> handleLinkClosed(
     String conversationId, {
     String? peerKey,
@@ -84,7 +84,7 @@ class TransferCoordinator {
     if (failure != null) Error.throwWithStackTrace(failure, stack!);
   }
 
-  // 스토어에서 전송이 사라진 뒤(소각·와이프) 네트워크 쪽 남은 자원만 정리. 도는 I/O가 끝날 때까지 기다려서 패닉 경로가 정리 완료를 믿을 수 있음
+  // 스토어에서 전송이 제거된 후(소각·와이프) 네트워크 계층의 잔여 자원만 정리함. 진행 중인 I/O 완료까지 대기하여 패닉 시 완전한 정리를 보장함
   Future<void> discardTransfer(FileTransfer transfer) async {
     switch (transfer.direction) {
       case TransferDirection.outgoing:

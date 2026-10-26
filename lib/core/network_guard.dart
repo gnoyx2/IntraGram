@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 
 part 'network_guard_client.dart';
 
-// 사설망 밖 주소로 나가려 하면 던짐
+// 사설망 밖 연결이나 허용 경로 이탈(resolveWithin) 시 던짐
 class SecurityException implements Exception {
   SecurityException(this.message);
   final String message;
@@ -75,8 +75,8 @@ final class NetworkGuard {
     return parsePeerEndpoint(uri.host, uri.port);
   }
 
-  // 피어 다이얼 입구: 정규 10진 RFC 1918 IPv4 + 포트만 통과. 선행 0(010)은 브라우저가 8진수로 읽어 딴 주소가 돼서
-  // 다시 이어붙여 원문과 같은지 봄. 루프백·APIPA·IPv6는 피어 주소로 안 받음
+  // 피어 다이얼 입구: 정규 10진 RFC 1918 IPv4와 포트만 통과시킴. 선행 0(010)은 브라우저가 8진수로 읽어 다른 주소가 되므로
+  // 다시 이어 붙여 원문과 같은지 봄. 루프백·APIPA·IPv6는 피어 주소로 안 받음
   static ({String host, int port})? parsePeerEndpoint(String host, int port) {
     if (port < 1 || port > 65535) return null;
     final parts = host.split('.');
@@ -159,12 +159,12 @@ final class NetworkGuard {
   }
 
   // 리다이렉트(3xx)·WebSocket 업그레이드로 여는 소켓까지 connectionFactory 한 곳에서 다시 검사함.
-  // wrap은 연결된 소켓에 수신 상한 같은 걸 씌우는 자리
+  // wrap으로 연결된 소켓에 수신 상한 래퍼 등을 씌울 수 있음
   static HttpClient createPeerHttpClient({Socket Function(Socket)? wrap}) =>
       createPeerHttpClientImpl(wrap: wrap);
 
   // 사설 주소가 여러 개면 진짜 Wi-Fi·이더넷부터 고름. 대역 순위만 보면 VM·테더링 브리지, VPN(utun),
-  // 셀룰러(pdp_ip)가 받은 10.x에 붙어서 QR 주소가 LAN에서 안 닿음. 169.254는 맨 끝, 이름 규칙에 없는 건 그 사이
+  // 셀룰러(pdp_ip)가 받은 10.x에 붙어서 QR 주소가 LAN에서 안 닿음. 169.254는 맨 끝, 이름 규칙에 없는 인터페이스는 그 사이에 둠
   @visibleForTesting
   static InternetAddress? pickBindAddress(
     Iterable<(String, InternetAddress)> candidates,

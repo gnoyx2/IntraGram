@@ -37,7 +37,7 @@ class CancelToken {
   }
 
   // cancel 즉시 부를 콜백 (소켓 닫기·게이트 대기 풀기처럼 다음 청크를 못 기다리는 정리용). 이미 취소됐으면 바로 부름.
-  // 돌려주는 해제 함수는 finally에서 꼭 부를 것 (안 그러면 끝난 작업 리스너가 쌓임)
+  // 돌려주는 해제 함수는 finally에서 반드시 호출해야 함 (안 그러면 끝난 작업 리스너가 쌓임)
   void Function() onCancel(void Function() callback) {
     if (_cancelled) {
       callback();
@@ -72,7 +72,7 @@ class TransferCleanupException implements Exception {
       'TransferCleanupException(${failures.length} cleanup failure(s))';
 }
 
-// 예외를 안전한 사유 몇 개로 분류: 원문(피어 IP·포트·OS 코드)이 전송 기록과 화면에 안 새게. 번역은 UI가 그릴 때 함
+// 예외를 안전한 사유 몇 개로 분류함: 원문(피어 IP·포트·OS 코드)이 전송 기록과 화면에 노출되지 않게 막음. 번역은 UI가 렌더링할 때 처리함
 String classifyTransferError(Object error) => switch (error) {
   TransferCleanupException(:final original) =>
     original == null ? 'unknown' : classifyTransferError(original),
@@ -156,7 +156,7 @@ final class FileStreamer {
     onDigest: onDigest,
   );
 
-  // download와 같은 검사로 RAM에만 당김 (음성용). 통째로 들어와서 maxBytes를 넘게 선언하면 소켓을 열기 전에 거절하고 짧은 EOF도 거절
+  // download와 같은 검사로 RAM에만 가져옴 (음성용). 통째로 들어와서 maxBytes를 넘게 선언하면 소켓을 열기 전에 거절하고 짧은 EOF도 거절함
   static Future<Uint8List> downloadToMemory({
     required String host,
     required int port,

@@ -1,9 +1,9 @@
 part of 'peer_link.dart';
 
-// 프레임이 나갈 때: send API, inner 프레임을 enc 봉투로(웹 게스트면 plain), 핸드셰이크 끝날 때까지 대기 큐.
-// public인 건 레지스트리·전송 코드가 send*를 불러서
+// 아웃바운드 프레임 전송 처리: inner 프레임을 암호화 봉투(웹 게스트는 plain)에 담고 핸드셰이크 완료 전까지 대기 큐에 보관함.
+// 레지스트리와 전송 코드가 호출할 수 있도록 공개 메서드로 제공함
 extension PeerLinkOutbound on PeerLink {
-  // store에 먼저 쓰고 전선에 올림 (핸드셰이크 전이면 큐). inline·spillToFile 모드에서 너무 긴 글은 실패로 남음 (레지스트리가 이미 거르니 방어용)
+  // 스토어에 먼저 기록하고 네트워크로 전송함 (핸드셰이크 전이면 대기 큐에 보관함). inline·spillToFile 모드에서 너무 긴 글은 실패로 처리함 (레지스트리 방어용)
   Future<void> sendText(
     String text, {
     required int ttlSeconds,
@@ -69,7 +69,7 @@ extension PeerLinkOutbound on PeerLink {
   Future<void> sendTyping({required bool active}) =>
       _sendInner(InnerFrame.typing(active: active));
 
-  // inner 맵을 그대로 봉투에 담아 보냄 (게스트끼리 중계용이라 재조립 안 함)
+  // inner 맵을 변환 없이 봉투에 담아 전송함 (게스트 초기 room_state 전달용)
   Future<bool> sendRawInner(Map<String, dynamic> inner) => _sendInner(inner);
 
   // sendRawInner인데 절대 안 던짐: 나갔으면 true, 못 나갔거나 봉인 오류면 false. 호출부가 결과를 보고 미전달 처리를 꼭 해야 함

@@ -61,8 +61,8 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
   double _cancelProgress = 0;
   bool _busy = false;
 
-  // 시작(권한 요청 포함)이 끝나기 전에 손을 뗀 경우의 최종 의사 (null 없음, false 취소, true 전송)
-  // 한 번 false면 이후 true가 와도 안 덮음 (권한 대기 중 취소가 전송으로 둔갑하던 버그 방지)
+  // 시작(권한 요청 포함)이 끝나기 전에 손을 뗀 경우의 최종 의사 (null은 없음, false는 취소, true는 전송임)
+  // 한 번 false면 이후 true가 와도 안 덮음 (권한 대기 중 취소가 전송으로 둔갑하던 버그를 방지함)
   bool? _pendingSend;
 
   // _start마다 오름. await 뒤에 다시 봐서 그사이 dispose·재시작됐으면 늦은 결과가 최신 상태를 안 덮음
@@ -70,7 +70,7 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
 
   OverlayEntry? _banner;
 
-  // 배너를 버튼의 현재 위치에 계속 고정시키는 링크 (Follower 방식)
+  // 배너를 버튼의 현재 위치에 고정하는 링크 (Follower 방식임)
   final LayerLink _bannerLink = LayerLink();
 
   // 홀드가 아니라 짧은 탭으로 시작한 핸즈프리 녹음 모드 (아이콘이 X로 바뀌고 배너에 전송 체크 버튼이 뜸)
@@ -82,7 +82,7 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton>
   static const _silenceDb = -45.0;
 
   // 홀드-투-녹음 판정을 쥔 포인터. 다른 손가락이나 마우스 우클릭이 판정을 가로채지 못하게 함
-  // (GestureDetector.onLongPress*는 안 씀, build 주석 참고)
+  // (GestureDetector.onLongPress*는 안 씀, gestures.dart 참고)
   int? _activePointer;
   Offset? _downPosition;
   Timer? _pressTimer;

@@ -24,7 +24,7 @@ class AppCommands extends StatefulWidget {
 
   final GlobalKey<NavigatorState> navigatorKey;
 
-  // 잠금 화면에선 설정·검색·새 연결을 안 띄움 (닫기는 대화상자에도 필요해서 늘 동작)
+  // 잠금 화면에선 설정·검색·새 연결을 띄우지 않음 (닫기는 대화상자에도 필요해 항상 동작함)
   final bool unlocked;
 
   final void Function(BuildContext navigatorContext) onNewConnection;
@@ -135,7 +135,7 @@ class _AppCommandsState extends State<AppCommands> {
             _newConnection,
         SingleActivator(LogicalKeyboardKey.keyW, meta: meta, control: !meta):
             _close,
-        // ⌘+는 자판에 따라 Shift+= 라서 둘 다
+        // ⌘+는 자판에 따라 Shift+=일 수 있어 둘 다 등록함
         for (final shift in const [false, true])
           SingleActivator(
             LogicalKeyboardKey.equal,

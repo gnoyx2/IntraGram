@@ -13,10 +13,6 @@ import 'package:intragram/store/models.dart';
 
 import '_harness.dart';
 
-// 음성 메시지 수동 저장(_VoicePlayer._save): 폴더 선택이 열려 있는 동안
-// 화면이 닫히면 아무것도 안 쓰고, 저장 실패는 화면에 보이며, 성공하면 저장 경로를 보여줌
-
-// 폴더 선택 결과를 테스트가 정하는 가짜 피커
 class _FakePicker extends FilePickerPlatform {
   Completer<String?> answer = Completer<String?>();
   int asked = 0;

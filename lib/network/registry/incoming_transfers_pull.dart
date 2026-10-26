@@ -2,7 +2,7 @@ part of 'incoming_transfers.dart';
 
 // 보낸 기기에서 당겨 오는 두 길: 방 파일(디스크로)과 음성(RAM으로). 둘 다 accept에서만 불림
 extension _IncomingPull on IncomingTransfers {
-  // 방 파일: 보낸 멤버의 GET /api/download/<id>에서 당김. push처럼 이번 시도 전용 .part에 쓰고 성공해야 커밋
+  // 그룹 방 파일: 발신 멤버의 GET /api/download/<id>에서 수신함. push와 동일하게 이번 시도 전용 .part 파일에 기록하고 성공 시 커밋함
   Future<void> _pullDirect({
     required String transferId,
     required String host,
@@ -114,7 +114,7 @@ extension _IncomingPull on IncomingTransfers {
       );
       return;
     }
-    // RAM에 통째로 받아서 상한을 둠 (넘게 선언하면 여기서 거절)
+    // 메모리에 직접 적재되므로 크기 상한을 검사함 (상한 초과 시 여기서 거절함)
     if (transfer.totalBytes > kMaxVoiceNoteBytes) {
       store.updateTransfer(
         transfer.id,

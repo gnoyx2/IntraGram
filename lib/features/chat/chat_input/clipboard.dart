@@ -15,7 +15,7 @@ mixin _ChatInputClipboard on _ChatInputStateBase {
     }
     if (!mounted) return;
     if (has != _hasClipboardText) setState(() => _hasClipboardText = has);
-    // 이미지/파일 프로브는 별도: 텍스트 버튼이 다른 채널 왕복을 안 기다리게
+    // 이미지/파일 프로브는 따로 돌림: 텍스트 버튼이 다른 채널 왕복을 안 기다리게 함
     unawaited(_refreshClipboardKinds());
   }
 

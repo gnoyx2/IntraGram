@@ -100,7 +100,7 @@ class ChatTitle extends StatelessWidget {
   }
 }
 
-// 암호화됐지만 미검증인 대화에서만 뜸. 나만 확인하고 상대 확인을 기다리는 중이면 대기 문구
+// 암호화됐지만 미검증인 대화에서만 뜸. 나만 확인하고 상대 확인을 기다리는 중이면 대기 문구를 씀
 class UnverifiedBanner extends StatelessWidget {
   const UnverifiedBanner({
     required this.conversation,

@@ -10,7 +10,7 @@ import 'package:intragram/widgets/peer_avatar.dart';
 
 import '../support/contrast.dart';
 
-// 디자인 시스템의 대비 약속(본문·보조 글씨 7:1, 아이콘 3:1)을 색 값이 바뀌어도 지키게 고정
+// 디자인 시스템의 대비 약속(본문·보조 글씨 7:1, 아이콘 3:1)을 색 값이 바뀌어도 지키게 고정함
 void main() {
   for (final theme in [AppTheme.light(), AppTheme.dark()]) {
     final scheme = theme.colorScheme;
@@ -106,8 +106,8 @@ void main() {
     });
   }
 
-  // 비텍스트 대비 1.4.11: 입력창 경계·켜진 스위치 트랙·가만히 있는 스크롤바는 3:1, iOS·macOS 대화상자
-  // 버튼 글씨는 4.5:1. 대비 증가 테마는 보조 글씨를 본문과 같게 올림
+  // 비텍스트 대비 1.4.11: 입력창 경계·켜진 스위치 트랙·가만히 있는 스크롤바는 3:1.
+  // 라이트 모드의 iOS·macOS 대화상자 버튼 글씨는 반투명 회색 바탕에서도 읽히게 surface 기준 7:1을 넘김
   for (final theme in [AppTheme.light(), AppTheme.dark()]) {
     final scheme = theme.colorScheme;
     test('${scheme.brightness.name}: controls stand off the surface', () {

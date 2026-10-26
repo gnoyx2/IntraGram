@@ -14,7 +14,7 @@ const int kHandshakeWireBytes = 64 * 1024;
 // 웹소켓 프레임 머리·마스킹·조각 나눔 몫
 const int _kWireSlackBytes = 64 * 1024;
 
-// 메시지 n개 뒤 다음 메시지에 허용할 원시 바이트. 첫 메시지는 핸드셰이크라 작게, 그다음은 앱 프레임 상한 + 여유
+// 메시지 n개 뒤 다음 메시지에 허용할 원시 바이트 상한임. 첫 메시지는 핸드셰이크라 작게 잡고, 그다음은 앱 프레임 상한과 여유분을 더함
 int wireBudget(int messages, LargeMessageMode mode) {
   if (messages == 0) return kHandshakeWireBytes;
   final frameCap = mode == LargeMessageMode.unlimited
@@ -23,7 +23,7 @@ int wireBudget(int messages, LargeMessageMode mode) {
   return frameCap + _kWireSlackBytes;
 }
 
-// 웹소켓이 메시지를 넘길 때마다 상한을 다시 채움. capped가 null이면(테스트 다이얼 등) 그대로
+// 웹소켓이 메시지를 넘길 때마다 상한을 다시 채움. capped가 null이면(테스트 다이얼 등) 그대로 반환함
 StreamChannel<dynamic> cappedChannel(WebSocket socket, CappedSocket? capped) =>
     StreamChannel<dynamic>(
       capped == null

@@ -11,7 +11,7 @@ class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
     self.sharingType = .none
     let flutterViewController = FlutterViewController()
-    // 첫 프레임 전엔 FlutterView가 기본 검정이라 라이트 모드에서 검은 창이 번쩍임: 외형별 앱 배경색
+    // 첫 프레임 전엔 FlutterView 기본색이 검정이라 라이트 모드에서 검은 창이 번쩍이므로 외형별 앱 배경색을 미리 지정함
     flutterViewController.backgroundColor = NSColor(name: nil) { appearance in
       appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         ? NSColor(srgbRed: 0x0D / 255, green: 0x0F / 255, blue: 0x14 / 255, alpha: 1)
@@ -20,7 +20,7 @@ class MainFlutterWindow: NSWindow {
     self.backgroundColor = flutterViewController.backgroundColor
     self.contentViewController = flutterViewController
 
-    // 420×560은 두 줄 채팅 앱바 제목과 오른쪽 액션, 오프라인 배너, 말풍선 3개, 입력창이 글자 배율 1.0에서 안 찌그러지는 최소치
+    // 420×560은 두 줄 채팅 앱바 제목과 오른쪽 액션, 오프라인 배너, 말풍선 3개, 입력창이 글자 배율 1.0에서 안 찌그러지는 최소치임
     self.minSize = NSSize(width: 420, height: 560)
 
     // setFrameAutosaveName은 같은 이름으로 저장된 프레임이 있으면 바로 복원해서, 저장된 게 없을 때(첫 실행)만
@@ -59,7 +59,7 @@ class MainFlutterWindow: NSWindow {
     super.awakeFromNib()
   }
 
-  // 메뉴 막대(MainMenu.xib, First Responder 액션) 명령은 Dart(AppCommands)가 단축키와 같은 길로 처리
+  // 메뉴 막대(MainMenu.xib, First Responder 액션) 명령은 Dart(AppCommands)가 단축키와 동일한 경로로 처리함
   @objc func showSettings(_ sender: Any?) { menuChannel?.invokeMethod("settings", arguments: nil) }
   @objc func newConnection(_ sender: Any?) {
     menuChannel?.invokeMethod("newConnection", arguments: nil)
@@ -128,7 +128,7 @@ class MainFlutterWindow: NSWindow {
       sensitiveChangeCount = nil
       result(nil)
     case "revealFile":
-      // Finder에서 받은 파일을 선택 상태로 (프로세스 안이라 고른 폴더의 샌드박스 권한이 그대로 먹음)
+      // Finder에서 받은 파일을 선택 상태로 엶 (같은 프로세스 안이라 선택한 폴더의 샌드박스 권한이 유지됨)
       guard let path = call.arguments as? String else { return result(false) }
       NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
       result(true)
@@ -169,7 +169,7 @@ class MainFlutterWindow: NSWindow {
 
   // macOS엔 iOS의 userDidTakeScreenshotNotification 같은 알림이 없어서, screencapture(Cmd+Shift+3/4/5)가 저장하는
   // 파일마다 Spotlight가 붙이는 kMDItemIsScreenCapture 메타데이터를 NSMetadataQuery로 실시간 감시함.
-  // 샌드박스에서도 되는 표준 기법 (파일 내용이 아니라 메타데이터 검색이라 files.user-selected 권한이 필요 없음)
+  // 샌드박스에서도 동작하는 표준 기법임 (파일 내용이 아니라 메타데이터 검색이라 files.user-selected 권한이 필요 없음)
   private func startWatchingScreenshots() {
     let query = NSMetadataQuery()
     query.predicate = NSPredicate(format: "kMDItemIsScreenCapture = 1")
@@ -185,7 +185,7 @@ class MainFlutterWindow: NSWindow {
   }
 
   // DidUpdate는 새로 잡힌 파일뿐 아니라 전에 잡힌 파일이 바뀌거나 지워질 때도 옴: Added만 걸러서 앱이 도는 중에
-  // 방금 찍힌 스크린샷에만 반응함 (옛 스크린샷을 지우기만 해도 알림이 뜨는 오탐 방지)
+  // 방금 찍힌 스크린샷에만 반응함 (옛 스크린샷을 지우기만 해도 알림이 뜨는 오탐을 방지함)
   @objc private func onScreenshotQueryUpdate(_ notification: Notification) {
     let added = notification.userInfo?[NSMetadataQueryUpdateAddedItemsKey] as? [NSMetadataItem]
     guard let added, !added.isEmpty else { return }

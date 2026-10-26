@@ -166,7 +166,7 @@ mixin _ChatInputActionBar
     );
   }
 
-  // 360dp 미만에서 퀵버튼 자리에 접어 넣은 액션들. 실제 처리는 clipboard mixin에 위임
+  // 360dp 미만에서 퀵버튼 자리에 접어 넣은 액션들. 실제 처리는 clipboard mixin에 위임함
   Future<void> _openFoldedAttachMenu() async {
     final s = S.of(context);
     final action = await showModalBottomSheet<VoidCallback>(

@@ -1,7 +1,7 @@
 import 'dart:math' show min;
 
 // 링크 확인 창용 호스트 표기: 비ASCII 라벨을 퓨니코드(xn--, RFC 3492)로 바꿔 'аpple.com'(키릴 а) 같은 동형 문자 주소를 드러냄.
-// UTS #46 매핑·NFC 없이 소문자만 맞춤. 표시 전용이라 드문 문자에서 브라우저와 달라도 'xn--' 신호는 같고, 실제로 여는 건 원문 URL
+// UTS #46 매핑·NFC 없이 소문자만 맞춤. 표시 전용이라 드문 문자에서 브라우저와 달라도 'xn--' 신호는 같고, 실제로 여는 대상은 원문 URL임
 String asciiHost(String host) => host
     .split('.')
     .map((label) {

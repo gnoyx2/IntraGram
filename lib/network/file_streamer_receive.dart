@@ -3,7 +3,7 @@ part of 'file_streamer.dart';
 Future<RandomAccessFile> _openPartial(File file) =>
     file.open(mode: FileMode.write);
 
-// 협상한 크기를 딱 맞춤: 넘거나 모자라면 멈추고 .part를 지운 뒤 SecurityException. 절대 상한은 없고 여유 디스크가 한도 (LocalSend처럼).
+// 협상한 크기를 정확히 맞춤: 넘거나 모자라면 멈추고 .part를 지운 뒤 SecurityException을 던짐. 절대 상한은 없고 여유 디스크가 한도임 (LocalSend 방식).
 // await for 대신 StreamIterator: 멈춘 스트림에서도 cancel()이 기다리던 moveNext()를 바로 끝냄
 Future<int> _receive({
   required Stream<List<int>> body,
@@ -38,12 +38,12 @@ Future<int> _receive({
   // 취소 때 iterator.cancel()이 끝나길 abort가 기다림 (안 그러면 정리 완료라고 한 뒤에도 구독 취소가 도는 중일 수 있음)
   Future<void>? cancelling;
 
-  // abort가 던진 걸 아래 catch가 다시 잡아 abort가 두 번 돌면 정리 실패가 두 겹으로 싸임
+  // abort가 던진 예외를 아래 catch가 다시 잡아 abort가 중복 실행되는 것을 막음 (두 번 돌면 정리 실패가 두 겹으로 감싸임)
   var aborted = false;
 
   Future<Never> abort(Object error) async {
     aborted = true;
-    // close가 실패해도 삭제는 시도함. 하나라도 실패하면 원래 오류와 같이 TransferCleanupException
+    // close가 실패해도 삭제는 시도함. 하나라도 실패하면 원래 오류와 함께 TransferCleanupException을 던짐
     final failures = <Object>[];
     try {
       await cancelling;

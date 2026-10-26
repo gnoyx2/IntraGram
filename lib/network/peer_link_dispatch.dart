@@ -182,7 +182,7 @@ extension _PeerLinkDispatch on PeerLink {
         utf8.encode(inner.text).length > kMaxInlineMessageBytes) {
       return;
     }
-    // 확인을 못 받은 상대가 같은 id로 다시 보낸 것: 확인만 다시 돌려주고 안 읽은 수는 그대로
+    // 확인을 받지 못한 상대가 동일한 id로 재전송한 경우: 확인(ack)만 다시 회신하고 안 읽은 개수는 유지함
     if (store.messageById(inner.id) != null) {
       if (_ownsMessage(inner.id)) {
         unawaited(deliverRawInner(InnerFrame.ack(inner.id)));

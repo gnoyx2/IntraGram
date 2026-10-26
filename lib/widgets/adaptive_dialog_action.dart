@@ -90,7 +90,7 @@ class AdaptiveDialogAction extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
 
-  // 저장·이름 바꾸기·연결처럼 힘줄 동작 (Cupertino는 굵게, Material은 FilledButton)
+  // 저장·이름 바꾸기·연결처럼 강조할 주 동작 여부임 (Cupertino는 굵게, Material은 FilledButton)
   final bool emphasis;
 
   // 삭제/소거처럼 되돌릴 수 없는 액션. iOS 표준 빨간 글씨 / Material error 컬러

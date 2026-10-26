@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:cryptography/dart.dart' show DartSha256;
 
-// 소금 친 Merkle 트리. 잎 = SHA-256(0x00 ‖ salt ‖ 내용), 마디 = SHA-256(0x01 ‖ 왼쪽 ‖ 오른쪽) (RFC 6962처럼 앞 바이트로
+// Salted Merkle 트리. 잎 = SHA-256(0x00 ‖ salt ‖ 내용), 마디 = SHA-256(0x01 ‖ 왼쪽 ‖ 오른쪽) (RFC 6962처럼 앞 바이트로
 // 잎을 마디로 위장 못 함). salt가 있어서 증명 하나에 딸린 형제 해시로 다른 사건 내용을 짐작 못 함.
 // 층이 홀수면 마지막 마디를 그대로 올림 (복제하면 잎 목록 두 개가 같은 루트를 냄)
 
@@ -49,7 +49,7 @@ List<Uint8List> merkleProof(List<Uint8List> leaves, int index) {
   return path;
 }
 
-// 잎 개수와 위치로 층마다 형제가 있어야 하는지 다시 계산해서 경로 모양까지 맞아야 통과 (남는 경로·모자란 경로 둘 다 거부)
+// 잎 개수와 위치로 층마다 형제 유무를 다시 계산해서 경로 모양까지 맞아야 통과함 (남는 경로·모자란 경로 둘 다 거부함)
 bool verifyMerkleProof({
   required List<int> leaf,
   required int index,

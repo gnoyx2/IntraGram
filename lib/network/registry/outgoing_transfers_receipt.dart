@@ -20,8 +20,8 @@ extension OutgoingTransfersReceipt on OutgoingTransfers {
     recipient.receipt = SignedAttestation.fromWire(receipt);
   }
 
-  // 서명이 맞고, 서명 키가 그 수신자 peerId의 키이고, 이 전송·attempt·보낸 사람(나)·내가 내보낸 내용 해시를 가리켜야 verified.
-  // 하나라도 틀리면 rejected로 남김 (받은 바이트가 달랐거나 다른 시도 영수증을 재생한 것)
+  // 서명이 유효하고 서명 키가 수신자 peerId와 일치하며, 전송 ID·시도 ID·발신자·송신 데이터 해시가 일치해야 verified로 인정함.
+  // 하나라도 불일치하면 증적에 unverified로 기록함 (수신 바이트가 변조되었거나 타 시도 영수증이 재전송된 경우임)
   Future<void> _checkReceipt(
     String transferId,
     OutgoingFileSource source,

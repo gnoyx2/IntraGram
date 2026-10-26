@@ -21,7 +21,7 @@ void main() {
 
   test('round-trips a multi-chunk payload larger than one record', () async {
     final (a, b) = await pairSessions();
-    // kFileChunkBytes 조각 3개 조금 넘게: 레코드가 여러 개 나오게
+    // kFileChunkBytes 3조각을 초과하는 크기로 설정해 다중 레코드 분할을 유도함
     final plain = Uint8List.fromList(
       List<int>.generate(6 * 1024 * 1024 + 777, (i) => i & 0xff),
     );
@@ -48,7 +48,7 @@ void main() {
     );
 
     final wire = await encryptForTest(a, plain);
-    // 극단적으로 잘게 쪼개서 먹임: 레코드 경계가 어디든 재조립돼야 함
+    // 1바이트씩 잘게 쪼개 입력함: 레코드 경계가 어디든 재조립돼야 함
     final byteAtATime = streamOf([
       for (final byte in wire) [byte],
     ]);
@@ -93,7 +93,7 @@ void main() {
     final wire = await encryptForTest(a, plain, transferId: 'real-transfer');
 
     // 같은 세션·같은 attemptId지만 다른 transferId로 열려고 함: AAD가
-    // 안 맞아서 tag 검증이 실패해야 함(레코드 재사용 방지)
+    // 안 맞아서 tag 검증이 실패해야 함 (레코드 재사용을 방지함)
     await expectLater(
       decryptForTest(b, wire, plain.length, transferId: 'other-transfer'),
       throwsA(anything),
@@ -155,7 +155,7 @@ void main() {
       final aad = utf8.encode('t');
       final sealed = await a.sealBytes(Uint8List.fromList([1, 2, 3]), aad: aad);
 
-      // 같은 nonce·cipher·mac을 메시지 채널 open()으로 열면 실패해야 함: 세션 키가 아니라 파일 서브키로 봉인돼서
+      // 세션 키가 아니라 파일 서브키로 봉인됐으므로 같은 nonce·cipher·mac을 메시지 채널 open()으로 열면 실패해야 함
       await expectLater(
         b.open(
           nonceB64: base64.encode(sealed.nonce),
@@ -166,7 +166,7 @@ void main() {
         throwsA(anything),
       );
 
-      // 파일 서브키 openBytes()로는 정상적으로 열림
+      // 파일 서브키 openBytes()로는 정상 복호화됨
       final opened = await b.openBytes(
         nonce: sealed.nonce,
         cipher: sealed.cipher,

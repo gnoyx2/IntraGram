@@ -66,7 +66,7 @@ String _burnPolicy(BurnCause cause, int ttlSeconds) => switch (cause) {
   BurnCause.replaced => 'burn/replaced',
 };
 
-// 앱이 맡은 자원 정리(네트워크 토큰·source·조각 파일, 음성 RAM 바이트)가 끝나면 completed, 던지면 failed.
+// 앱이 맡은 자원 정리(네트워크 토큰·source·조각 파일, 음성 RAM 바이트)가 끝나면 completed, 실패하면 failed로 기록함.
 // 세대는 사건 시점에 잡아서 정리가 끝나기 전 secureWipe(패닉)가 지나갔으면 그 뒤 세션에 증적을 안 남김
 void _attestCleanup(
   _InMemoryStoreState s, {

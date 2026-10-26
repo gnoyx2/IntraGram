@@ -20,7 +20,7 @@ class PeerDevice {
   final int port;
   final DateTime seenAt;
 
-  // 목록의 둘째 줄. 플랫폼을 안 밝힌 기기(mDNS os 속성 없음)는 영어 'Unknown' 대신 주소만
+  // 목록의 둘째 줄. 플랫폼을 안 밝힌 기기(mDNS os 속성 없음)는 영어 'Unknown' 대신 주소만 표시함
   String get detail => platform == 'Unknown' ? host : '$platform · $host';
 
   // mDNS TXT에 room=1이 있으면 true: 지금 그룹 방을 호스팅 중 (탭하면 합류)

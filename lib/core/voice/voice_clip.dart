@@ -26,7 +26,7 @@ abstract interface class VoiceClip {
   Duration get duration;
   Stream<VoiceProgress> get progress;
 
-  // 끝까지 들었으면 처음부터 다시
+  // 끝까지 들었으면 처음부터 다시 재생함
   Future<void> play();
   Future<void> pause();
   Future<void> dispose();
@@ -38,7 +38,7 @@ typedef VoiceClipLoader = Future<VoiceClip> Function(PcmWav wav);
 @visibleForTesting
 VoiceClipLoader? debugVoiceClipLoader;
 
-// 16비트 PCM WAV가 아니면 FormatException (호출부가 '재생할 수 없음'을 띄움)
+// 16비트 PCM WAV가 아니면 FormatException을 던짐 (호출부가 '재생할 수 없음'을 띄움)
 Future<VoiceClip> loadVoiceClip(Uint8List bytes) async {
   final wav = parsePcm16Wav(bytes);
   if (wav == null) throw const FormatException('not a 16-bit PCM voice note');
@@ -79,7 +79,7 @@ abstract class PolledVoiceClip implements VoiceClip {
   Future<void> pauseOutput();
   @protected
   Future<Duration> outputPosition();
-  // 폴링으로 끝을 아는 플랫폼만 true (이벤트로 아는 쪽은 markCompleted를 부름)
+  // 폴링으로 종료를 감지하는 플랫폼만 true를 반환함 (이벤트 방식은 markCompleted를 부름)
   @protected
   Future<bool> outputFinished();
   @protected
@@ -120,7 +120,7 @@ abstract class PolledVoiceClip implements VoiceClip {
     _emit(duration);
   }
 
-  // 출력이 끝까지 못 가고 죽음: 완료로 치지 않고 그 자리에서 멈춘 뒤 듣는 쪽에 오류를 알림
+  // 출력이 도중에 비정상 종료됨: 완료로 치지 않고 그 자리에서 멈춘 뒤 구독자에 오류를 알림
   @protected
   void markFailed(Duration position, Object error) {
     if (_disposed || !_playing) return;

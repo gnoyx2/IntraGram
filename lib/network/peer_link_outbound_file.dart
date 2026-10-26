@@ -58,8 +58,8 @@ extension PeerLinkOutboundFile on PeerLink {
     ),
   );
 
-  // 호스트 전용: 멤버의 대상 지정 offer를 정책상 거부했다고 알림 (남의 경로·id 충돌, 다른 기기 주소, 자기 대상, 경로 상한).
-  // 수신자 대신 file_cancel로 그 몫을 끝냄. 못 나가면 링크를 닫음
+  // 호스트 전용: 멤버의 대상 지정 offer를 정책상 거부했음을 알림 (경로 충돌, 타 기기 주소 위조, 자기 자신 대상, 경로 상한 초과 등).
+  // 수신자 대신 file_cancel로 취소하며 전송 실패 시 링크를 닫음
   Future<bool> sendOfferRefusal(
     String transferId, {
     required String attemptId,
@@ -71,7 +71,7 @@ extension PeerLinkOutboundFile on PeerLink {
     'from': ?targetAlias,
   });
 
-  // pushToken은 방금 발급한 POST 인가 토큰: 암호화된 이 링크로만 감 (핸드셰이크 전이면 큐에 들어가고 평문으론 절대 안 나감)
+  // pushToken은 수신 측이 발급한 POST 인가 토큰임 (1:1 앱 링크는 암호화 전송되며 웹 게스트는 평문 링크로 전달됨)
   Future<void> sendFileAccept(
     String transferId, {
     required String attemptId,
@@ -90,7 +90,7 @@ extension PeerLinkOutboundFile on PeerLink {
   Future<void> sendFileRetry(String transferId, {required String attemptId}) =>
       _sendInner(InnerFrame.fileRetry(transferId, attempt: attemptId));
 
-  // 길이·AEAD 검증과 커밋까지 다 끝난 뒤 한 번 보냄. 보내는 쪽은 EOF가 아니라 이 ACK로만 완료 처리. receipt는 선택 서명 영수증
+  // 바이트 검증과 커밋이 끝난 뒤 한 번 전송함. 발신 측은 EOF가 아니라 이 ACK를 수신해야 완료로 처리함. receipt는 선택적 서명 영수증임
   Future<void> sendFileReceived(
     String transferId, {
     required String attemptId,
@@ -102,7 +102,7 @@ extension PeerLinkOutboundFile on PeerLink {
   // 1:1 앱 피어처럼 살아 있는 암호 세션이 있으면 true. 호출부가 이걸 먼저 보고 암호화 여부를 정함
   bool get canSealFileChunks => _crypto?.isReady ?? false;
 
-  // 파일 서브키로 봉인. canSealFileChunks가 false면 던짐
+  // 파일 서브키로 암호화 봉인함. canSealFileChunks가 false면 StateError를 던짐
   Future<({Uint8List nonce, Uint8List cipher, Uint8List mac})> sealFileChunk(
     Uint8List bytes, {
     required Uint8List aad,

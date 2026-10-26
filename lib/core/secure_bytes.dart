@@ -39,7 +39,7 @@ final class SecureBytes {
 
   static final Random _rng = Random.secure();
 
-  // destroy 뒤에 쓰면 조용히 빈 값으로 돌지 말고 터지게 함
+  // destroy 뒤에 접근하면 조용히 빈 값을 돌려주지 않고 StateError를 던짐
   Uint8List get bytes {
     if (_destroyed) {
       throw StateError('SecureBytes used after destroy()');
@@ -73,7 +73,7 @@ final class SecureBytes {
         target[i] = 0;
       }
     } on UnsupportedError {
-      // 못 고치는 버퍼는 주인이 지울 몫
+      // 수정 불가 버퍼는 소유한 쪽에서 지워야 함
     }
   }
 }

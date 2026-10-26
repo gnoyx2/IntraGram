@@ -12,7 +12,7 @@ import 'package:intragram/network/file_streamer.dart'
     show TransferCleanupException;
 import 'package:intragram/network/registry/incoming_path_resolver.dart';
 
-// 이번 실행에서 .part를 만든 폴더와 받은 파일 경로 (RAM). 패닉 뒤 레지스트리가 새로 생겨도 남아야 해서 static
+// 이번 실행에서 .part 파일을 생성한 폴더와 수신 완료된 파일 경로를 보관함 (RAM). 패닉 후 레지스트리가 재인스턴스화되어도 유지되도록 static으로 관리함
 abstract final class IncomingSessionFiles {
   static final Set<String> _directories = <String>{};
   static final Set<String> _received = <String>{};
@@ -49,7 +49,7 @@ abstract final class IncomingSessionFiles {
   }
 
   // 폴더 경로 → macOS 북마크(base64, 다른 OS는 null). 예전 형식(경로 목록)도 읽음.
-  // 깨졌거나 못 읽으면 빈 목록 (설정 파일 하나 때문에 시작·저장이 막히면 안 됨)
+  // 손상되었거나 읽을 수 없으면 빈 맵을 반환함 (설정 파일 손상으로 앱 시작이나 저장이 차단되지 않도록 방지함)
   static Map<String, String?> _readDirectories(File file) {
     try {
       if (!file.existsSync()) return const {};
@@ -105,7 +105,7 @@ abstract final class IncomingSessionFiles {
     }
   }
 
-  // 시작할 때 한 번만 복원 (패닉 정리는 이번 세션 목록만 씀)
+  // 시작 시 한 번만 복원함 (패닉 정리는 이번 세션 목록만 참조함)
   static Future<void> restoreDirectories({File? settingsFile}) async {
     if (!(Platform.isMacOS || Platform.isWindows || Platform.isLinux)) return;
     final entries = _readDirectories(settingsFile ?? await _settingsFile());
@@ -114,7 +114,7 @@ abstract final class IncomingSessionFiles {
     }
   }
 
-  // 크래시로 남은 .intragram-*.part를 지움. 받는 전송이 없을 때만 부를 것 (시작 직후, 패닉에서 링크가 다 닫힌 뒤)
+  // 크래시로 남은 .intragram-*.part를 지움. 받는 전송이 없을 때만 호출해야 함 (시작 직후, 패닉에서 링크가 다 닫힌 뒤)
   static Future<int> sweepOrphanPartials([
     Iterable<String>? directories,
   ]) async {

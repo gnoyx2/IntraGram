@@ -33,7 +33,7 @@ class PortalQr extends ConsumerWidget {
         child: Semantics(
           label: S.of(context).t('a11y.qrCodeUrl'),
           child: QrImageView(
-            // 앱이 찍으면 이 기기 신원으로 고정됨. 브라우저는 #t만 읽고 p는 무시
+            // 앱이 찍으면 이 기기 신원으로 고정됨. 브라우저는 #t만 읽고 p는 무시함
             data: portalCodeWithPeer(url, ref.read(appIdentityProvider).peerId),
             version: QrVersions.auto,
             size: 208,

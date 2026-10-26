@@ -37,7 +37,7 @@ Stream<List<int>> sha256Tap(
   );
 }
 
-// 짧은 메시지는 그냥 해시하면 사전 대입으로 내용이 맞춰짐: 16바이트 salt를 섞고 그 salt는 바로 버림.
+// 짧은 메시지는 그냥 해시하면 사전 대입으로 내용이 드러남: 16바이트 salt를 섞고 그 salt는 바로 버림.
 // 소각 뒤엔 이 기기도 증적만으로 본문을 되찾거나 추측을 확인 못 함. 본문 바이트는 여기서만 잠깐 쓰고 덮음
 String saltedCommitment(String domain, List<Object?> fields) {
   final body = utf8.encode(jsonEncode(<Object?>[domain, ...fields]));

@@ -42,7 +42,7 @@ abstract class _InMemoryStoreState {
   // '내가 연 대화만 받기' 설정의 미러: 링크 레이어가 모르는 기기의 인바운드를 거절할 때 읽음
   bool onlyChatsIStart = false;
 
-  // 알림 브리지가 false일 때만 인바운드 메시지에 로컬 알림을 띄움
+  // 이 값이 false일 때만 알림 브리지가 인바운드 메시지에 로컬 알림을 띄움
   bool appInForeground = true;
 
   // 시스템 메시지 제외. 알림 브리지가 구독해서 앱이 포그라운드가 아니면 로컬 알림을 띄움

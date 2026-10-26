@@ -16,7 +16,7 @@ extension _DiscoveryScan on DiscoveryController {
     }
   }
 
-  // eventStream이 나중에 오류를 흘림 (같은 DefunctConnection). 안 잡으면 앱이 죽어서 스캔만 포기하고 isRunning을 내림 (새로고침이나 다음 start가 복구)
+  // eventStream이 나중에 오류를 방출할 수 있음 (같은 DefunctConnection). 처리하지 않으면 앱이 비정상 종료되므로 스캔을 중단함 (새로고침이나 다음 start가 복구함)
   void _onDiscoveryError() {
     unawaited(_subscription?.cancel());
     _subscription = null;
@@ -86,8 +86,8 @@ bool isDiscoveryPeerStale(DateTime seenAt, DateTime now) =>
     seenAt.isBefore(now.subtract(kDiscoveryRefresh * 3));
 
 extension BonsoirServiceHost on BonsoirService {
-  // 다이얼할 IPv4를 고름 (resolve 전이면 null). Apple은 IPv6 링크로컬을 먼저 주기도 하고 같은 기기 등록이면 127.0.0.1이 앞에 붙어서
-  // RFC1918 주소를 먼저 보고 loopback은 마지막에
+  // 다이얼할 주소를 고름 (resolve 전이면 null). Apple은 IPv6 링크로컬을 먼저 주기도 하고 같은 기기 등록이면 127.0.0.1이 앞에 붙어서
+  // RFC1918 주소를 먼저 보고 loopback은 마지막에 확인하며, 없으면 IPv6 등으로 폴백함
   String? get host {
     final ipv4 = hostAddresses.where((a) => a.isNotEmpty && !a.contains(':'));
     for (final address in ipv4) {

@@ -32,7 +32,7 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
     var acquired = false;
     _SettledStream? tracked;
     try {
-      // 자리 날 때까지 기다림 (취소되면 바로 빠지고 막혀도 kTransferStallTimeout 뒤엔 실패)
+      // 가용 슬롯이 확보될 때까지 대기함 (취소 시 즉시 반환되며 지연 시 kTransferStallTimeout 후 실패 처리됨)
       await gate.acquire(
         timeout: kTransferStallTimeout,
         cancelToken: cancelToken,
@@ -114,7 +114,7 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
     if (failure != null) throw TransferCleanupException(failures: [failure]);
   }
 
-  // 사용자가 보내기를 무름: 수신자를 다 끊고 각자 attempt로 취소를 알림. 상태는 바로 cancelled (소켓 정리는 뒤따름)
+  // 사용자가 발신을 취소함: 모든 수신자 작업을 중단하고 각자의 attemptId로 취소를 통보함. 상태는 즉시 cancelled로 전환됨
   void cancelTransfer(String transferId) {
     final transfer = store.transfer(transferId);
     if (transfer == null || transfer.direction != TransferDirection.outgoing) {
@@ -152,7 +152,7 @@ extension OutgoingTransfersDelivery on OutgoingTransfers {
   // 테스트·진단용
   OutgoingFileSource? source(String transferId) => _outgoing[transferId];
 
-  // 링크가 닫힘. recipientKey가 있으면(방 멤버 하나) 그 수신자만 실패, 없으면(1:1) 그 대화 전송을 다 버림
+  // 링크 연결이 종료됨. recipientKey가 지정된 경우(그룹 방 개별 멤버) 해당 수신자만 실패 처리하고, 없으면(1:1) 대화의 모든 발신을 정리함
   Future<void> handleLinkClosed(
     String conversationId, {
     String? recipientKey,

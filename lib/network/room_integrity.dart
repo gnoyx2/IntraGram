@@ -15,8 +15,8 @@ part 'room_integrity/observation.dart';
 part 'room_integrity/checkpoints.dart';
 part 'room_integrity/seen_counters.dart';
 
-// 남이 보낸 작성자 서명을 하나 이상 검증했고 체크포인트도 봤으면 verified. 위조·같은 번호의 다른 글·서명 뗀 글·
-// 상충 체크포인트를 보면 conflict
+// 피어가 보낸 작성자 서명을 1건 이상 검증하고 체크포인트도 관측했으면 verified임. 위조, 동일 카운터 상충 메시지, 서명 누락,
+// 상충되는 체크포인트가 감지되면 conflict로 전환함
 enum RoomIntegrityStatus { waiting, verified, conflict }
 
 // RAM 전용 방 관측 장부. 합의 원장이 아니라 이 기기가 본 것만 맞춰 봄: 방마다 최근 256개 사건·체크포인트만 남겨서
@@ -51,7 +51,7 @@ final class RoomIntegrityBook extends ChangeNotifier {
       ..addAll(members.take(window));
   }
 
-  // 멤버 쪽: 호스트 링크로 온 room_join·room_state의 범위를 따름 (도중에 범위나 호스트가 바뀌면 상충)
+  // 멤버 측: 호스트 링크로부터 수신한 room_join·room_state의 범위를 따름 (진행 중 scope나 호스트가 변경되면 상충 처리함)
   void join(
     String localId,
     String scope,
@@ -130,7 +130,7 @@ final class RoomIntegrityBook extends ChangeNotifier {
     final room = _rooms[localId];
     final hasEnvelope = roomAuthorKeys.any(payload.containsKey);
     if (!hasEnvelope) {
-      // 봉투 없는 옛 앱 글은 받음 (검증 배지만 안 오름). 단 이 방에서 이미 서명한 작성자 이름이면 중계가 서명을 뗀 것.
+      // 봉투가 없는 구버전 앱 메시지는 수신함 (검증 배지만 갱신되지 않음). 단 해당 방에서 이미 서명 이력이 있는 peerId면 중계가 서명을 제거한 상태임.
       // 작성자의 첫 서명 글을 보기 전에 떼인 글은 못 가려냄
       if (room == null || !room.signers.contains(actorId)) return true;
       conflict(localId);
@@ -199,7 +199,7 @@ final class RoomIntegrityBook extends ChangeNotifier {
     }
   }
 
-  // 소각 직후 재전송 캐시에 남은 본문 커밋먼트 봉투도 퇴역시킴. 사건 해시·번호는 재생 차단용으로 유지.
+  // 소각 직후 재전송 캐시에 남은 본문 커밋먼트 봉투를 정리함. 사건 해시 및 번호는 재생 공격 차단용으로 유지함
   void retireMessage(String localId, String messageId) {
     final room = _rooms[localId];
     room?.authored.remove(messageId);

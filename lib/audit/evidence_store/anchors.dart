@@ -1,6 +1,6 @@
 part of '../evidence_store.dart';
 
-// 오프라인 앵커 교환 쪽 (audit_bundle_exchange.dart): 내 배치에 증인 영수증을 붙이고, 남의 배치를 증인으로 기록함
+// 오프라인 앵커 교환(audit_bundle_exchange.dart): 내 배치에 증인 영수증을 붙이고, 상대 기기의 배치를 증인으로 기록함
 extension EvidenceAnchors on EvidenceStore {
   // 증인 앵커를 붙임: 증인 서명이 맞고, 내 배치 머리를 가리키고, 그 링크 상대가 서명했어야 함
   Future<bool> attachAnchor(
@@ -28,7 +28,7 @@ extension EvidenceAnchors on EvidenceStore {
     return true;
   }
 
-  // 남의 배치를 증인으로 기록. 같은 기기·번호에 다른 루트면 상충으로 남기고 true를 돌려줌
+  // 상대 기기의 배치를 증인으로 기록함. 같은 기기·번호에 다른 루트면 상충으로 남기고 true를 돌려줌
   bool witness(String peerId, BatchHeader header) {
     if (_disposed || _frozen) return false;
     final root = base64.encode(header.root);

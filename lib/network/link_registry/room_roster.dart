@@ -1,7 +1,7 @@
 part of '../link_registry.dart';
 
 extension _RoomRoster on _LinkRegistryState {
-  // 열린 멤버 링크. 같은 peerId 링크가 둘이면(재접속 직후) 최신 것만. 웹 게스트는 peerId가 없어 링크마다 한 명
+  // 열린 멤버 링크 목록임. 같은 peerId 링크가 둘이면(재접속 직후) 최신 것만 남김. 웹 게스트는 peerId가 없어 링크마다 한 명씩 셈
   List<PeerLink> _memberLinks(String roomId) {
     final open = _roomLinks
         .where((l) => l.conversationId == roomId && !l.isClosed)
@@ -29,8 +29,8 @@ extension _RoomRoster on _LinkRegistryState {
     );
   }
 
-  // 같은 멤버가 다시 붙으면 옛 링크를 닫음 (반쯤 죽은 링크가 인원을 부풀리고 경로를 붙들지 않게). 소켓 종료가 최대 2초라
-  // 파일 경로는 닫기 전에 넘김. 그 peerId로 핸드셰이크를 통과하는 건 키 주인뿐이라 남이 멤버를 못 쫓아냄
+  // 동일 멤버 재연결 시 이전 링크를 정리함 (비정상 링크의 인원 왜곡 및 경로 점유 방지). 소켓 종료에 최대 2초가 걸리므로
+  // 파일 경로는 닫기 전에 인계함. 해당 peerId로 핸드셰이크를 통과하는 주체는 키 소유자뿐이라 타인이 멤버를 축출할 수 없음
   void _supersedeMemberLinks(PeerLink link) {
     final peerId = link.remotePeerId;
     if (peerId == null) return;

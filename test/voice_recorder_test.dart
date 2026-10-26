@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intragram/features/chat/voice_recorder.dart';
 
-// 파일 없이 바이트를 바로 돌려주는 가짜 녹음 백엔드: 테스트가 fake clock만으로
-// 진행됨 (실제 파일 I/O 없음)
+// 실제 파일·마이크 I/O 없이 메모리 바이트를 바로 돌려주는 가짜 녹음 백엔드
 class _FakeCapture implements VoiceCapture {
   _FakeCapture(this._bytes);
   final List<int> _bytes;
@@ -84,10 +83,10 @@ Future<void> _holdRelease(WidgetTester tester, {Offset? slide}) async {
     tester.getCenter(find.byType(VoiceRecorderButton)),
   );
   await tester.pump(const Duration(milliseconds: 800)); // 롱프레스 판정 시점
-  await tester.pump(); // _start 처리
-  await tester.pump(); // _start 처리
-  // 700ms 문턱이 이제 실제 Stopwatch(진짜 벽시계)를 읽어서, fake-clock
-  // pump(duration)으로는 못 채움: runAsync 안에서 진짜로 기다림
+  await tester.pump();
+  await tester.pump();
+  // 700ms 문턱이 실제 Stopwatch(벽시계)를 읽으므로 fake clock의 pump(duration)으로는
+  // 채울 수 없어 runAsync 안에서 실제 시간을 대기함
   await tester.runAsync(
     () => Future<void>.delayed(const Duration(milliseconds: 800)),
   );
@@ -97,7 +96,7 @@ Future<void> _holdRelease(WidgetTester tester, {Offset? slide}) async {
     await tester.pump();
   }
   await gesture.up();
-  await tester.pump(); // _stop 처리
+  await tester.pump();
   await tester.pump();
 }
 
@@ -163,7 +162,7 @@ void main() {
 
     expect(capture.started, isTrue);
     // 탭-고정 녹음 중엔 마이크 대신 X(취소) 아이콘: 배너에도 같은 아이콘의
-    // 취소 버튼이 따로 뜨니(체크/전송 버튼과 짝) 최소 1개만 확인
+    // 취소 버튼이 따로 뜨므로(체크/전송 버튼과 짝) 최소 1개만 확인함
     expect(find.byIcon(Icons.close), findsWidgets);
     expect(find.byIcon(Icons.mic_none), findsNothing);
   });
@@ -187,7 +186,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
 
-    await tester.tap(find.byType(VoiceRecorderButton)); // X
+    await tester.tap(find.byType(VoiceRecorderButton));
     await tester.pump();
     await tester.pump();
 
@@ -217,8 +216,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 800)); // 홀드 판정 시점
       await tester.pump(); // _start 진입 후 hasPermission()에서 막힘
 
-      // 시스템이 제스처를 가로챔(예: 스크롤 아레나 패배), 명시적 취소 신호.
-      // 예전 버그는 이 신호의 send/cancel 구분을 잃고 항상 "전송"으로 굳혔음
+      // 시스템이 제스처를 가로채는 명시적 취소 신호(예: 스크롤 아레나 패배):
+      // send/cancel 구분을 잃고 전송으로 처리되면 안 됨
       await gesture.cancel();
       await tester.pump();
 

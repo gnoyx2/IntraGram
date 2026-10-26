@@ -49,7 +49,7 @@ mixin _StoreLifecycle on _InMemoryStoreState, _StoreCore {
     _emitTransfers();
   }
 
-  // 다 비우고 빈 결과를 알림. 스토어는 계속 씀 (빈 새 세션). 정리가 끝나길 기다리려면 drainDisposals.
+  // 다 비우고 빈 결과를 알림. 스토어는 계속 씀 (빈 새 세션). 비동기 정리 완료까지 기다리려면 drainDisposals를 호출해야 함.
   // Panic 진입 때 동결·소거한 장부도 다시 비움: 종료 중 파생된 잔여물이 새 세션에 남지 않게 함.
   void secureWipe() {
     evidence.clear();

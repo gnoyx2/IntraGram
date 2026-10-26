@@ -46,8 +46,8 @@ void main() {
     store.dispose();
   });
 
-  // 1.5 MiB는 앱 프레임 상한(2 MiB)보다 작아서 예전엔 서버가 다 모은 뒤 형식 오류로 버리고 핸드셰이크
-  // 시한(12초)까지 열어 뒀음. 이제는 첫 메시지 예산(64 KiB)에서 바로 끊김
+  // 1.5 MiB는 인증 후 프레임 상한(2 MiB)보다 작지만 인증 전 첫 메시지 예산(64 KiB)을 넘으므로,
+  // 서버가 다 모으거나 핸드셰이크 시한(12초)까지 기다리지 않고 즉시 끊어야 함
   test('a large first message is cut off before hello', () async {
     final socket = await WebSocket.connect(
       'ws://${bound.host}:${bound.port}/ws',

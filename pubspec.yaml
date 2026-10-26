@@ -52,7 +52,7 @@ flutter:
   uses-material-design: true
 
   # 브라우저 게스트용 웹 클라이언트 (CDN 없음). 파일은 index.html·css/*.css·js/*.js로 나뉘어 있지만
-  # server_web_client.dart가 한 문서로 이어 붙여서 게스트마다 요청은 하나
+  # server_web_client.dart가 한 문서로 이어 붙여서 게스트마다 요청은 하나임
   assets:
     - assets/web/
     - assets/web/js/

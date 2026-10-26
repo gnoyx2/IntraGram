@@ -162,7 +162,7 @@ void main() {
       expect(r.copyAt(2, id), isNull);
     }
     expect(r.routeCount, 0);
-    // 대상이 없는 offer는 알릴 수신자가 없어 조용히 버려지고, 자기 자신 대상은 접힘을 알림
+    // 대상이 없는 offer는 알릴 수신자가 없어 조용히 버려지고, 자기 자신 대상은 취소(cancel)를 알림
     expect(r.senderEvents, ['cancel:b:a1']);
   });
 

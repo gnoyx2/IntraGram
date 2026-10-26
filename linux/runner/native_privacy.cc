@@ -13,16 +13,15 @@ struct PrivacyState {
   GtkClipboard* clipboard;
   gchar* copied_text;
   guint64 settings_generation;
-  // -1 without a portal value (no portal, error, missing key); 0 no preference,
-  // 1 dark, 2 light.
+  // 포털 값이 없으면 -1(포털 부재·오류·키 누락), 기본 선호 없음 0, 다크 1, 라이트 2
   gint portal_scheme;
   gint portal_contrast;
   gint portal_motion;
   gboolean reduce_motion;
   gboolean high_contrast;
   gboolean setting_theme;
-  // gtk-application-prefer-dark-theme holds the portal value at application
-  // priority; resetting it returns to the session setting.
+  // gtk-application-prefer-dark-theme에 애플리케이션 우선순위로 포털 값을 반영하며,
+  // 재설정 시 세션 설정으로 되돌아감
   gboolean dark_override;
 };
 
@@ -43,9 +42,9 @@ static void push(PrivacyState* state, const gchar* name, gboolean enabled) {
                                   nullptr);
 }
 
-// GTK3 widgets (the header bar) ignore the portal color-scheme, so only a portal
-// dark/light choice is applied. Otherwise (no portal, error, no preference,
-// unknown value) the app value is reset and XSettings/settings.ini win again.
+// GTK3 위젯(헤더 바)은 포털의 color-scheme을 직접 읽지 않으므로, 포털에서 다크·라이트가
+// 명시된 경우만 적용함. 그 외(포털 없음, 오류, 선호 없음, 알 수 없는 값)에는
+// 앱 수준 설정을 초기화하여 XSettings/settings.ini 설정이 적용되도록 함
 static void sync_dark_preference(PrivacyState* state) {
   const gboolean override = intragram_overrides_dark(state->portal_scheme);
   state->setting_theme = TRUE;
@@ -81,7 +80,7 @@ static void sync_settings(PrivacyState* state) {
   fl_view_set_background_color(state->view, &background);
   if (contrast != state->high_contrast) {
     state->high_contrast = contrast;
-    // The portal has no transparency preference: high contrast defines borders.
+    // 포털에는 투명도 줄이기 설정이 없으므로 고대비 설정으로 테두리를 결정함
     push(state, "onHighContrastChanged", contrast);
     push(state, "onReduceTransparencyChanged", contrast);
   }
@@ -93,7 +92,7 @@ static void sync_settings(PrivacyState* state) {
 
 static void settings_changed(GtkSettings*, GParamSpec*, gpointer data) {
   auto* state = static_cast<PrivacyState*>(data);
-  // Notifications caused by our own writes must not loop back.
+  // 자체 쓰기로 발생한 변경 알림이 다시 루프로 들어오지 않도록 차단함
   if (!state->setting_theme) sync_settings(state);
 }
 
@@ -169,8 +168,8 @@ static void read_portal(PrivacyState* state) {
                     1000, state->cancel, read_settings_done, request);
 }
 
-// A portal that exits or restarts drops its old values: without an owner the
-// session settings apply, a new owner is read again.
+// 포털 프로세스가 종료되거나 재시작되면 기존 값이 무효화됨. 소유자가 없으면
+// 세션 기본 설정을 적용하고, 새 소유자가 나타나면 값을 다시 읽음
 static void portal_owner_changed(GObject*, GParamSpec*, gpointer data) {
   auto* state = static_cast<PrivacyState*>(data);
   ++state->settings_generation;
@@ -294,7 +293,7 @@ static void method_call(FlMethodChannel*, FlMethodCall* call, gpointer data) {
     respond_bool(call, state->reduce_motion);
   } else if (g_str_equal(method, "copySensitive") &&
              fl_value_get_type(args) == FL_VALUE_TYPE_STRING) {
-    // Drop ownership before replacing text: GTK calls clear on the previous copy.
+    // 텍스트를 교체하기 전에 소유권을 해제함. GTK가 이전 복사본의 clear를 호출함
     if (gtk_clipboard_get_owner(state->clipboard) == G_OBJECT(state->view)) {
       gtk_clipboard_clear(state->clipboard);
     }

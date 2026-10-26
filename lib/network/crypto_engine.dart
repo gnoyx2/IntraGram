@@ -20,7 +20,7 @@ part 'crypto_engine/file_records.dart';
 // ChaCha20-Poly1305 nonce = 0 4바이트 + 8바이트 카운터(메시지는 PeerLink seq, 파일은 세션 카운터).
 // 신원 키(Ed25519, 메모리만)는 peerId 증명에만 쓰고 키 합의엔 안 섞임
 
-// 보관소 PIN KDF 반복 횟수. 짧은 PIN이면 파일을 가져간 사람한테 시간만 벌어 줌
+// 보관소 PIN KDF 반복 횟수임. 짧은 PIN이면 오프라인 대입 공격의 연산 시간만 지연시킴
 const int kVaultPbkdf2Iterations = 200000;
 const int kVaultLegacyPbkdf2Iterations = 100000;
 
@@ -82,10 +82,10 @@ final class CryptoSession {
 
   String get publicKeyBase64 => base64.encode(publicKey);
 
-  // 양쪽이 같은 값. 비밀 아님 (소리 내어 맞춰 보라고 만든 숫자)
+  // 양쪽이 동일한 값이며 비밀이 아님 (직접 대조 확인용 숫자임)
   String? get sasDigits => _sasDigits;
 
-  // 이 핸드셰이크의 두 임시키 해시 (양쪽 같음). 증명을 다른 세션으로 옮겨 쓰지 못하게 서명에 묶는 값
+  // 이 핸드셰이크의 두 임시키 해시(양쪽 동일). 증명을 다른 세션으로 옮겨 쓰지 못하게 서명에 묶는 값임
   Uint8List? get sessionBinding => _destroyed ? null : _sessionBinding;
 
   SecretKey _requireSendKey() {

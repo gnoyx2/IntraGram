@@ -114,7 +114,7 @@ function incomingOffer(inner) {
         document.body.appendChild(a);
         a.click();
         a.remove();
-        // 저장 창(특히 iOS)이 blob을 다 읽기 전에 URL을 없애면 조용히 저장이 안 됨: 40초 뒤에 해제
+        // 저장 창(특히 iOS)이 blob을 다 읽기 전에 URL을 없애면 조용히 저장이 안 됨: 40초 뒤에 해제함
         setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
         // wire EOF와 이 ACK가 모두 있어야 발신자가 완료로 침
         sendInner({ k: "file_received", id: inner.id, at: inner.at });
@@ -276,7 +276,6 @@ function uploadFile(inner) {
     });
 }
 
-// app.js에서 넘긴 파일 프레임 처리
 function handleFileOffer(inner) { incomingOffer(inner); }
 function handleFileAccept(inner) { uploadFile(inner); }
 function handleFileReject(inner) {

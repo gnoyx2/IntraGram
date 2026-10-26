@@ -6,7 +6,7 @@ final navigatorKey = GlobalKey<NavigatorState>();
 // (다음 대화를 열 때까지 스크린샷은 내 기록만)
 String? foregroundConversationId;
 
-// PIN 게이트가 떠 있으면 마지막 탭 하나만 쥐었다가 gateCleared에서 엶 (push는 위젯 없이 테스트하려고 주입)
+// PIN 게이트가 떠 있으면 마지막 탭 하나만 쥐었다가 gateCleared에서 엶 (push는 위젯 없이 테스트하려고 주입함)
 class ConversationOpener {
   ConversationOpener({required this.push, required this.gateUp});
 

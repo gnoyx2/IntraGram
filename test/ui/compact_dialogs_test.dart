@@ -120,7 +120,7 @@ Future<Harness> _pump(
 }
 
 void main() {
-  // iOS는 투명도 설정이 기본이면 Cupertino 대화상자라 따로 돌림
+  // 플랫폼별 대화상자 분기(iOS·macOS Cupertino, 데스크톱 모양·버튼 순서·420×560 최소 창)를 모두 검증함
   for (final platform in [
     TargetPlatform.android,
     TargetPlatform.iOS,

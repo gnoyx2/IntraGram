@@ -17,7 +17,7 @@ window.addEventListener("pagehide", function () {
   Object.keys(voiceResources).forEach(releaseVoice);
 });
 
-// 음성 메시지는 폴더도 다운로드 버튼도 없이 바로 재생 (게스트는 이미 LAN 평문)
+// 음성 메시지는 폴더도 다운로드 버튼도 없이 바로 재생함 (게스트는 이미 LAN 평문임)
 function renderVoiceMessage(inner) {
   var wrap = document.createElement("div");
   wrap.className = "xfer-incoming";

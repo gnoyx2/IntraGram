@@ -18,7 +18,7 @@ function flushUnseen() {
   unseen = [];
   ids.forEach(seen);
 }
-// 내 글은 상대가 읽었다고 알려 올 때 카운트다운 시작 (앱과 같은 기준)
+// 내 글은 상대가 읽었다고 알려 올 때 카운트다운을 시작함 (앱과 같은 기준)
 function handleRead(id) {
   markRead(id);
   beginBurn(id);
@@ -108,7 +108,7 @@ function initChatUi() {
   });
   sendEl.onclick = sendText;
   sendEl.disabled = true;
-  // 보내기를 눌러도 입력창 초점을 안 뺏음: Android에서 키보드가 매번 닫히지 않게
+  // 보내기를 눌러도 입력창 초점을 안 뺏음: Android에서 키보드가 매번 닫히지 않게 함
   sendEl.addEventListener("mousedown", function (e) { e.preventDefault(); });
   fitToVisibleViewport();
   document.addEventListener("visibilitychange", function () {

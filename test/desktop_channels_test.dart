@@ -121,7 +121,7 @@ void main() {
       'requestAttention',
     ]);
     expect(calls.every((c) => c.arguments == null), isTrue);
-    expect(service.isReady, isFalse); // Toast plugin was never initialized.
+    expect(service.isReady, isFalse); // 토스트 플러그인이 초기화되지 않은 상태임
   });
 
   // 포커스를 잃음(inactive)·최소화(hidden)·백그라운드(paused)는 모두 자리를 비운 것. 복귀(resumed)는 아님

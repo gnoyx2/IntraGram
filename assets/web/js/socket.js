@@ -44,7 +44,7 @@ window.addEventListener("pageshow", function (event) {
   setStatus(t("reconnecting"), false);
   connect(connectionCallbacks.onFrame, connectionCallbacks.onOpen, connectionCallbacks.onClose);
 });
-// 호스트가 이번 페이지에서 한 번이라도 받아 줬는지 (다음 입장은 '다시 연결됨')
+// 호스트가 이번 페이지에서 한 번이라도 받아 줬는지 여부 (이후 입장은 재연결로 처리함)
 var everAccepted = false;
 var reconnectAttempts = 0;
 var RECONNECT_BASE_MS = 1000;
@@ -90,7 +90,7 @@ function connect(onFrame, onOpen, onClose) {
   clearTimeout(reconnectTimer);
   reconnectTimer = null;
   // 입장 토큰 없이는 서버가 web_hello를 거절하고 끊으므로 재시도하지 않고 이유를 보여 줌
-  // (주소를 손으로 치거나 새로고침해서 #t=…가 빠진 경우)
+  // (주소를 직접 입력했거나 토큰 없이 새 탭에서 열어 #t=가 없는 경우)
   if (!TOKEN) {
     setStatus(t("noToken"), false);
     system(t("noToken"));

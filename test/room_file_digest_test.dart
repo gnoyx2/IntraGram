@@ -163,8 +163,8 @@ void main() {
       );
     });
   });
-  // 바꿔치기로 실패한 전송은 같은 발신자가 다시 제안해도 묻지 않고 받지 않음: 방의 다른 멤버가 큰 파일을 거듭
-  // 재제안해 받는 쪽이 계속 내려받게 만들 수 있음. 네트워크 실패는 전처럼 이어받음
+  // 바꿔치기로 실패한 전송은 같은 발신자가 재제안해도 자동 수락하지 않고 다시 확인을 받음: 방의 다른 멤버가 큰 파일을
+  // 거듭 재제안해 받는 쪽이 계속 내려받게 만드는 것을 막음. 네트워크 실패는 재제안 시 자동 수락함
   test('a re-offer after a tampered transfer asks again', () async {
     final p = await connectedPair();
     addTearDown(p.storeA.dispose);

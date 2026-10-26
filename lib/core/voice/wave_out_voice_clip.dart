@@ -123,7 +123,7 @@ class WaveOutVoiceClip extends PolledVoiceClip {
   }
 }
 
-// mmsystem.h가 바이트 정렬(pshpack1)이라 WAVEFORMATEX(18바이트)·MMTIME(12바이트)은 packed
+// mmsystem.h가 1바이트 정렬(pshpack1)이라 WAVEFORMATEX(18바이트)·MMTIME(12바이트)은 packed로 지정함
 @Packed(1)
 final class _WaveFormatEx extends Struct {
   @Uint16()

@@ -38,7 +38,7 @@ class NotificationService {
         requestBadgePermission: false,
         requestSoundPermission: false,
       );
-      // Linux는 D-Bus 알림. 아이콘은 install.sh가 깐 테마 아이콘 이름
+      // Linux는 D-Bus 알림을 쓰며, 아이콘은 install.sh가 설치한 테마 아이콘 이름을 지정함
       final linux = LinuxInitializationSettings(
         defaultActionName: 'Open',
         defaultIcon: ThemeLinuxIcon('intragram'),
@@ -111,7 +111,7 @@ class NotificationService {
     }
   }
 
-  // channelName·channelDescription은 Android 알림 설정 화면에 보이는 앱 언어 문구
+  // channelName·channelDescription은 Android 알림 설정 화면에 보이는 앱 언어 문구임
   Future<void> show({
     required String title,
     required String body,
@@ -168,7 +168,7 @@ class NotificationService {
         payload: conversationId,
       );
     } on Object {
-      // 채널 없음/권한 거부가 채팅을 죽이면 안 됨
+      // 채널 없음/권한 거부가 메시지 수신을 막으면 안 됨
     }
   }
 

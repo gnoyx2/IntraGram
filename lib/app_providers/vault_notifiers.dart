@@ -14,21 +14,21 @@ final class VaultLocked extends VaultAccessState {
   const VaultLocked();
 }
 
-// 내용은 안 들고 게이트 메타데이터만 (스냅샷은 takeSnapshot으로 한 번만 씀)
+// 내용은 안 들고 게이트 메타데이터만 가짐 (스냅샷은 takeSnapshot으로 한 번만 소비함)
 final class VaultOpen extends VaultAccessState {
   const VaultOpen({required this.settings, required this.archivePreserved});
 
   final VaultSettings settings;
 
-  // 이 세션이 만들지 않은 암호화/평문 아카이브가 디스크에 있으면 true
-  // 설정 변경이나 vault 토글로 그 파일을 조용히 덮지 않게 하는 신호
+  // 이 세션이 만들지 않은 암호화/평문 아카이브가 디스크에 있으면 true임
+  // 설정 변경이나 vault 토글로 그 파일을 조용히 덮어쓰지 않게 막는 신호임
   final bool archivePreserved;
 }
 
 class VaultAccessNotifier extends Notifier<VaultAccessState> {
   int _relockGeneration = 0;
-  // takeSnapshot이 소비하면 즉시 null. VaultOpen은 안 들고 있어서
-  // provider 재생성 뒤 fireImmediately listener가 지운 내용을 재hydrate 못 함
+  // takeSnapshot이 소비하면 즉시 null이 됨. VaultOpen은 스냅샷을 들고 있지 않아서
+  // provider 재생성 뒤 fireImmediately listener가 지운 내용을 재hydrate하지 못함
   VaultSnapshot? _pendingSnapshot;
 
   // 진짜 PIN unlock 또는 PIN 보호 없음일 때만 true
@@ -57,7 +57,7 @@ class VaultAccessNotifier extends Notifier<VaultAccessState> {
       _legacyIdentityReadable = true;
       _open(snapshot, archivePreserved: snapshot != null);
     } on FileSystemException {
-      // 확인~판독 사이 디스크 실패 시 잠금 유지. 빈 세션으로 열면 기존 파일을 덮을 수 있음
+      // 확인~판독 사이 디스크 실패 시 잠금을 유지함. 빈 세션으로 열면 기존 파일을 덮을 수 있음
       if (ref.mounted) state = const VaultLocked();
     }
   }
@@ -84,7 +84,7 @@ class VaultAccessNotifier extends Notifier<VaultAccessState> {
     }
   }
 
-  // unlock이 돌려준 스냅샷을 그대로 씀. load() 재호출은 디스크 읽기 + PBKDF2 중복
+  // unlock이 돌려준 스냅샷을 그대로 씀. load()를 다시 부르면 디스크 읽기와 PBKDF2가 중복됨
   Future<bool> _unlock(String pin) async {
     final vault = ref.read(vaultProvider);
     final snap = await vault.unlock(pin);

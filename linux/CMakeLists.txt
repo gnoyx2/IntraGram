@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(runner LANGUAGES CXX)
 
-# 실행 파일 이름 (디스크에 깔리는 앱 이름)
 set(BINARY_NAME "intragram")
 # GTK 앱 ID (https://wiki.gnome.org/HowDoI/ChooseApplicationID)
 set(APPLICATION_ID "com.yonghun0310.intragram")
@@ -29,7 +28,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Profile" "Release")
 endif()
 
-# 대부분의 타깃에 거는 컴파일 설정. 플러그인도 기본으로 이 함수를 써서 옵션은 여기보다 타깃별로 더할 것
+# 대부분의 타깃에 거는 컴파일 설정. 플러그인도 기본으로 이 함수를 써서 옵션은 여기보다 타깃별로 추가해야 함
 function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_features(${TARGET} PUBLIC cxx_std_14)
   target_compile_options(${TARGET} PRIVATE -Wall -Werror)
@@ -43,7 +42,6 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
-# 앱 빌드는 runner/CMakeLists.txt
 add_subdirectory("runner")
 
 # Flutter 도구 쪽 빌드. 지우면 안 됨
@@ -56,18 +54,15 @@ set_target_properties(${BINARY_NAME}
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/intermediates_do_not_run"
 )
 
-
-# 생성된 플러그인 빌드 규칙 (플러그인을 빌드해서 앱에 붙임)
 include(flutter/generated_plugins.cmake)
 
-
-# 설치: 기본은 빌드 폴더 안에 옮길 수 있는 번들을 만드는 것뿐
+# 설치 경로를 별도로 지정하지 않으면 빌드 폴더 안에 이동 가능한 번들만 생성함
 set(BUILD_BUNDLE_DIR "${PROJECT_BINARY_DIR}/bundle")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
 endif()
 
-# 번들 폴더는 매번 비우고 시작
+# 번들 폴더는 매번 비우고 시작함
 install(CODE "
   file(REMOVE_RECURSE \"${BUILD_BUNDLE_DIR}/\")
   " COMPONENT Runtime)
@@ -90,13 +85,13 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     COMPONENT Runtime)
 endforeach(bundled_library)
 
-# 모든 패키지의 build.dart가 낸 네이티브 에셋을 복사
+# 각 패키지의 build.dart가 생성한 네이티브 에셋을 복사함
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"
    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
    COMPONENT Runtime)
 
-# 지난 설치의 낡은 파일이 안 남게 에셋 폴더는 빌드마다 통째로 다시 복사
+# 이전 빌드의 오래된 파일이 남지 않게 에셋 폴더는 빌드마다 통째로 다시 복사함
 set(FLUTTER_ASSET_DIR_NAME "flutter_assets")
 install(CODE "
   file(REMOVE_RECURSE \"${INSTALL_BUNDLE_DATA_DIR}/${FLUTTER_ASSET_DIR_NAME}\")
@@ -104,7 +99,6 @@ install(CODE "
 install(DIRECTORY "${PROJECT_BUILD_DIR}/${FLUTTER_ASSET_DIR_NAME}"
   DESTINATION "${INSTALL_BUNDLE_DATA_DIR}" COMPONENT Runtime)
 
-# AOT 라이브러리는 Debug가 아닐 때만 설치
 if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)

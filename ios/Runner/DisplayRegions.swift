@@ -32,7 +32,6 @@ final class DisplayRegionProbe: UIView {
     report()
   }
 
-  // Dart가 시작할 때 물어보는 지금 값
   var state: [String: Any] { ["status": status.rawValue, "regions": regions] }
 
   // [x, y, 폭, 높이, 활성 1·0]. 창을 덮는 뷰 기준 포인트라 Flutter 논리 픽셀과 같음

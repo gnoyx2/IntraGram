@@ -15,10 +15,10 @@ enum SystemEventKind {
   becameRoom,
   markedVerified,
   mutuallyVerified,
-  joinedRoom, // alias 필요
-  memberJoined, // alias 필요
-  memberLeft, // alias 필요
-  screenshotByPeer, // alias 필요
+  joinedRoom, // alias 필요함
+  memberJoined, // alias 필요함
+  memberLeft, // alias 필요함
+  screenshotByPeer, // alias 필요함
   screenshotByMe,
   protocolVersionMismatch,
   sasMismatch,

@@ -41,7 +41,7 @@ extension _PeerLinkSecure on PeerLink {
         online: true,
         // 인바운드면 remotePort는 accept가 본 ephemeral 포트라 hello의 진짜 리스닝 포트로 덮음 (파일 다시 밀 때 다이얼할 포트)
         peerPort: hello.port ?? c.peerPort,
-        // 방이면 peerId 안 건드림 (멤버별로 RoomMember가 들고 있음). 1:1이면 IP가 바뀌어도 재연결 때 같은 피어인지 보게 적어 둠
+        // 방이면 peerId를 변경하지 않음 (RoomMember가 각자 관리함). 1:1이면 IP가 바뀌어도 재연결 시 동일 피어인지 식별할 수 있도록 기록해 둠
         peerId: isRoomLink ? null : hello.peerId,
       ),
     );

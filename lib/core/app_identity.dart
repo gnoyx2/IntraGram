@@ -23,7 +23,7 @@ String newId() {
 }
 
 // 실행마다 새로 만드는 신원 (저장 안 해서 세션끼리 엮을 고정값이 없음). 앱 피어 링크는 키 있는 신원(create/withKey)만 됨.
-// 키 없는 생성자·generate는 화면·테스트용
+// 키 없는 생성자·generate는 화면·테스트용임
 final class AppIdentity {
   AppIdentity({
     required this._peerId,
@@ -72,7 +72,7 @@ final class AppIdentity {
   Uint8List? _publicKey;
   Uint8List? _seed;
 
-  // 패닉 소각(rotateKey) 때 바뀌니 캐시하지 말고 그때그때 읽을 것
+  // 패닉 소각(rotateKey) 때 바뀌니 캐시하지 말고 그때그때 읽어야 함
   String get peerId => _peerId;
 
   Uint8List? get publicKey => _publicKey;
@@ -95,7 +95,7 @@ final class AppIdentity {
     return Uint8List.fromList(signature.bytes);
   }
 
-  // 패닉 소각용: 같은 peerId면 소각 전후 세션이 엮여서 키를 통째로 바꿈. 새 키를 다 뽑은 뒤 한 번에 갈아끼우고
+  // 패닉 소각용: 같은 peerId면 소각 전후 세션이 엮여서 키를 통째로 바꿈. 새 키를 다 생성한 뒤 한 번에 교체하고
   // 우리가 쥔 옛 시드만 확실히 0으로 덮음 (서명 중 라이브러리가 만든 사본까진 보장 못 함)
   Future<void> rotateKey() async {
     if (_seed == null) return;
@@ -107,7 +107,7 @@ final class AppIdentity {
     old?.fillRange(0, old.length, 0);
   }
 
-  // LinkRegistry·DiscoveryController가 이 객체를 계속 쥐고 있어서 이름만 제자리에서 바꿈 (불변 규칙의 일부러 둔 예외)
+  // LinkRegistry·DiscoveryController가 이 객체를 계속 쥐고 있어서 alias를 제자리에서 바꿈 (불변 규칙에 의도적으로 둔 예외임)
   String alias;
 
   final String platform;

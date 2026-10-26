@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-// 고DPI를 아는 Win32 창 추상화. 그리기·입력을 바꾸려면 상속해서 씀
+// 고DPI를 지원하는 Win32 창 추상화임. 그리기·입력을 바꾸려면 상속해서 씀
 class Win32Window {
  public:
   struct Point {
@@ -27,7 +27,7 @@ class Win32Window {
   virtual ~Win32Window();
 
   // origin·size(논리 픽셀)로 기본 모니터에 title 창을 만듦. OS엔 물리 픽셀로 넘겨서 크기가 일정하게 기본 모니터 배율을 곱함.
-  // Show 전까진 안 보이고, 만들었으면 true
+  // Show 전까진 안 보이고, 만들었으면 true를 반환함
   bool Create(const std::wstring& title, const Point& origin, const Size& size);
 
   bool Show();
@@ -36,10 +36,10 @@ class Win32Window {
 
   void SetChildContent(HWND content);
 
-  // 아이콘 같은 창 속성을 바꿀 수 있게 창 핸들을 줌 (창이 없어졌으면 nullptr)
+  // 창 핸들을 반환함 (창이 파괴된 상태면 nullptr)
   HWND GetHandle();
 
-  // true면 이 창을 닫을 때 앱도 끝남
+  // true면 이 창을 닫을 때 앱도 함께 종료됨
   void SetQuitOnClose(bool quit_on_close);
 
   RECT GetClientArea();
@@ -51,7 +51,7 @@ class Win32Window {
                                  WPARAM const wparam,
                                  LPARAM const lparam) noexcept;
 
-  // Create 때 불림 (하위 클래스의 창 준비). 실패하면 false
+  // Create 호출 시 실행되는 하위 클래스 초기화 훅임. 실패 시 false를 반환함
   virtual bool OnCreate();
 
   virtual void OnDestroy();
@@ -67,7 +67,6 @@ class Win32Window {
 
   static Win32Window* GetThisFromHandle(HWND const window) noexcept;
 
-  // 창 테두리 테마를 시스템 테마에 맞춤
   static void UpdateTheme(HWND const window);
   static void ProtectContent(HWND const window);
 

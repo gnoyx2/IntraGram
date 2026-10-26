@@ -8,7 +8,7 @@ import 'package:intragram/widgets/action_menu.dart';
 import 'package:intragram/widgets/keyboard_access.dart';
 import 'package:intragram/widgets/peer_avatar.dart';
 
-// 회색 방패는 암호화는 됐지만 6자리 코드를 아직 안 맞춘 상태라 중간자를 못 배제함. SAS를 맞춰야 초록이 됨
+// 미검증 방패(경고색)는 암호화는 됐지만 6자리 코드를 아직 안 맞춘 상태라 중간자를 배제하지 못함. SAS를 맞춰야 초록이 됨
 class ConversationTile extends StatelessWidget {
   const ConversationTile({
     required this.conversation,
@@ -108,7 +108,7 @@ class ConversationTile extends StatelessWidget {
 
   String _subtitle(S s) {
     if (!conversation.online) return s.t('chat.status.offline');
-    // 브라우저 게스트 방은 LAN 구간이 평문
+    // 브라우저 게스트 방은 LAN 구간이 평문임
     if (conversation.isRoom && conversation.transport == PeerTransport.web) {
       return s.t('convTile.webGuestRoom');
     }

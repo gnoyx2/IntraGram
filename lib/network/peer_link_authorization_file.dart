@@ -2,8 +2,8 @@ part of 'peer_link.dart';
 
 // 파일 프레임 인가: 거부할 프레임이 중계로 새면 안 돼서 충돌·다운그레이드·mode 검사가 전부 이 입구에 있음
 extension _PeerLinkAuthorizationFile on PeerLink {
-  // 받아 줄 수 있는 offer인가: 방(공유 키 없음)은 늘 평문, 1:1은 늘 암호화 (어긋나면 다운그레이드라 거부). pull은 방이나 1:1 음성만.
-  // 같은 id 전송이 있으면 같은 발신자·같은 메타데이터의 재전송일 때만
+  // 수락 가능한 offer인지 검사함: 방(공유 키 없음)은 항상 평문, 1:1은 항상 암호화되어야 함 (어긋나면 다운그레이드로 보고 거부함). pull은 방이나 1:1 음성에서만 허용하며,
+  // 같은 id 전송이 이미 있으면 동일 발신자의 멱등 재전송일 때만 허용함
   bool _authorizeFileOffer(FileOfferInner offer) {
     final conversation = store.conversation(conversationId);
     if (conversation == null) return false;
@@ -23,7 +23,7 @@ extension _PeerLinkAuthorizationFile on PeerLink {
     } else if (_roomRole == _RoomLinkRole.localHostMember) {
       return false;
     }
-    // 웹 게스트가 밝힌 원본 주소도 자기 링크 주소여야 함 (호스트가 게스트가 고른 아무 사설 주소에서 당겨 오지 않게)
+    // 웹 게스트가 명시한 원본 주소도 자신의 링크 주소와 일치해야 함 (호스트가 게스트가 지정한 임의의 사설 주소로 요청을 보내지 못하게 막음)
     if (_roomRole == _RoomLinkRole.webGuest &&
         offer.srcHost != null &&
         offer.srcHost != remoteHost) {
@@ -48,8 +48,8 @@ extension _PeerLinkAuthorizationFile on PeerLink {
     );
   }
 
-  // 정당한 재offer인가: attempt가 같으면 멱등 재전송, 다르면 수락 전(offered)이나 실패한(failed) 전송을 새 attempt로
-  // 다시 협상할 때만 (진행 중·완료된 건 못 갈아치움)
+  // 유효한 재offer인지 확인함: attempt가 같으면 멱등 재전송이고, 다르면 수락 전(offered)이나 실패한(failed) 전송을 새 attempt로
+  // 다시 협상할 때만 허용함 (진행 중이거나 완료된 전송은 교체할 수 없음)
   bool _isReofferOfSameTransfer(
     FileTransfer existing,
     FileOfferInner offer, {
@@ -99,7 +99,7 @@ extension _PeerLinkAuthorizationFile on PeerLink {
     return false;
   }
 
-  // 호스트가 보낸 file_unavailable: 링크 상대가 이 방의 확정된 호스트이고 내 아웃고잉 전송을 가리킬 때만 통과. 나머지 위조는 다 거부하고 중계도 안 함
+  // 호스트가 보낸 file_unavailable 프레임 검사: 링크 상대가 이 방의 확정된 호스트이고 내 발신 전송을 가리킬 때만 통과시킴. 위조 프레임은 거부하고 중계하지 않음
   bool _authorizeFileUnavailable(String id) {
     if (_phase != _LinkPhase.app || _roomRole != _RoomLinkRole.remoteHost) {
       return false;
@@ -118,8 +118,8 @@ extension _PeerLinkAuthorizationFile on PeerLink {
         transfer.direction == TransferDirection.outgoing;
   }
 
-  // 호스트로서 멤버한테 받은 파일 제어 프레임이 registry가 등록한 (전송, attempt) 경로의 인증된 대상(cancel은 발신자도)한테서 왔는가.
-  // 맞으면 반대편 멤버 몫이라 로컬 dispatch 없이 중계만
+  // 호스트로서 멤버에게서 수신한 파일 제어 프레임이 등록된 (전송, attempt) 경로의 인증된 대상(cancel은 발신자 포함)에게서 왔는지 확인함.
+  // 유효하면 반대편 멤버 몫이므로 로컬 처리 없이 중계만 수행함
   bool _routedRoomFileControl(InboundInner inner) {
     if (_roomRole != _RoomLinkRole.localHostMember) return false;
     final check = authorizeRoomFileControl;

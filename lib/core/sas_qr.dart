@@ -6,7 +6,7 @@ const String _sasQrPrefix = 'intragram-sas:';
 
 String encodeSasQr(String sasDigits) => '$_sasQrPrefix$sasDigits';
 
-// 같으면 true, SAS 코드인데 숫자가 다르면 false(중간자 신호라 바로 경고), SAS 코드가 아니면 null(다른 QR이라 계속 스캔)
+// 같으면 true, SAS 코드인데 숫자가 다르면 false(중간자 신호라 바로 경고), SAS 코드가 아니면 null(다른 QR이라 계속 스캔)을 반환함
 bool? sasScanVerdict(String raw, String expectedSas) {
   final trimmed = raw.trim();
   if (!trimmed.startsWith(_sasQrPrefix)) return null;

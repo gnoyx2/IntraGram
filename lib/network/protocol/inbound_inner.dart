@@ -3,8 +3,8 @@ part of '../protocol.dart';
 sealed class InboundInner {
   const InboundInner();
 
-  // wire JSON을 타입 있는 프레임으로. 절대 안 던짐: 필드가 없거나 틀리면 MalformedInner라 호출부가 dispatch도 중계도 안 함.
-  // from은 릴레이가 붙인 표시용 alias, peerId는 인가 단계가 확정한 발신자 (웹 게스트는 alias로 대신함)
+  // wire JSON을 타입 있는 프레임으로 변환함. 예외를 던지지 않으며 필드가 없거나 틀리면 MalformedInner를 반환해 호출부가 dispatch도 중계도 하지 않음.
+  // from은 릴레이가 붙인 표시용 alias, peerId는 인가 단계가 확정한 발신자임 (웹 게스트는 alias로 대신함)
   factory InboundInner.fromJson(Map<String, dynamic> j) {
     try {
       return _parseInner(j);

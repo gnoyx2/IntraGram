@@ -1,6 +1,6 @@
 import 'dart:async';
 
-// 녹음·재생 중인 producer의 정지 콜백 모음: 패닉이 store를 태우기 전에 다 멈춤. 위젯이 ref 없는 StatefulWidget이라 provider 대신 전역 싱글턴
+// 녹음·재생 중인 producer의 정지 콜백 모음: 패닉이 스토어를 비우기 전에 다 멈춤. 위젯이 ref 없는 StatefulWidget이라 provider 대신 전역 싱글턴으로 둠
 class VoiceProducerRegistry {
   VoiceProducerRegistry._();
   static final VoiceProducerRegistry instance = VoiceProducerRegistry._();

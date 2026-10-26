@@ -25,7 +25,7 @@ class InnerFrame {
     'id': id,
   };
 
-  // SAS가 맞다고 내가 확인하면 보냄. 양쪽이 각자 보내야 검증 완료 (한쪽만이면 받는 쪽은 peerVerified만 켜짐)
+  // SAS가 일치함을 확인했을 때 전송함. 양측이 각각 보내야 검증이 완료됨 (한쪽만 보내면 수신 측은 peerVerified만 활성화됨)
   static Map<String, dynamic> verify() => <String, dynamic>{'k': 'verify'};
 
   // hello는 한 번뿐이라 연결된 상대는 이걸로만 새 이름을 앎. peerId가 바꾼 사람 것이라 방에서 그대로 중계돼도 누구 이름인지 앎
@@ -120,7 +120,7 @@ class InnerFrame {
     if (enc) 'ec': true,
   };
 
-  // token은 push 수신자가 새로 만든 32바이트 난수 (보내는 쪽이 POST 인가에 실음). 암호화된 링크로만 감 (1:1 전용)
+  // token은 push 수신자가 발급한 32바이트 난수임 (보내는 쪽이 POST 인가 헤더에 실음)
   static Map<String, dynamic> fileAccept(
     String id, {
     required String attempt,
@@ -148,7 +148,7 @@ class InnerFrame {
       <String, dynamic>{'k': 'file_retry', 'id': id, 'at': attempt};
 
   // 길이·AEAD 검증과 커밋(또는 RAM 이전)까지 끝난 뒤 한 번 보냄. attempt로 받은 시도를 못박아서 옛 시도의 늦은 ACK가 새 시도를 완료 못 시킴.
-  // rc는 선택: 받는 쪽 신원 키로 서명한 수신 영수증 (옛 앱은 없이 보내고 받는 쪽도 없으면 ACK로만 씀)
+  // rc는 선택 사항임: 수신 측 신원 키로 서명한 수신 영수증임 (구버전 앱은 영수증 없이 전송하며 없으면 ACK로만 처리함)
   static Map<String, dynamic> fileReceived(
     String id, {
     required String attempt,

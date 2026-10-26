@@ -5,7 +5,7 @@ import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/network/server_controller.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 서버를 못 띄운 이유(server.problem)를 번역해서 (제목, 본문)으로. 포털 시트도 같은 문구를 씀
+// 서버를 못 띄운 이유(server.problem)를 번역해서 (제목, 본문)으로 돌려줌. 포털 시트도 같은 문구를 씀
 (String, String) serverProblemText(S s, ServerState server) =>
     switch (server.problem) {
       ServerProblem.localNetworkDenied => (
@@ -66,7 +66,7 @@ class ErrorBanner extends StatelessWidget {
                     color: scheme.onErrorContainer,
                   ),
                 ),
-                // 원문 예외는 헤드라인 대신 '자세히 보기' 안에 (복사 가능)
+                // 원문 예외는 헤드라인 대신 '자세히 보기' 안에 둠 (복사 가능)
                 if (server.problem == ServerProblem.failed &&
                     server.error != null)
                   _RawError(server.error!, color: scheme.onErrorContainer),
@@ -140,7 +140,7 @@ class SectionHeader extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // 스크린 리더가 구역 제목으로 건너뛸 수 있게 헤딩 표시
+          // 스크린 리더가 구역 제목으로 건너뛸 수 있게 헤딩으로 표시함
           final title = Semantics(
             header: true,
             child: Text(label, style: Theme.of(context).textTheme.titleSmall),

@@ -55,7 +55,7 @@ class _ScannerViewState extends State<ScannerView> with WidgetsBindingObserver {
   bool _disposed = false;
   DateTime _lastFrame = DateTime.fromMillisecondsSinceEpoch(0);
 
-  // 앱이 앞에 있는지, 그리고 권한 창(비활성)만이 아니라 앱을 떠났다 왔는지 (설정에서 권한을 켤 기회)
+  // 앱이 포그라운드에 있는지, 권한 창(비활성)만이 아니라 앱을 벗어났다 복귀했는지 여부 (설정에서 권한을 켤 기회임)
   bool _foreground = true;
   bool _wentAway = false;
 

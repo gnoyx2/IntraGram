@@ -18,8 +18,8 @@ import 'support/in_memory_store_fixtures.dart';
 import 'support/panic_fakes.dart';
 import 'support/test_identities.dart';
 
-// 패닉 시퀀스의 순서/타임아웃/admission 불변식: 각 정지 단계를 테스트가 Completer로
-// 직접 쥐고 있어서 진짜 시간/플랫폼 채널에 안 기대고 결정적으로 돎
+// 패닉 시퀀스의 개별 단계 계약: 포그라운드 서비스 정지 미확인 보고, 실행 중 음성 입력 차단 및
+// 종료 후 재개(admission), 활성 파일 수신 중 패닉 시 .part 정리 (순서/타임아웃은 panic_wipe_test.dart)
 
 class _NoVault extends Vault {
   @override

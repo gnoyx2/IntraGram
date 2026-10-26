@@ -73,7 +73,7 @@ mixin _LinkRegistryConnect
       return;
     }
     try {
-      // 아직 앱인지 브라우저인지 몰라서 host로 못 합침 (한 PC의 탭 여럿은 정상). 앱 재연결 중복은 hello 뒤 _mergeDuplicateHost가 처리
+      // 아직 앱인지 브라우저인지 알 수 없어 host로 합치지 못함 (한 PC의 여러 탭은 정상임). 앱 재연결 중복은 hello 수신 후 _mergeDuplicateHost가 처리함
       final conversationId = newId();
       store.upsertConversation(
         Conversation(

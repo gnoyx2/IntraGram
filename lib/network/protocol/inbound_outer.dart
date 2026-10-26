@@ -3,7 +3,7 @@ part of '../protocol.dart';
 sealed class InboundOuter {
   const InboundOuter();
 
-  // 나쁜 프레임 하나가 링크를 못 죽이게 안 던지고 MalformedOuter를 돌려줌
+  // 비정상 프레임으로 링크가 종료되지 않도록 예외를 던지지 않고 MalformedOuter를 반환함
   factory InboundOuter.parse(String raw) {
     try {
       final j = jsonDecode(raw);
@@ -19,7 +19,7 @@ sealed class InboundOuter {
           // peerId는 방 명단(peers)에 그대로 실려 다른 멤버의 엄격 파서를 통과해야 해서 형식이 틀리면 핸드셰이크 전에 버림 (링크는 워치독이 닫음)
           final peerId = wireId(j['peerId']);
           if (peerId == null) return const MalformedOuter('hello peerId');
-          // 신원 공개키는 필수. 서명은 리스너 hello에만 있고, 있는데 틀리면 거부
+          // 신원 공개키는 필수임. 서명은 리스너 hello에만 존재하며 형식이 맞지 않으면 거부함
           final identityKey = wireBytes(j['idk'], length: 32);
           if (identityKey == null) return const MalformedOuter('hello idk');
           final signature = wireBytes(j['sig'], length: 64);
@@ -96,10 +96,10 @@ class HelloOuter extends InboundOuter {
   final String alias;
   final String platform;
 
-  // 상대가 밝힌 신원 공개키(32바이트). peerId가 그 해시여야 통과
+  // 상대가 밝힌 신원 공개키(32바이트)임. peerId가 해당 공개키의 해시여야 통과함
   final Uint8List identityKey;
 
-  // 리스너의 X25519 임시키. 다이얼러는 대신 commitment를 보내고 임시키는 auth에서 공개
+  // 리스너의 X25519 임시키임. 다이얼러는 대신 commitment를 보내고 임시키는 auth에서 공개함
   final Uint8List? ephemeralKey;
   final Uint8List? commitment;
 
@@ -122,7 +122,7 @@ class WebHelloOuter extends InboundOuter {
   final String? token;
 }
 
-// hello/web_hello 버전이 kProtocolVersion과 정확히 같지 않음 (없거나 옛 버전 다 여기). 평문으로 계속하는 척 안 하고 안내 뒤 닫음
+// hello/web_hello 버전이 kProtocolVersion과 일치하지 않는 경우임. 호환되지 않는 연결은 안내 후 닫음
 class VersionMismatchOuter extends InboundOuter {
   const VersionMismatchOuter({required this.peerVersion});
   final String peerVersion;

@@ -1,6 +1,6 @@
 part of '../vault.dart';
 
-// PIN 봉인(PBKDF2 키 + ChaCha20-Poly1305)과 duress PIN 확인
+// PIN 봉인(PBKDF2 키 + ChaCha20-Poly1305)과 duress PIN을 확인함
 extension _VaultCrypto on Vault {
   void _clearKey() {
     _keyGeneration++;
@@ -154,7 +154,7 @@ Future<List<int>> _dchkFromKey(List<int> pbkdf2Out) async {
   return key.extractBytes();
 }
 
-// iter는 현행 200k나 옛 100k만 받음: 조작한 횟수로 KDF 비용을 낮추거나 읽기를 하염없이 묶지 못하게
+// iter는 현행 200k나 옛 100k만 받음: 조작한 횟수로 KDF 비용을 낮추거나 읽기를 하염없이 묶지 못하게 함
 int _requireSupportedIterations(Object? rawIter) {
   if (rawIter is! int ||
       (rawIter != kVaultPbkdf2Iterations &&

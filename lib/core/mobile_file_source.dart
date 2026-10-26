@@ -24,7 +24,7 @@ final class MobileFileSource {
 
   Future<void>? _releasing;
 
-  // 메타데이터만 받고 바이트는 openRead 때 읽음. 취소하면 빈 리스트
+  // 메타데이터만 받고 바이트는 openRead 때 읽음. 취소하면 빈 리스트를 반환함
   static Future<List<MobileFileSource>> pick({bool imagesOnly = false}) async {
     final generation = _generation;
     final raw = await _channel.invokeMethod<List<Object?>>('pick', {

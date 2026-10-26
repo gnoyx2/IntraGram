@@ -6,7 +6,7 @@ import 'package:intragram/store/models.dart';
 import 'support/member_room_rig.dart';
 
 // 방 멤버가 낸 파일의 명단(수신자 목록)과 정직한 실패: 명단 갱신, 서버 주소·호스트 링크·
-// 명단을 못 믿을 때의 실패, 호스트가 살아있는 멤버한테 못 넘긴 offer, 표시 이름
+// 명단을 못 믿을 때의 실패, 상한 초과 썸네일 거부, 중복 링크 최신 우선, 표시 이름
 void main() {
   final m1 = MemberRoomRig.memberId(0);
   final m2 = MemberRoomRig.memberId(1);
@@ -86,8 +86,8 @@ void main() {
     'an offer whose thumbnail is over the wire cap never reaches the member',
     () async {
       final r = await MemberRoomRig.create();
-      // 수락 전 썸네일은 kMaxThumbBytes까지만. 넘으면 호스트가 파싱에서 버려 중계도 경로도 없음
-      // (중계 실패 자체는 member_room_delivery_failure_test가 fault 주입으로 봄)
+      // 수락 전 썸네일은 kMaxThumbBytes까지만 허용하며 초과 시 호스트가 파싱에서 버려 중계도 경로도 없음
+      // (offer 중계 실패 자체는 member_room_offer_failure_test가 fault 주입으로 검증함)
       r.senderStore.largeMessageMode = LargeMessageMode.unlimited;
       await r.rawOffer(
         id: 'big',

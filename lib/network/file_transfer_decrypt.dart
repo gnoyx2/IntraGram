@@ -120,8 +120,8 @@ class _RecordReader {
   }
 }
 
-// encryptChunks의 역. 조각이 어떻게 오든 _RecordReader가 다시 맞추고 open으로 품. tag가 틀리면 바로 던지고 그 뒤 평문은 안 내보냄.
-// 레코드 수·길이가 약속과 다르면 FormatException. 구독 취소는 소스에 바로 넘어감 (async*처럼 await에 안 막힘)
+// encryptChunks의 역과정임. 조각이 어떻게 오든 _RecordReader가 다시 맞추고 open으로 풂. tag가 틀리면 바로 예외를 던지고 그 뒤 평문은 내보내지 않음.
+// 레코드 수·길이가 약속과 다르면 FormatException을 던짐. 구독 취소는 소스에 바로 넘어감 (async*처럼 await에 안 막힘)
 Stream<List<int>> decryptChunks(
   Stream<List<int>> wire,
   OpenChunk open, {

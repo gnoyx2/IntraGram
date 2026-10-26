@@ -9,7 +9,7 @@ plugins {
 // 릴리즈 서명 키는 저장소에 없음. android/key.properties(gitignore됨)에 storeFile·storePassword·keyAlias·keyPassword가
 // 있을 때만 릴리즈 키로 서명함. 키 없이 release를 만들면 debug 서명 산출물이 release 이름으로 나와 배포본으로 착각할 수 있어서
 // 빌드를 멈춤. 시험용 debug 서명 release가 필요하면 allowDebugSigning 속성을 줌 (ORG_GRADLE_PROJECT_allowDebugSigning=true).
-// 절차와 검증은 RELEASING.md
+// 절차와 검증은 RELEASING.md에 있음
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }
@@ -75,7 +75,7 @@ kotlin {
 }
 
 dependencies {
-    // flutter_local_notifications 18.0.1 설정 안내대로 1.2.2. 함부로 안 올림
+    // flutter_local_notifications 18.0.1 설정 안내에 맞춰 1.2.2로 고정함 (임의로 올리지 않음)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.2.2")
 }
 

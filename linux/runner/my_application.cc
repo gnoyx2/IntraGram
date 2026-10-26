@@ -57,7 +57,7 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_default_size(window, 1100, 760);
   // 최소 420x560 논리 픽셀: 두 줄 채팅 앱바 제목과 오른쪽 액션, 오프라인 배너, 말풍선 3개, 입력창이
-  // 글자 배율 1.0에서 안 찌그러지는 최소치
+  // 글자 배율 1.0에서 안 찌그러지는 최소치임
   GdkGeometry geometry;
   geometry.min_width = 420;
   geometry.min_height = 560;
@@ -86,7 +86,7 @@ static gboolean my_application_local_command_line(GApplication* application,
                                                   gchar*** arguments,
                                                   int* exit_status) {
   MyApplication* self = MY_APPLICATION(application);
-  // 첫 인자는 실행 파일 이름이라 뺌
+  // 첫 인자는 실행 파일 이름이라 제외함
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
   g_autoptr(GError) error = nullptr;

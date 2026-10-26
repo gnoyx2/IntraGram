@@ -16,8 +16,8 @@ typedef _OfInt2 = int Function(int, int);
 typedef _OfName = IntPtr Function(Pointer<Utf16>, Pointer<Utf16>);
 typedef _OfNameDart = int Function(Pointer<Utf16>, Pointer<Utf16>);
 
-// 쓰는 user32·kernel32 함수만 묶음. 소유 창은 Flutter 러너 창 (hwnd 없이 열면 SetClipboardData가 실패함).
-// 테스트는 Windows 클립보드 동작을 흉내 낸 모형으로 바꿔 끼움
+// 필요한 user32·kernel32 함수만 묶음. 소유 창은 Flutter 러너 창을 씀 (hwnd 없이 열면 SetClipboardData가 실패함).
+// 테스트에서는 Windows 클립보드 동작을 흉내 낸 모형으로 교체함
 class User32 {
   User32()
     : _user32 = DynamicLibrary.open('user32.dll'),
@@ -86,7 +86,7 @@ class User32 {
   void globalUnlock(int handle) =>
       _kernel32.lookupFunction<_BoolOf, _OfInt>('GlobalUnlock')(handle);
 
-  // 성공하면 메모리는 시스템 것이 됨. 실패하면 직접 풂
+  // 성공하면 메모리 소유권이 시스템으로 넘어감. 실패하면 직접 해제함
   bool put(int format, Uint8List bytes) {
     final handle = _kernel32.lookupFunction<_Alloc, _OfInt2>('GlobalAlloc')(
       WindowsClipboard._gmemMoveable,

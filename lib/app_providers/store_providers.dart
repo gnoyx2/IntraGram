@@ -19,7 +19,7 @@ final inMemoryStoreProvider = Provider<InMemoryStore>((ref) {
     // settings는 metadata라 보관소 on/off와 무관하게 항상 적용됨
     store.largeMessageMode = next.settings.largeMessageMode;
     store.onlyChatsIStart = next.settings.onlyChatsIStart;
-    // 스냅샷은 한 번만 소비. invalidate로 재빌드돼도 null이라 재hydrate 안 됨
+    // 스냅샷은 한 번만 소비함. invalidate로 재빌드돼도 null이라 재hydrate 안 됨
     final snap = ref.read(vaultAccessProvider.notifier).takeSnapshot();
     if (snap != null && next.settings.enabled) store.hydrate(snap);
   }, fireImmediately: true);
@@ -41,8 +41,8 @@ final roomMessagesProvider =
       (ref, id) => ref.watch(inMemoryStoreProvider).watchRoom(id),
     );
 
-// 원본이 소각·삭제되면 null (UI는 삭제된 메시지로 보여 줌)
-// 방 스트림은 갱신 신호로만 쓰고 조회는 스토어 인덱스로 O(1). 값이 같으면(==) 구독자에 안 알림
+// 원본이 소각·삭제되면 null을 반환함 (UI는 삭제된 메시지로 보여 줌)
+// 방 스트림은 갱신 신호로만 쓰고 조회는 스토어 인덱스로 O(1)에 처리함. 값이 같으면(==) 구독자에 안 알림
 final messageByIdProvider =
     Provider.family<
       EphemeralMessage?,

@@ -27,8 +27,8 @@ Future<bool> openSettings(SettingsPane pane) async {
   }
 }
 
-// iOS는 앱 설정 화면(스위치가 다 있음), macOS는 개인정보 보호 해당 항목, Windows는 마이크·카메라 화면이고
-// 로컬 네트워크 자리엔 네트워크 프로필 화면 (새 Wi-Fi가 공용이면 방화벽이 들어오는 연결을 막아서). Linux는 열 화면 없음
+// iOS는 앱 설정 화면(스위치가 다 있음), macOS는 개인정보 보호 해당 항목, Windows는 마이크·카메라 화면과
+// 네트워크 프로필 화면(새 Wi-Fi가 공용이면 방화벽이 수신 연결을 막기 때문)을 엶. Linux는 열 화면 없음
 @visibleForTesting
 Uri? settingsUriFor(TargetPlatform os, SettingsPane pane) => switch (os) {
   TargetPlatform.iOS => Uri.parse('app-settings:'),

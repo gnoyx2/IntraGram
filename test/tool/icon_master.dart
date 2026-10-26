@@ -1,6 +1,6 @@
 // 아이콘 마스터 생성기. _test 접미사가 없어 일반 테스트 실행에는 안 잡힘
 // flutter test test/tool/icon_master.dart && ./tool/gen_icons.sh
-// build/icon_master/에 1024px PNG 여섯 장과 작은 PNG 세 장을 쓰고 gen_icons.sh가 플랫폼별로 줄임
+// build/icon_master/에 1024px PNG 일곱 장과 작은 PNG 세 장을 쓰고 gen_icons.sh가 플랫폼별로 줄임
 // - master_full: 풀블리드 배경 + 마크 (Android 레거시, iOS. 모서리는 OS가 깎음)
 // - master_macos: Big Sur 스퀘어클 플레이트 + 투명 여백 (macOS, Linux)
 // - master_windows: 캔버스를 거의 채우는 스퀘어클 플레이트 (Windows 48px 이상)

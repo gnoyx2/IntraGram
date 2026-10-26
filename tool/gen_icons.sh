@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # macOS sips·Swift·Dart로 아이콘과 실행 화면 표시를 만듦.
 # 먼저 flutter test test/tool/icon_master.dart를 실행해야 함.
-# test/tool/icon_master.dart를 바꾸면 다시 실행함.
+# test/tool/icon_master.dart를 바꾸면 다시 실행해야 함.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -114,7 +114,7 @@ mkdir -p linux/icons/hicolor/512x512/apps
 sips -z 512 512 "$MASTER_MACOS" --out "linux/icons/hicolor/512x512/apps/intragram.png" >/dev/null
 
 echo "== iOS launch mark =="
-# 라이트 외형은 흰 바탕이라 밝은 마크가 안 보여서 남색 판째(macOS 마스터), 다크 외형은 투명 마크
+# 라이트 외형은 흰 바탕에서 밝은 마크가 보이지 않아 남색 판이 포함된 macOS 마스터를 쓰고, 다크 외형은 투명 마크를 씀
 LAUNCH_DIR="ios/Runner/Assets.xcassets/LaunchImage.imageset"
 for pair in ":168" "@2x:336" "@3x:504"; do
   suffix=${pair%%:*}; size=${pair##*:}

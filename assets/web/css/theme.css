@@ -1,7 +1,6 @@
-/* 웹 게스트 클라이언트 색 토큰.
-   lib/theme/color_schemes.dart·app_theme.dart(AppPalette/ChatColors/ColorScheme,
-   AppRadius/AppSpacing)와 같은 값이라 웹 게스트도 네이티브 앱과 같은 제품으로 보임.
-   라이트 값은 :root, 다크 값은 prefers-color-scheme 아래. 페이지 안 테마 전환이 없어 OS 설정만 따름 */
+/* 웹 게스트 클라이언트 색·간격·반경 토큰.
+   lib/theme/color_schemes.dart·app_theme.dart와 값을 맞춰 네이티브 앱과 동일한 대비·배치를 유지함.
+   라이트 값은 :root에, 다크 값은 prefers-color-scheme 아래에 두며 OS 설정만 따름 */
 :root {
   color-scheme: light dark;
 

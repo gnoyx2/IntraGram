@@ -143,8 +143,8 @@ void main() {
     });
 
     test('a traversal-laden name still resolves inside the directory', () {
-      // safeBasename가 이미 '../'를 지우지만, resolveWithin 자체도 독립
-      // 레이어라: 이 조합이 어떤 입력으로도 디렉토리를 못 벗어남을 증명함
+      // safeBasename이 이미 '../'를 지우고 resolveWithin도 경로가 대상 디렉터리 안인지 다시 검사하므로
+      // 상위 이동 문자열이 섞인 이름도 대상 디렉터리 안으로만 해석됨
       final resolved = resolveWithin(dir.path, '../../../etc/passwd');
       expect(p.isWithin(p.normalize(p.absolute(dir.path)), resolved), isTrue);
     });

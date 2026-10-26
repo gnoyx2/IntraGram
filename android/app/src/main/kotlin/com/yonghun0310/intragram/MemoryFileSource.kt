@@ -66,7 +66,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
             addCategory(Intent.CATEGORY_OPENABLE)
             type = if (imagesOnly) "image/*" else "*/*"
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            // 클라우드 전용(기기에 안 받은) 문서는 목록에서 미리 거름: 첨부가 몰래 네트워크 다운로드를 일으키면 안 됨
+            // 클라우드 전용(기기에 안 받은) 문서는 목록에서 미리 거름: 첨부가 네트워크 다운로드를 일으키면 안 됨
             putExtra(Intent.EXTRA_LOCAL_ONLY, true)
         }
         try {
@@ -77,7 +77,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
         }
     }
 
-    // MainActivity.onActivityResult가 부름. 이 채널 요청이면 true
+    // MainActivity.onActivityResult가 호출함. 이 채널 요청이면 true를 반환함
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode != REQUEST_CODE) return false
         val result = pendingPick ?: return true
@@ -147,7 +147,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
                     try {
                         stream?.close()
                     } catch (e: Exception) {
-                        // 되면 좋고 안 되면 말고
+                        // 닫기 실패는 무시함
                     }
                     result.error("released", "source was released during open", null)
                 } else if (stream == null) {
@@ -191,7 +191,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
                 try {
                     stream.close()
                 } catch (e: Exception) {
-                    // 되면 좋고 안 되면 말고
+                    // 닫기 실패는 무시함
                 }
             }
         }
@@ -213,7 +213,7 @@ class MemoryFileSource(private val activity: Activity, messenger: BinaryMessenge
                 try {
                     it.close()
                 } catch (e: Exception) {
-                    // 되면 좋고 안 되면 말고
+                    // 닫기 실패는 무시함
                 }
             }
         }

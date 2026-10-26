@@ -34,7 +34,7 @@ class IdentityStore {
     }
   }
 
-  // .tmp에 쓰고 rename (중간에 죽어도 기존 파일 보존)
+  // .tmp에 쓰고 rename함 (도중에 비정상 종료돼도 기존 파일이 보존됨)
   Future<void> saveAlias(String alias) async {
     try {
       final file = await _file();
@@ -46,9 +46,9 @@ class IdentityStore {
       );
       await tmp.rename(file.path);
     } on FileSystemException {
-      // 권한·디스크 문제면 그냥 포기 (편의 기능이라)
+      // 권한·디스크 문제 시 저장을 건너뜀 (편의 기능임)
     } on MissingPluginException {
-      // 테스트 환경 (플랫폼 채널 없음)
+      // 플랫폼 채널이 없는 테스트 환경임
     }
   }
 

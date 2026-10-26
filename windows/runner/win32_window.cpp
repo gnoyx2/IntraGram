@@ -26,17 +26,15 @@ namespace {
 
 constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
 
-// 앱 테마 설정 레지스트리 키. 0이면 다크 모드, 0이 아니거나 없으면 라이트 모드
+// 앱 테마 설정 레지스트리 키. 0이면 다크 모드, 0이 아니거나 없으면 라이트 모드임
 constexpr const wchar_t kGetPreferredBrightnessRegKey[] =
   L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
 constexpr const wchar_t kGetPreferredBrightnessRegValue[] = L"AppsUseLightTheme";
 
-// 지금 살아 있는 Win32Window 수
 static int g_active_window_count = 0;
 
 }  // namespace
 
-// Win32Window의 창 클래스 등록을 맡음
 class WindowClassRegistrar {
  public:
   ~WindowClassRegistrar() = default;
@@ -48,10 +46,10 @@ class WindowClassRegistrar {
     return instance_;
   }
 
-  // 창 클래스 이름을 줌 (아직 등록 안 됐으면 등록부터)
+  // 창 클래스 이름을 반환함 (미등록 상태면 등록 먼저 수행)
   const wchar_t* GetWindowClass();
 
-  // 창 클래스 등록을 풂. 창이 하나도 없을 때만 부를 것
+  // 창 클래스 등록을 해제함. 창이 하나도 없을 때만 호출해야 함
   void UnregisterWindowClass();
 
  private:
@@ -171,12 +169,10 @@ void Win32Window::SetQuitOnClose(bool quit_on_close) {
 }
 
 bool Win32Window::OnCreate() {
-  // 하위 클래스용 빈 구현
   return true;
 }
 
 void Win32Window::OnDestroy() {
-  // 하위 클래스용 빈 구현
 }
 
 int Win32Window::Scale(int source, double scale_factor) {
@@ -212,10 +208,9 @@ void Win32Window::UpdateTheme(HWND const window) {
 }
 
 void Win32Window::ProtectContent(HWND const window) {
-  // Best effort for supported Windows capture APIs; DWM is not a security boundary.
-  // A failure (for example without DWM composition) goes to the console that
-  // main.cpp attaches for flutter run/debuggers, once per change, with the error
-  // code only: no file is written and nothing reports the window as protected.
+  // 지원되는 Windows 캡처 API에 대한 최선의 시도(best effort)이며, DWM은 보안 경계가 아님.
+  // 실패 시(예: DWM 컴포지션 미사용) main.cpp가 flutter run/디버거용으로 연결한 콘솔에
+  // 오류 코드만 1회 출력됨. 별도 파일을 기록하지 않으며 창이 보호된 것으로 보고하지도 않음
   static DWORD last_error = ERROR_SUCCESS;
   const DWORD error = SetWindowDisplayAffinity(window, WDA_EXCLUDEFROMCAPTURE)
                           ? ERROR_SUCCESS

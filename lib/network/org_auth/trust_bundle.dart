@@ -96,7 +96,7 @@ Future<({AppIdentity issuer, TrustBundle bundle})> _demoIssuer() =>
 
 Future<TrustBundle> demoTrustBundle() async => (await _demoIssuer()).bundle;
 
-// 지금 실행의 신원 키에 시연용 자격을 발급함. 만료는 짧게 (실행이 끝나면 키째 사라지지만 오래 켜 둔 기기도 고려)
+// 지금 실행의 신원 키에 시연용 자격을 발급함. 만료 기간은 짧게 둠 (실행 종료 시 키와 함께 소멸하지만 장시간 구동 기기도 고려함)
 Future<OrgCredential> issueDemoCredential(
   AppIdentity holder, {
   required String org,

@@ -30,7 +30,7 @@ extension _IncomingCleanup on IncomingTransfers {
   void _releasePartial(String transferId, String attemptId) =>
       _activePartials.remove(_partialKey(transferId, attemptId));
 
-  // 이 시도를 계속해도 되나: 정리됐거나 전송이 사라졌거나 attempt가 바뀌면 false. await마다 뒤에서 불러서 늦은 결과가 끝난 세션에 .part를 못 만들게 함
+  // 해당 시도를 계속 진행할 수 있는지 확인함: 세션이 종료되었거나 전송이 소멸했거나 attempt가 변경되면 false를 반환함. await 직후 호출하여 지연된 비동기 작업이 유효하지 않은 세션에 .part 파일을 생성하지 않도록 방지함
   bool _isCurrent(String transferId, String attemptId) {
     if (_closed) return false;
     final transfer = store.transfer(transferId);
@@ -41,7 +41,7 @@ extension _IncomingCleanup on IncomingTransfers {
             transfer.state == TransferState.transferring);
   }
 
-  // 그 전송의 .part를 끝까지 다 지움 (하나가 실패해도 계속). 못 지운 건 남겨서 다음 정리가 다시 하고 TransferCleanupException
+  // 해당 전송의 .part 파일을 모두 삭제함 (단일 삭제가 실패해도 계속 진행함). 삭제에 실패한 파일은 목록에 남겨 후속 정리 작업에서 재시도하며 TransferCleanupException을 던짐
   Future<void> _deleteOwnedPartials(String transferId) async {
     final failures = <Object>[];
     final owned = _activePartials.entries

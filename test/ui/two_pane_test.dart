@@ -69,7 +69,7 @@ void main() {
       greaterThanOrEqualTo(360),
     );
 
-    // Esc는 오른쪽 창의 대화만 닫고 목록은 그대로
+    // Esc는 오른쪽 창의 대화만 닫고 목록은 그대로 둠
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await _settle(tester);
     expect(find.byType(ChatRoomScreen), findsNothing);

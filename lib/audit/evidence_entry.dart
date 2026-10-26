@@ -73,7 +73,7 @@ final class MerkleBatch {
   );
 }
 
-// 내가 증인으로 본 남의 배치. 같은 기기·번호에 다른 루트가 오면 conflict (그 기기가 원장을 바꿔 보여 준 것)
+// 내가 증인으로 관측한 상대 기기의 배치. 같은 기기·번호에 다른 루트가 오면 conflict가 true가 됨 (상대 기기가 원장을 바꿔 제시함)
 @immutable
 final class WitnessRecord {
   const WitnessRecord({

@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-// 시작·패닉 때 앱 전용 임시·캐시 폴더를 비움: 플러그인이 남긴 사본(공유 시트·파일 선택·드래그 등)이 평문으로 안 남게.
-// Windows·Linux 임시 폴더는 공용이라 안 건드림. 못 지운 게 있으면 끝까지 돈 뒤 던짐
+// 시작 및 패닉 시 앱 전용 임시·캐시 디렉터리를 비움 (플러그인이 남긴 공유 시트·파일 선택·드래그 등의 사본이 평문으로 남지 않게 함).
+// Windows·Linux 임시 폴더는 공용 경로라 정리 대상에서 제외함. 삭제 실패 항목이 있으면 전체 순회 완료 후 예외를 발생시킴
 Future<void> sweepAppTemp({List<Directory>? tempDirs, bool? appPrivate}) async {
   final private =
       appPrivate ??
@@ -40,7 +40,7 @@ List<Directory> tempDirsFor(Directory pluginTemp, {required bool apple}) => [
   if (apple) Directory.systemTemp,
 ];
 
-// macOS는 샌드박스일 때만 tmp/가 이 앱 것 (아니면 사용자 공용 $TMPDIR)
+// macOS는 샌드박스일 때만 tmp/가 앱 전용 경로임 (아니면 사용자 공용 $TMPDIR)
 @visibleForTesting
 bool tempIsAppPrivate(String os, Map<String, String> env) => switch (os) {
   'ios' || 'android' => true,

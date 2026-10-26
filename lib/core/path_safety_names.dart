@@ -2,7 +2,7 @@ import 'dart:convert';
 
 const int kMaxBasenameBytes = 200;
 
-// 확장자를 길게 만들어 이름 예산을 다 먹는 걸 막음
+// 확장자를 길게 만들어 이름 바이트 예산을 모두 차지하는 것을 막음
 const int kMaxExtensionBytes = 32;
 
 const Set<String> _kWindowsReservedStems = <String>{

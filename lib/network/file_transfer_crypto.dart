@@ -29,7 +29,7 @@ typedef OpenChunk =
 const int _kLengthPrefixBytes = 4;
 const int _kNonceBytes = 12;
 const int _kMacBytes = 16;
-const int _kMinRecordBody = _kNonceBytes + _kMacBytes; // 빈 ciphertext 허용
+const int _kMinRecordBody = _kNonceBytes + _kMacBytes; // AEAD 최소 오버헤드 하한
 
 // 기대 레코드 수. 빈 파일이면 0개
 int _expectedChunkCount(int totalBytes) {
@@ -65,8 +65,7 @@ Uint8List _chunkAad({
   ),
 );
 
-// 고정 크기로 다시 잘라 조각마다 봉인해 길이-접두 레코드로 내보냄. 다 돌고 나서 평문 총합이 totalBytes와 다르면 던짐
-// (offer 뒤에 로컬 파일이 바뀐 걸 wire로 나가기 전에 잡음)
+// 고정 크기로 다시 잘라 조각마다 봉인해 길이-접두 레코드로 내보냄. 다 돌고 나서 평문 총합이 totalBytes와 다르면 예외를 던져 정상 완료 전 스트림을 중단함
 Stream<List<int>> encryptChunks(
   Stream<List<int>> plain,
   SealChunk seal, {
@@ -109,7 +108,7 @@ Stream<List<int>> encryptChunks(
   }
 }
 
-// 암호화했을 때 wire에 나가는 총 바이트 (형식이 결정적이라 미리 계산됨). send()가 Content-Length로 씀: 평문 크기로 잘못 선언해 끊기던 버그 방지
+// 암호화했을 때 wire에 나가는 총 바이트 (형식이 결정적이라 미리 계산됨). send()가 Content-Length로 씀: 평문 크기로 잘못 선언해 끊기던 문제를 방지함
 int encryptedFileLength(int plaintextSize) {
   if (plaintextSize <= 0) return 0;
   const recordOverhead = _kLengthPrefixBytes + _kNonceBytes + _kMacBytes;

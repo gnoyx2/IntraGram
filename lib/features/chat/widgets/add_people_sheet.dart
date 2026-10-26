@@ -43,7 +43,7 @@ class _AddPeopleSheetState extends ConsumerState<_AddPeopleSheet> {
         .watch(discoveryControllerProvider)
         .where((p) => !(members?.containsKey(p.peerId) ?? false))
         .toList();
-    // 시트 전체가 스크롤됨: 작은 플로팅 창·큰 글씨에서 빈 상태 그림이나 버튼이 시트 밖으로 넘치지 않게
+    // 시트 전체가 스크롤됨: 작은 플로팅 창·큰 글씨에서 빈 상태 그림이나 버튼이 시트 밖으로 넘치지 않게 함
     return SafeArea(
       child: ListView(
         shrinkWrap: true,

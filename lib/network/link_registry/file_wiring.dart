@@ -28,7 +28,7 @@ mixin _LinkRegistryFileWiring on _LinkRegistryState {
       );
     };
     link.onFileCancelled = (transferId, attemptId, actor) {
-      // 방향을 몰라서 둘 다 부르고 각자 자기 것 아니면 조용히 무시
+      // 방향을 알 수 없어 둘 다 호출하고 각자 자신의 전송이 아니면 조용히 무시함
       _transfers.outgoing.handleCancelledByPeer(
         transferId,
         attemptId: attemptId,

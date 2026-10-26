@@ -136,7 +136,7 @@ void main() {
       expect(rig.store.conversations, isEmpty);
       expect(conn.closed(), isTrue);
 
-      // 이제 정상: 자리가 새지 않았음
+      // 정상 세션 생성으로 복구: 슬롯이 누수되지 않았는지 확인함
       rig.registry.debugCreateSession = rig.engine.createSession;
       for (var i = 0; i < kMaxPendingHandshakesPerHost; i++) {
         final ok = rig.connect('192.168.1.66', 6000 + i);

@@ -65,7 +65,7 @@ class PacatVoiceClip extends PolledVoiceClip {
       _exited = true;
       return;
     }
-    // 끝까지 못 가고 죽음: 들은 데까지 기억하고, PulseAudio였으면 그 자리부터 PipeWire로 한 번만 다시 띄움
+    // 재생 도중 비정상 종료됨: 들은 위치까지 기록하고, PulseAudio였으면 그 자리부터 PipeWire로 한 번만 다시 띄움
     _offset = _playedBytes();
     _clock
       ..stop()

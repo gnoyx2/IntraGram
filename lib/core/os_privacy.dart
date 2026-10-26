@@ -28,7 +28,7 @@ abstract final class OsPrivacy {
   static Future<void> refreshAccessibility() =>
       _PrivacyAccessibility.refreshAll();
 
-  // 요청은 세션당 한 번. 거부 뒤 자동 재탐색은 설정 변경 여부만 확인함
+  // 권한 요청은 세션당 한 번만 보냄. 거부 뒤 자동 재탐색은 설정 변경 여부만 확인함
   static Future<bool> localNetworkPermission() {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
       return Future.value(true);
@@ -83,7 +83,7 @@ abstract final class OsPrivacy {
     }
   }
 
-  // Android 13+ 민감 표시, iOS localOnly·macOS currentHostOnly(Universal Clipboard 차단), Windows는 기록·클라우드 동기화 제외.
+  // Android 13+ 민감 표시, iOS localOnly·macOS currentHostOnly(Universal Clipboard 차단), Windows는 기록·클라우드 동기화에서 제외함.
   // clipboardLifetime 뒤에도 이 복사본이면 지움
   static Future<void> copySensitive(String text) async {
     _clipboardTimer?.cancel();
@@ -108,7 +108,7 @@ abstract final class OsPrivacy {
     });
   }
 
-  // iOS만: UIDevice로 iPad인지 물음 (창 크기 짐작은 Split View 1/3로 켜면 틀림). 모르면 null
+  // iOS만: UIDevice로 iPad인지 물음 (창 크기 짐작은 Split View 1/3로 켜면 틀림). 모르면 null을 반환함
   static Future<bool?> isPad() async {
     if (cachedIsPad != null) return cachedIsPad;
     if (kIsWeb || !Platform.isIOS) return null;
@@ -126,15 +126,15 @@ abstract final class OsPrivacy {
     if (_clipboardCheckPending) await _clearOwnCopy();
   }
 
-  // 내용은 안 읽고 네이티브가 우리 것인지만 봄 (Android 라벨, iOS changeCount). 남의 내용을 읽으면 iOS 붙여넣기 허용 창,
-  // Android 12+ 토스트가 뜸. null이면 Android 백그라운드라 복귀 때 다시
+  // 내용은 안 읽고 네이티브가 이 앱 복사본인지만 봄 (Android 라벨, iOS changeCount). 다른 앱의 내용을 읽으면 iOS 붙여넣기 허용 창,
+  // Android 12+ 토스트가 뜸. null이면 Android 백그라운드 상태라 복귀 때 다시 확인함
   static Future<void> _clearOwnCopy() async {
     _clipboardCheckPending = false;
     try {
       final result = await _channel.invokeMethod<bool>('clearIfOwn');
       _clipboardCheckPending = result == null;
     } on PlatformException {
-      // native 실패면 남의 내용일 수 있어 건드리지 않음
+      // 네이티브 호출이 실패하면 다른 앱의 내용일 수 있어 건드리지 않음
     } on MissingPluginException {
       // 엔진 종료·테스트라 채널이 없음
     }

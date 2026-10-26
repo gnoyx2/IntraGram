@@ -7,7 +7,7 @@ import 'package:intragram/theme/motion.dart';
 
 // 누르는 동안 0.97로 살짝 들어갔다가 놓으면 돌아옴
 // 포인터 이벤트만 엿봐서 자식 버튼의 탭·드래그 제스처를 가로채지 않음
-// 스크롤 시작 터치에 움찔하지 않게 kPressTimeout 동안 안 움직였을 때만 눌림을 보여줌
+// 스크롤 시작 터치에 오작동하지 않게 kPressTimeout 동안 안 움직였을 때만 눌림을 보여 줌
 // 햅틱은 실제 동작이 일어나는 쪽(onPressed)이 울림
 class PressScale extends StatefulWidget {
   const PressScale({required this.child, this.enabled = true, super.key});

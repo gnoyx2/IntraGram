@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:intragram/theme/tokens.dart';
 
-// 길게 누르기(터치)는 바텀 시트, 마우스 우클릭·메뉴 키는 그 자리 팝업 메뉴 (데스크톱 관례)
-// builder 안에서 Navigator.of(context).pop(값)으로 고른 값을 돌려줌. 시트·메뉴 둘 다 같은 길
+// 길게 누르기(터치)는 바텀 시트, 마우스 우클릭·메뉴 키는 그 자리에 팝업 메뉴를 띄움 (데스크톱 관례)
+// builder 안에서 Navigator.of(context).pop(값)으로 고른 값을 돌려주며 시트·메뉴 모두 방식이 같음
 Future<T?> showActionMenu<T>(
   BuildContext context, {
   required WidgetBuilder builder,
@@ -12,7 +12,7 @@ Future<T?> showActionMenu<T>(
   if (at == null) {
     return showModalBottomSheet<T>(
       context: context,
-      // 늘어난 ListTile 패딩 + 드래그 핸들 때문에 낮은 화면에서 넘칠 수 있어 스크롤 가능하게
+      // 늘어난 ListTile 패딩과 드래그 핸들 때문에 낮은 화면에서 넘칠 수 있어 스크롤 가능하게 감쌈
       builder: (sheetContext) =>
           SafeArea(child: SingleChildScrollView(child: builder(sheetContext))),
     );

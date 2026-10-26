@@ -22,7 +22,7 @@ void main() {
     final identity = testIdentity('a');
     final store = InMemoryStore();
     addTearDown(store.dispose);
-    final steps = PanicSteps(); // Every stop future initially hangs.
+    final steps = PanicSteps(); // 모든 중지 future는 처음에 완료되지 않고 대기함
     final registry = PanicRegistry(steps, store: store);
     store.evidence.bindSigner(identity);
     final container = ProviderContainer(
@@ -89,7 +89,7 @@ void main() {
           return result;
         });
 
-    // No await or event-loop tick has occurred since executePanicWipe.
+    // executePanicWipe 호출 직후이며 아직 await나 이벤트 루프 틱이 돌지 않은 상태임
     expect(finished, isFalse);
     expect(steps.links.isCompleted, isFalse);
     expect(store.evidence.generation, greaterThan(generation));
@@ -109,7 +109,7 @@ void main() {
     expect(store.evidence.witnessed, isEmpty);
     expect(await store.evidence.seal(), isNull);
 
-    // Simulate residual state produced while old stop futures were pending.
+    // 이전 중지 future가 대기 중인 동안 발생한 잔여 상태를 시뮬레이션함
     store.orgCredentials.activate(credential);
     store.roomIntegrity.ensureRoom('late', host: identity.peerId);
     steps.completeAll();

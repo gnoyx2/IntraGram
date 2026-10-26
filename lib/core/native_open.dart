@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
-// 받은 파일 열기·폴더에서 보기 (데스크톱 전용, 모바일은 전부 false). LocalSend open_file·open_folder에서 아이디어만 가져와
-// 플러그인 없이 새로 짬
+// 받은 파일 열기·폴더에서 보기 (데스크톱 전용, 모바일은 전부 false). LocalSend open_file·open_folder 방식을 참고해
+// 외부 플러그인 없이 직접 구현함
 final class NativeOpen {
   const NativeOpen._();
 
@@ -16,7 +16,7 @@ final class NativeOpen {
       defaultTargetPlatform == TargetPlatform.windows ||
       defaultTargetPlatform == TargetPlatform.linux;
 
-  // 테스트에서 바꿔 끼워서 셸 메타문자 든 파일 이름이 Uri로만 넘어가는지 봄
+  // 테스트에서 교체해 셸 메타문자가 든 파일 이름이 Uri로만 넘어가는지 확인함
   @visibleForTesting
   static Future<bool> Function(Uri uri, {required LaunchMode mode})
   launchUrlOverride = launchUrl;
@@ -123,7 +123,7 @@ final class NativeOpen {
         Uri.file(path),
         mode: LaunchMode.externalApplication,
       ),
-      // cmd /c start 말고 url_launcher(ShellExecute): 상대가 정한 파일 이름의 &·^·괄호를 cmd.exe가 명령으로 읽을 수 있음
+      // cmd /c start 대신 url_launcher(ShellExecute)로 엶: 상대가 정한 파일 이름의 &·^·괄호를 cmd.exe가 명령으로 읽을 수 있음
       TargetPlatform.windows => launchUrlOverride(
         Uri.file(path, windows: true),
         mode: LaunchMode.externalApplication,

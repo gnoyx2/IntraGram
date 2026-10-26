@@ -112,7 +112,7 @@ final class EvidenceStore extends ChangeNotifier {
     );
   }
 
-  // 아직 배치에 없는 증적을 한 배치로 봉인하고 루트에 서명함. 동시에 불러도 하나씩 (번호가 안 겹침)
+  // 아직 배치에 없는 증적을 한 배치로 봉인하고 루트에 서명함. 동시에 불러도 하나씩 처리됨 (번호가 안 겹침)
   Future<MerkleBatch?> seal() {
     final generation = _generation;
     final run = _sealing.then(
@@ -192,7 +192,7 @@ final class EvidenceStore extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  // 스토어가 닫힐 때: 비우고 더는 서명·알림 안 함. ChangeNotifier.dispose는 안 불러서 늦게 떨어지는 위젯 구독도 안전
+  // 스토어가 닫힐 때 비우고 더는 서명·알림 안 함. ChangeNotifier.dispose는 안 불러서 늦게 해제되는 위젯 구독도 안전함
   void close() {
     clear();
     _disposed = true;

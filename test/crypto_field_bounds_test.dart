@@ -20,8 +20,7 @@ void main() {
     for (final length in [16, 32, 64]) {
       final encoded = base64.encode(Uint8List(length));
       final escaped = _escaped(encoded);
-      // A normalized representation has the right byte count, but its raw
-      // wire form still exceeds the encoded length budget.
+      // 정규화된 형태는 바이트 수가 맞더라도 원본 전송(wire) 형태가 인코딩 길이 제한을 초과함
       expect(base64.decode(base64.normalize(escaped)), hasLength(length));
       expect(wireBytes(escaped, length: length), isNull);
       expect(wireBytes(encoded, length: length), hasLength(length));

@@ -53,7 +53,7 @@ mixin _LinkRegistrySession
       unawaited(_transfers.incoming.accept(transferId));
     };
     link.onWebGuestHello = () => _joinRoom(link);
-    // onRoomFrame은 방 멤버 링크에만 검 (여기서 걸면 1:1 메시지가 방으로 샘)
+    // onRoomFrame은 방 멤버 링크에만 연결함 (여기서 걸면 1:1 메시지가 방으로 샘)
     link.onClosed = _onLinkClosed;
     link.refusePeer = (peerId) =>
         _refusal(peerId, dialledByUs: link.dialledByUs);

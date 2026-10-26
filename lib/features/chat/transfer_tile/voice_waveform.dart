@@ -36,11 +36,11 @@ List<double> _waveformFor(Uint8List bytes) {
   ];
 }
 
-// 재생 전에도 길이를 보이도록 머리에서 계산함. 형식을 모르면 0
+// 재생 전에도 길이를 보이도록 WAV 헤더에서 계산함. 형식을 모르면 0을 돌려줌
 Duration _wavDuration(Uint8List bytes) =>
     parsePcm16Wav(bytes)?.duration ?? Duration.zero;
 
-// 상대가 보낸 바이트를 파싱하므로 형식 깨짐·잘린 머리에도 안 죽는지 테스트가 이 창으로 확인함
+// 상대가 보낸 바이트를 파싱하므로 형식 깨짐·잘린 헤더에도 죽지 않는지 테스트가 이 진입점으로 확인함
 @visibleForTesting
 List<double> voiceWaveformForTesting(Uint8List bytes) => _waveformFor(bytes);
 

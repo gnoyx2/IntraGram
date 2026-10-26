@@ -115,7 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _list(BuildContext context) =>
       Focus(autofocus: true, child: _homeScaffold(context));
 
-  // Ctrl+Tab / Ctrl+Shift+Tab: 목록 순서대로 다음·이전 대화를 대화 창에
+  // Ctrl+Tab / Ctrl+Shift+Tab: 목록 순서대로 다음·이전 대화를 대화 창에 띄움
   void _stepPane(int step) {
     final ids = [...?ref.read(conversationsProvider).value?.map((c) => c.id)];
     if (ids.isEmpty) return;

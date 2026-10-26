@@ -33,7 +33,7 @@ class OutgoingOfferSpec {
 }
 
 // 방 전송은 바이트가 평문이라 offer(인증된 링크)에 SHA-256을 실음: 받는 쪽이 LAN에서 바꿔치기된 내용을 잡음.
-// 파일을 한 번 끝까지 읽어서 큰 파일은 offer가 늦음 (순수 Dart라 약 100 MB/s, 더 빨라야 하면 OS 해시를 FFI로).
+// 파일을 전체 한 번 순회하므로 대용량 파일은 offer 전송이 지연될 수 있음 (순수 Dart 환경으로 약 100 MB/s 처리됨).
 // 이 읽기도 reader라 취소·소각이 끊고, 끊기가 끝나야 원본을 놓음. 못 읽거나 끊기거나 전송이 사라지면 false.
 // 1:1(봉인)은 여기서 안 읽음: 수신 영수증용 같은 SHA-256을 보내는 길(_plainFor)과 받는 길(FileStreamer onDigest)에서 재서
 // offer가 늦거나 원본을 두 번 열지 않음
@@ -104,7 +104,7 @@ class OutgoingFileSource {
   // 1:1이면 true: 보낼 때 봉인함. size는 평문 기준이라 wire 길이 계산에도 씀
   final bool encrypted;
 
-  // 재시도해도 안 바뀜 (pull이 push로 둔갑 금지)
+  // 재시도 시에도 변경되지 않음 (pull 모드가 push 모드로 임의 전환되는 것을 방지함)
   final FileTransferMode mode;
 
   // 썸네일이 행이 뜬 뒤에 만들어져서 그때 완성본으로 바꿈
@@ -122,7 +122,7 @@ class OutgoingFileSource {
   Future<void> Function()? _stopHashing;
   Future<void>? _hashing;
 
-  // 여러 경로가 겹쳐 불러도 해제는 한 번
+  // 여러 경로에서 중복 호출되어도 해제 작업은 한 번만 실행함
   Future<void> _release() =>
       _released ??= Future<void>.sync(() => releaseSource?.call());
 
@@ -130,7 +130,7 @@ class OutgoingFileSource {
   final Map<String, _OutgoingRecipient> _recipients =
       <String, _OutgoingRecipient>{};
 
-  // 수신자가 딱 한 명일 때의 pull 토큰 (여럿이면 수신자별이라 null)
+  // 수신자가 한 명일 때의 pull 토큰 (다수면 수신자별이라 null임)
   String? get downloadToken =>
       _recipients.length == 1 ? _recipients.values.single.pullToken : null;
 }

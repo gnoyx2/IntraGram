@@ -13,14 +13,14 @@ extension _PeerLinkLifecycle on PeerLink {
   Future<void> _shutdown() => _closeFuture ??= _performShutdown();
 
   Future<void> _performShutdown() async {
-    // 끝내 누군지 안 밝히고 끊긴 인바운드 소켓인가 (_phase 바꾸기 전에 봄)
+    // 신원을 밝히지 않고 연결이 끊긴 인바운드 소켓인지 확인함 (_phase 변경 전에 확인함)
     final unidentified = !dialledByUs && isPendingHandshake;
     _closed = true;
     _stopOrgAttestation();
     _phase = _LinkPhase.closed;
     _awaitingAuth = null;
     _handshakeWatchdog?.cancel();
-    // 못 나간 대기 큐와 ack 못 받은 내 메시지는 다시 보낼 수 있게 failed로
+    // 못 나간 대기 큐와 ack 못 받은 내 메시지는 다시 보낼 수 있게 failed로 변경함
     for (final inner in _pending) {
       _noteWrite(inner, written: false);
       _reowe(inner);
@@ -52,12 +52,12 @@ extension _PeerLinkLifecycle on PeerLink {
         tile != null &&
         !tile.isRoom &&
         store.messages(conversationId).isEmpty) {
-      // 연결만 열고 닫는 반복으로 목록이 빈 'peer' 대화로 차는 걸 막음 (안내 줄이 남은 대화·방은 아래로)
+      // 연결 개폐 반복으로 목록에 빈 'peer' 대화가 누적되는 것을 방지함 (안내 메시지가 남은 대화나 방은 유지함)
       store.wipeConversation(conversationId);
     } else if (!_superseded) {
       store.setConversationOnline(conversationId, online: false);
       store.setPeerTyping(conversationId, typing: false);
-      // 대화가 남아 있을 때만 (패닉 중이면 이미 없음: 빈 방 안 되살림). 내가 다이얼한 핸드셰이크가 실패했으면 그 이유 줄로
+      // 대화가 남아 있을 때만 처리함 (패닉 중이면 이미 정리되어 빈 방을 되살리지 않음). 다이얼한 핸드셰이크가 실패했으면 해당 실패 사유 시스템 메시지를 남김
       if (store.conversation(conversationId) != null) {
         store.addSystemMessage(
           conversationId,

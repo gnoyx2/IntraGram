@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/network/registry/incoming_path_resolver.dart';
 
-// 파일·폴더 대화상자를 못 띄웠을 때 원인 안내 (Linux에 xdg-desktop-portal 백엔드가 없는 게 대부분)
+// 파일·폴더 대화상자를 못 띄웠을 때 원인을 안내함 (대부분 Linux에 xdg-desktop-portal 백엔드가 없는 경우임)
 void showPickerUnavailable(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text(S.of(context).t('picker.unavailable'))),

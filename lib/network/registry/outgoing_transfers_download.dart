@@ -44,8 +44,8 @@ extension OutgoingTransfersDownload on OutgoingTransfers {
   int _wireBytesOf(OutgoingFileSource source) =>
       source.encrypted ? encryptedFileLength(source.size) : source.size;
 
-  // GET /api/download/<id> 인가와 봉인. source가 없으면 null(404), 토큰·attempt·크기·상태가 어긋나면 SecurityException(403).
-  // 다 확인한 뒤에만 그 수신자 토큰을 씀 (한 번 쓴 토큰은 끝)
+  // GET /api/download/<id> 인가 및 와이어 봉인을 수행함. 소스가 없으면 null(404), 토큰·attempt·크기·상태가 불일치하면 SecurityException(403)을 던짐.
+  // 모든 검증이 완료된 후에만 수신자 토큰을 소비함 (1회 사용 원칙)
   Future<OutgoingDownload?> openDownload({
     required String transferId,
     required String attemptId,
@@ -115,7 +115,7 @@ extension OutgoingTransfersDownload on OutgoingTransfers {
         name: source.name,
       );
     } on Object {
-      // 한 바이트도 안 나갔으니 슬롯을 돌려줌: 게이트 타임아웃 같은 내 쪽 사정으로 수신자의 하나뿐인 토큰이 타면 안 됨
+      // 데이터 송신 전이므로 슬롯을 복구함: 게이트 타임아웃 등 로컬 문제로 수신자의 일회용 토큰이 소진되는 것을 방지함
       if (acquired) gate.release();
       if (recipient.attemptId == attemptId &&
           identical(_outgoing[transferId], source) &&

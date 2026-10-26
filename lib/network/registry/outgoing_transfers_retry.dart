@@ -1,6 +1,6 @@
 part of 'outgoing_transfers.dart';
 
-// retryTransfer 구현. mode는 그대로고 실패한 수신자마다 새 attempt로 그 수신자에게만 다시 offer.
+// retryTransfer 구현. 전송 mode는 유지하며 실패한 수신자별로 신규 attempt를 생성해 재제안함.
 // 옛 흔적은 startNewAttempt가 다 버려서 늦게 온 옛 ACK가 새 시도를 못 끝냄
 Future<void> _retryOutgoingTransfer(
   OutgoingTransfers self,
@@ -15,7 +15,7 @@ Future<void> _retryOutgoingTransfer(
     return;
   }
   if (source._recipients.isEmpty) {
-    // 처음 offer 때 대상이 아무도 없어서 실패한 전송: 지금 붙어있는 링크로 처음부터 다시 offer
+    // 최초 offer 시점에 대상이 없어 실패한 전송: 현재 연결된 링크를 대상으로 처음부터 다시 제안함
     final links = self._linksForTransfer(source.conversationId);
     final endpoint = _endpointFor(self, source);
     if (links.isEmpty ||
@@ -43,7 +43,7 @@ Future<void> _retryOutgoingTransfer(
 ) => source.mode == FileTransferMode.pull ? self._localEndpoint?.call() : null;
 
 extension _OutgoingTransfersRetry on OutgoingTransfers {
-  // 수신자 한 명만 새 attempt로 다시 offer. 링크가 없거나 pull인데 서버가 꺼졌으면 failed로 둠
+  // 해당 수신자만 신규 attempt로 재제안함. 링크가 없거나 pull 모드에서 서버가 비활성화된 경우 failed 상태를 유지함
   Future<void> _retryRecipient(
     String transferId,
     OutgoingFileSource source,
@@ -71,7 +71,7 @@ extension _OutgoingTransfersRetry on OutgoingTransfers {
       recipient,
       endpoint: endpoint,
     );
-    // 못 실었으면 다시 실패로 (그사이 더 새 재시도가 시작됐으면 안 건드림)
+    // 전송 실패 시 다시 failed로 전환함 (그사이 신규 재시도가 시작되었으면 상태를 보존함)
     if (!sent && recipient.attemptId == attemptId) {
       recipient.fail();
       _syncTransfer(transferId);
@@ -107,7 +107,7 @@ Future<void> _handleLinkClosedOutgoing(
   }
 }
 
-// 세션 정리: 하나씩 discard처럼 (도는 작업까지 기다림)
+// 세션 정리: 모든 발신 소스를 개별 discard하며 진행 중인 I/O 작업 완료까지 대기함
 Future<void> _clearOutgoing(OutgoingTransfers self) async {
   self._closed = true; // 이 뒤로 늦게 온 제안은 안 올림
   for (final id in self._outgoing.keys.toList()) {

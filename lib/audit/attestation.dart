@@ -201,10 +201,10 @@ final class SignedAttestation {
     'sg': base64.encode(signature),
   };
 
-  // 엄격 파싱: 필드 하나라도 형식이 틀리면 null (기본값으로 정상 증적인 척 안 만듦). 서명 검사는 verify가 따로 함
+  // 엄격 파싱: 필드 하나라도 형식이 틀리면 null을 반환함 (기본값으로 정상 증적을 꾸며 내지 않음). 서명 검사는 verify가 따로 함
   static SignedAttestation? fromWire(Object? raw) => _attestationFromWire(raw);
 }
 
-// 중계 전 정규화: 아는 필드만 다시 써서 끼워 넣은 여분 키가 안 넘어감. 형식이 틀리면 null (그 필드만 버림)
+// 중계 전 정규화: 아는 필드만 다시 써서 끼워 넣은 여분 키가 안 넘어감. 형식이 틀리면 null을 반환함 (그 필드만 버림)
 Map<String, dynamic>? canonicalAttestationWire(Object? raw) =>
     SignedAttestation.fromWire(raw)?.toWire();

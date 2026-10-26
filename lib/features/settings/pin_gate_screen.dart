@@ -10,7 +10,7 @@ import 'package:intragram/features/settings/pin_dialog.dart'
 import 'package:intragram/l10n/strings.dart';
 import 'package:intragram/theme/tokens.dart';
 
-// 맞는 PIN이면 아카이브를 열어 RAM에 올린 뒤 통과. 틀리면 다시 하거나 새로 시작 (파일은 그대로 두고 빈 세션)
+// 맞는 PIN이면 아카이브를 열어 RAM에 올린 뒤 통과시킴. 틀리면 다시 입력하거나 새로 시작함 (파일은 그대로 두고 빈 세션)
 class PinGateScreen extends ConsumerStatefulWidget {
   const PinGateScreen({super.key});
 

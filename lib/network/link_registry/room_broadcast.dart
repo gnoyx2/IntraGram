@@ -42,7 +42,7 @@ extension _RoomBroadcast on _LinkRegistryState {
   }
 
   Future<void> _sendRoomText(EphemeralMessage message) async {
-    // 작성자 서명·체크포인트는 앱 방만 (브라우저 게스트 방은 평문이라 예전 프레임 그대로)
+    // 작성자 서명·체크포인트는 앱 방만 적용함 (브라우저 게스트 방은 평문이라 기존 프레임을 그대로 씀)
     final appRoom = message.conversationId == _appRoomId;
     if (appRoom) _ensureRoomIntegrity(message.conversationId);
     final wire = await store.roomIntegrity

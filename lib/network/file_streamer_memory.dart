@@ -63,7 +63,7 @@ Future<Uint8List> _downloadToMemory({
             attemptId: attemptId,
             totalBytes: declaredSize,
           );
-    // 받은 조각은 결과로 옮긴 뒤 덮어씀: 성공하든 실패하든 음성 사본이 RAM에 안 남음
+    // 받은 조각은 결과로 옮긴 뒤 덮어씀: 중간 조각 버퍼를 정리해 음성 사본이 중복으로 RAM에 남지 않게 함
     final pieces = <List<int>>[];
     var received = 0;
     try {

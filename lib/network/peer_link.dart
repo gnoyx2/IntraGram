@@ -54,7 +54,7 @@ class PeerLink {
     this.expectedPeerId,
     this.requiredWebToken,
   })
-    // 필드는 nullable(웹 게스트면 세션을 부숨)이지만 시작은 늘 진짜 세션이라 required
+    // 필드는 nullable(웹 게스트는 세션 제거)이지만 시작은 항상 유효한 세션이어야 하므로 required임
     // ignore: prefer_initializing_formals
     : _crypto = crypto;
 
@@ -192,7 +192,7 @@ class PeerLink {
   // 멤버만: 호스트가 알린 방 앱 피어 id 목록 (room_join/room_state)
   void Function(List<String> peerIds)? onRoomRoster;
 
-  // 정리가 다 끝나면 한 번 불림. 링크 자신을 넘겨서 호출부가 지금 맵 값과 같을 때만 지움 (늦게 닫힌 옛 링크가 새 링크를 안 지우게)
+  // 정리가 완료되면 한 번 호출됨. 링크 자신을 넘겨 호출부가 현재 맵 값과 일치할 때만 삭제함 (늦게 닫힌 이전 링크가 새 링크를 덮어 지우는 동작을 방지함)
   void Function(PeerLink link)? onClosed;
 
   bool get isClosed => _closed;

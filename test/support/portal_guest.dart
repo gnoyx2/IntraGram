@@ -68,7 +68,7 @@ class Guest {
     'd': <String, dynamic>{'k': 'screenshot'},
   });
 
-  // v3 offer: at/md가 필수이고 주소(sh/sp)를 주면 pull이라 토큰도 함께 실음 (파서가 조합을 강제함)
+  // file_offer는 at/md가 필수이고 주소(sh/sp)를 주면 pull이라 토큰도 함께 실음 (파서가 조합을 강제함)
   void offerFile(String id, {String? srcHost, int? srcPort}) =>
       _send(<String, dynamic>{
         't': 'plain',

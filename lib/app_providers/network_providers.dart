@@ -1,7 +1,7 @@
 part of '../app_providers.dart';
 
-// 앱 평생 같은 객체 (alias만 제자리 변경). 화면은 identityAliasProvider를 watch할 것
-// main.dart가 키 있는 신원으로 override함. 기본값은 키 없는 테스트용이라 피어 링크 불가
+// 앱 수명 동안 같은 인스턴스를 유지함 (alias·패닉 키 회전은 제자리 변경함). 화면은 identityAliasProvider를 watch해야 함
+// main.dart가 키 있는 신원으로 override함. 기본값은 키 없는 테스트용이라 피어 링크를 맺을 수 없음
 final appIdentityProvider = Provider<AppIdentity>(
   (ref) => AppIdentity.generate(),
 );
@@ -21,7 +21,7 @@ final _savedAliasProvider = FutureProvider<String?>((ref) async {
   return ref.watch(identityStoreProvider).loadAlias();
 });
 
-// 제자리 변경은 Riverpod가 감지 못 해서, alias 변화를 위젯 리렌더로 전달하는 신호용
+// 제자리 변경은 Riverpod가 감지하지 못하므로 alias 변화를 위젯 리빌드로 전달함
 final identityAliasProvider = NotifierProvider<IdentityAliasNotifier, String>(
   IdentityAliasNotifier.new,
 );
@@ -30,7 +30,7 @@ class IdentityAliasNotifier extends Notifier<String> {
   @override
   String build() {
     final identity = ref.read(appIdentityProvider);
-    // 값이 늦게 와도 notifier가 다시 안 만들어지게 watch 대신 listen. 보관소 savedAlias와 identity.json을 둘 다 봄
+    // 값이 늦게 와도 notifier가 재생성되지 않게 watch 대신 listen을 씀. 보관소 savedAlias와 identity.json을 둘 다 봄
     ref.listen<VaultSettings>(vaultSettingsProvider, (_, next) {
       final saved = next.savedAlias;
       if (saved != null && saved.isNotEmpty) _apply(identity, saved);
@@ -42,7 +42,7 @@ class IdentityAliasNotifier extends Notifier<String> {
     return identity.alias;
   }
 
-  // 저장된 이름이 늦게 올 수 있어서 mDNS 광고도 다시 뿌림 (안 그러면 남들은 옛 랜덤 이름을 봄). 광고 전이면 그냥 무시됨
+  // 저장된 이름이 늦게 올 수 있어서 mDNS 광고도 다시 내보냄 (안 그러면 다른 기기가 이전 랜덤 이름을 봄). 광고 전이면 무시됨
   void _apply(AppIdentity identity, String alias) {
     identity.rename(alias);
     state = alias;
@@ -51,8 +51,8 @@ class IdentityAliasNotifier extends Notifier<String> {
     );
   }
 
-  // 연결된 피어에게도 새 이름을 알림 (hello는 핸드셰이크 때 한 번뿐)
-  // 저장은 vault 켜짐이면 vault 안, 아니면 identity.json. duress 세션은 디스크에 안 씀
+  // 연결된 피어에게도 새 이름을 알림 (hello는 핸드셰이크 때 한 번만 보냄)
+  // vault가 켜져 있으면 vault에, 아니면 identity.json에 저장함. duress 세션은 디스크에 안 씀
   Future<void> rename(String alias, {required bool save}) async {
     _apply(ref.read(appIdentityProvider), alias);
     ref.read(linkRegistryProvider).broadcastRename(alias);
@@ -92,7 +92,7 @@ final linkRegistryProvider = Provider<LinkRegistry>((ref) {
     crypto: ref.watch(cryptoEngineProvider),
     identity: ref.watch(appIdentityProvider),
   );
-  // 와이프로 스토어에서 전송이 사라지면 취소 토큰/스테이징 source도 같이 정리
+  // 와이프로 스토어에서 전송이 사라지면 취소 토큰/스테이징 source도 같이 정리함
   store.onTransferRemoved = registry.discardRemovedTransfer;
   ref.onDispose(registry.disposeAll);
   return registry;

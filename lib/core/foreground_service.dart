@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show ValueNotifier, visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show AppLifecycleState;
 
-// Android 전용. 소켓은 엔진이 쥐고 이 서비스는 OS가 프로세스를 안 죽이게 붙잡기만 함. 그래도 OS가 죽이면 못 살림 (배터리 더 씀, 옵트인)
+// Android 전용. 소켓은 엔진이 쥐고 이 서비스는 OS가 프로세스를 종료하지 않게 유지하기만 함. 그래도 OS가 종료하면 복구 못 함 (배터리 더 씀, 옵트인)
 class ForegroundService {
   ForegroundService({
     MethodChannel? channel,
@@ -40,7 +40,7 @@ class ForegroundService {
     }
   }
 
-  // 실패하면 false + onStartFailed. 호출부가 결과를 안 봐도 상태는 맞게 남음
+  // 실패하면 false를 반환하고 onStartFailed를 부름. 호출부가 결과를 안 봐도 상태는 맞게 남음
   Future<bool> start() async {
     final ok = await _invoke('start');
     _active = ok;
@@ -75,7 +75,7 @@ class ForegroundService {
     }
   }
 
-  // 채널 없는 환경(테스트)은 성공으로 침. 네이티브가 던진 PlatformException만 실패
+  // 채널 없는 환경(테스트)은 성공으로 침. 네이티브가 던진 PlatformException만 실패로 침
   Future<bool> _invoke(String method) async {
     if (!_isAndroid) return true;
     try {

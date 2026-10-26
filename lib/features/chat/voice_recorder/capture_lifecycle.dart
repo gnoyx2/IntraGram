@@ -144,7 +144,7 @@ extension _VoiceRecorderCapture on _VoiceRecorderButtonState {
       return;
     }
     if (elapsed.inMilliseconds < 700) {
-      // 실수로 톡 친 것. 아무 반응 없으면 씹힌 것처럼 보여서 한 줄 알림
+      // 너무 짧게 끝난 녹음은 보내지 않되, 입력이 무시된 것처럼 보이지 않게 한 줄로 알림
       if (mounted) {
         messenger.showSnackBar(SnackBar(content: Text(s.t('voice.tooShort'))));
       }

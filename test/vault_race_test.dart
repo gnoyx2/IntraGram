@@ -8,10 +8,9 @@ import 'package:intragram/store/vault.dart';
 
 import 'support/vault_snapshot.dart';
 
-// [CryptoEngine.deriveKeyFromPin] + `ChaCha20-Poly1305`로 [Vault]가 실제로
-// 쓰는 것과 같은 모양의 봉인 파일을 손으로 만듦: `iter` 값을 자유롭게
-// 골라야 해서 (구버전 100k·잘못된 값 테스트) `Vault._encrypt`를
-// 그대로 쓸 수 없음(그건 항상 현재 [kVaultPbkdf2Iterations]를 씀)
+// PBKDF2-HMAC-SHA256 + ChaCha20-Poly1305로 Vault와 같은 봉인 파일 형식을 직접 조립함:
+// 구버전 100k나 비정상 iter 값을 넣어 시험해야 하므로 항상 현재 kVaultPbkdf2Iterations로만
+// 봉인하는 Vault.save 경로를 그대로 쓸 수 없음
 Future<String> _sealManually(
   String plaintext,
   String pin,
@@ -196,7 +195,7 @@ void main() {
         vault.setPin('1357');
         const pinned = VaultSettings(enabled: true, pinProtected: true);
 
-        // 두 호출을 겹쳐서 건다: await 없이 save 시작 직후 바로 erase
+        // 두 호출을 겹쳐서 검: await 없이 save 시작 직후 바로 erase
         final saveFuture = vault.save(snap(settings: pinned));
         final eraseFuture = vault.erase();
         await Future.wait([saveFuture, eraseFuture]);

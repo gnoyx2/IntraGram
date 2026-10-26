@@ -56,7 +56,7 @@ void main() {
         throwsA(isA<VaultLockedException>()),
       );
       expect(container.read(vaultSettingsProvider).enabled, isFalse);
-      await settings.setLangOverride('ko'); // RAM 전용 설정은 계속 쓸 수 있음
+      await settings.setLangOverride('ko'); // 아카이브를 건드리지 않는 메모리 내 설정 변경은 계속 허용됨
       expect(file.readAsBytesSync(), original);
     },
   );

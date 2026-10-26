@@ -8,7 +8,7 @@ import 'support/fake_file_source_channel.dart';
 
 // 모바일 native 소스 lifecycle: 가짜 MethodChannel의 호출 기록으로
 // open -> read -> close -> release의 순서/횟수를 검사하고,
-// releaseAll의 generation이 늦게 도착한 pick/open 결과를 막는지 확인
+// releaseAll의 generation이 늦게 도착한 pick/open 결과를 막는지 확인함
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late FakeFileSourceChannel fake;

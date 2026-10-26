@@ -52,7 +52,7 @@ abstract class _LinkRegistryState {
   final CryptoEngine crypto;
   final AppIdentity identity;
 
-  // disposeAll이 첫 await 전에 세움: 그 뒤 등록은 전부 거부. 다음 세션은 새 LinkRegistry로 시작
+  // disposeAll이 첫 await 전에 설정함: 그 뒤 등록은 전부 거부함. 다음 세션은 새 LinkRegistry로 시작함
   bool _disposed = false;
 
   // disposeAll마다 오름. _register가 세션을 만들고 돌아왔을 때 값이 바뀌었으면(그사이 disposeAll) 늦은 채널·세션은 버림
@@ -107,7 +107,7 @@ abstract class _LinkRegistryState {
   PeerLink? linkFor(String conversationId) {
     final direct = _links[conversationId];
     if (direct != null) return direct;
-    // 내가 호스트인 방: 멤버가 딱 한 명일 때만 그 링크. 여럿이면 모호해서 null (방 파일은 linksForTransfer로 감)
+    // 내가 호스트인 방: 멤버가 딱 한 명일 때만 그 링크를 반환함. 여럿이면 모호해서 null을 반환함 (방 파일은 linksForTransfer로 감)
     final inRoom = _memberLinks(conversationId);
     return inRoom.length == 1 ? inRoom.single : null;
   }
@@ -142,7 +142,7 @@ abstract class _LinkRegistryState {
 
   Iterable<String> get activeConversationIds => _links.keys;
 
-  // PeerLink가 되기 전에 거부한 채널을 닫음 (이미 죽은 소켓이면 무시)
+  // PeerLink가 되기 전에 거부한 채널을 닫음 (이미 닫힌 소켓이면 무시함)
   Future<void> _closeAbandonedChannel(StreamChannel<dynamic> channel) async {
     try {
       await channel.sink.close();
@@ -168,12 +168,12 @@ abstract class _LinkRegistryState {
   // 검사를 통과해 예약했지만 아직 세션을 만드는 중이라 _links에 없는 미인증 접속. 동시 상한에 같이 셈
   final Set<_InboundSlot> _inboundSlots = <_InboundSlot>{};
 
-  // 테스트 전용: 세션 생성을 바꿔 지연·실패를 재현 (프로덕션은 null)
+  // 테스트 전용: 세션 생성을 교체해 지연·실패를 재현함 (프로덕션은 null)
   Future<CryptoSession> Function()? _debugCreateSession;
 }
 
-// 실제 소켓 다이얼. 리터럴 사설 IP만 통과. 8초 타임아웃 뒤 늦게 붙은 소켓은 바로 닫음 (Future는 취소가 안 됨).
-// 상대가 보내는 메시지도 다 모이기 전에 상한을 거는 채널로 돌려줌
+// 실제 소켓 다이얼임. 리터럴 사설 IP만 통과시킴. 8초 타임아웃 뒤 늦게 붙은 소켓은 바로 닫음 (Future는 취소되지 않음).
+// 상대가 보내는 메시지도 모두 수신되기 전에 상한을 거는 채널로 돌려줌
 Future<StreamChannel<dynamic>> _dialPeerSocket(
   String host,
   int port, {

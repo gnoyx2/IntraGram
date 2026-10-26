@@ -197,7 +197,7 @@ void main() {
           await raw('GET /health HTTP/1.1\r\nHost: $host\r\n$close'),
           startsWith('HTTP/1.1 200'),
         );
-        // 머리를 끝내지 않는 연결은 idleTimeout 뒤 닫힘 (기본 120초면 위 timeout에 걸림)
+        // 요청 헤더를 끝내지 않는 연결은 idleTimeout 뒤 닫힘 (기본 120초면 위 timeout에 걸림)
         expect(await raw('GET /health HTTP/1.1\r\nHost: $host\r\n'), isEmpty);
       } finally {
         await server.stop();

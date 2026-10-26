@@ -18,7 +18,7 @@ class _Authorized {
   final bool relay;
 }
 
-// 역할·발신자·소속 검사와 정규화 맵 생성: 로컬 dispatch와 중계 앞의 단일 입구. 파싱 실패·모르는 kind도 여기서 거부 (아는 kind만 통과)
+// 역할·발신자·소속 검사와 정규화 맵 생성: 로컬 dispatch와 중계 직전의 단일 진입점임. 파싱 실패나 알 수 없는 kind는 거부하고 아는 kind만 통과시킴
 extension _PeerLinkAuthorization on PeerLink {
   _Authorized? _authorizeInner(Map<String, dynamic> raw) {
     final parsed = InboundInner.fromJson(raw);
@@ -39,7 +39,7 @@ extension _PeerLinkAuthorization on PeerLink {
     return _Authorized(inner, wire, local: local, relay: relay);
   }
 
-  // 호스트로서 멤버의 대상 지정 offer를 거부했으면 그 멤버에게 그 수신자 몫이 접혔다고 알림 (조용히 버리면 발신자가 영영 기다림)
+  // 호스트로서 멤버의 대상 지정 offer를 거부했으면 해당 멤버에게 해당 수신자 몫이 취소되었음을 알림 (알리지 않으면 발신자가 영구히 대기함)
   void _refuseDirectedOffer(InboundInner parsed) {
     if (parsed is! FileOfferInner ||
         _roomRole != _RoomLinkRole.localHostMember) {
@@ -52,7 +52,7 @@ extension _PeerLinkAuthorization on PeerLink {
     );
   }
 
-  // null이면 거부, 아니면 방 멤버에게 중계해도 되는지. sealed 전수 switch라 새 프레임 종류를 안 넣으면 컴파일 에러
+  // null이면 거부하고, bool이면 방 멤버에게 중계 가능 여부를 나타냄. sealed 전수 switch라 새 프레임 종류를 누락하면 컴파일 오류가 발생함
   bool? _authorize(InboundInner inner, bool routedControl) => switch (inner) {
     MessageInner() ||
     TypingInner() ||
@@ -117,7 +117,7 @@ extension _PeerLinkAuthorization on PeerLink {
     MalformedInner() || UnknownInner() => null,
   };
 
-  // room_join/room_state는 호스트 → 멤버 방향이고 링크 상대가 그 방의 확정된 호스트일 때만 통과. 내가 호스트인 링크·방에선 늘 거부.
+  // room_join/room_state는 호스트 → 멤버 방향이고 링크 상대가 그 방의 확정된 호스트일 때만 통과시킴. 내가 호스트인 링크·방에선 항상 거부함.
   // 1:1을 방으로 바꾸는 첫 room_join은 우리가 다이얼했거나 양쪽이 SAS를 확인한 상대만 받고 hostPeerId로 못박음.
   // 이미 방이면 확정된 호스트 링크의 갱신만 받음
   bool _authorizeRoomControl(InboundInner inner) {
@@ -147,7 +147,7 @@ extension _PeerLinkAuthorization on PeerLink {
     return true;
   }
 
-  // 모두에게서 지우기는 쓴 사람만. 타이머 메시지는 양쪽 만료를 맞추는 신호라 누구나 되고, 호스트가 중계한 방 프레임은 호스트가 이미 검사함
+  // 모두에게서 지우기는 작성자만 요청할 수 있음. 타이머 메시지는 양쪽 만료를 맞추는 신호라 누구나 보낼 수 있고, 호스트가 중계한 방 프레임은 호스트가 이미 검증함
   bool _mayBurn(String id) {
     final message = store.messageById(id);
     if (message == null || message.conversationId != conversationId) {
@@ -158,13 +158,13 @@ extension _PeerLinkAuthorization on PeerLink {
         message.senderPeerId == (remotePeerId ?? peerAlias);
   }
 
-  // 내가 남의 방 멤버라서 wire의 from/pid를 호스트가 원래 멤버 신원으로 이미 도장 찍었는가
+  // 내가 다른 호스트의 방 멤버로서 와이어의 from/pid를 호스트가 원 멤버 신원으로 이미 검증했는지 확인함
   bool get _trustsRelayedActor {
     final conversation = store.conversation(conversationId);
     return (conversation?.isRoom ?? false) && conversation?.hostAlias != null;
   }
 
-  // 발신자 peerId: 위 경우만 wire 값을 쓰고 나머지는 이 링크의 인증된 신원 (pid 위조로 다른 멤버 사칭 차단)
+  // 발신자 peerId를 결정함: 위 경우에만 와이어 값을 쓰고 나머지는 이 링크의 인증된 신원을 적용해 사칭을 차단함
   String _resolveActor(String? wirePeerId) {
     final linkActorId = remotePeerId ?? peerAlias;
     return _trustsRelayedActor ? (wirePeerId ?? linkActorId) : linkActorId;

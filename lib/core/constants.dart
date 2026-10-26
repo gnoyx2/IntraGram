@@ -1,4 +1,4 @@
-// 설정 저장소가 없어서 설정감인 값도 전부 상수로 박아 둠
+// 별도 설정 저장소가 없어 관련 설정값도 전부 상수로 정의해 둠
 library;
 
 // 와이어 형식이 바뀌면 올림. hello 버전이 정확히 같아야 붙어서 웹 클라이언트(socket.js)도 같이 올려야 함.
@@ -23,7 +23,7 @@ const int kMaxVoiceNoteBytes = 4 * 1024 * 1024;
 
 const int kVoiceSampleRate = 16000;
 
-// 네이티브 파일 읽기 단위. Dart가 이만큼씩 당겨서 EventChannel 버퍼가 무한정 안 쌓임
+// 네이티브 파일 읽기 단위. Dart가 이만큼씩 당겨서 버퍼가 무한정 쌓이지 않음
 const int kMobileFileReadChunkBytes = 256 * 1024;
 
 // 0은 타이머 없음
@@ -41,7 +41,7 @@ const List<String> kQuickReactions = <String>[
   '🙏',
 ];
 
-// 자유 입력 대신 고르기만 함 (IME 조합 중에 시트를 닫다 크래시 나던 문제)
+// 자유 입력 대신 고르기만 함 (IME 조합 중에 시트를 닫을 때 비정상 종료되던 문제를 방지함)
 const List<String> kExtendedReactions = <String>[
   '😀',
   '😃',
@@ -108,13 +108,13 @@ const List<String> kExtendedReactions = <String>[
   '❌',
 ];
 
-// 1 MiB(한글 약 35만 자). inline 모드는 넘는 msg를 받으면 버리고 보내면 실패 처리. unlimited는 kFrameCeilingBytes만 봄
+// 1 MiB(한글 약 35만 자). inline 모드는 넘는 msg를 받으면 버리고 보내면 실패 처리함. unlimited는 kFrameCeilingBytes만 봄
 const int kMaxInlineMessageBytes = 1024 * 1024;
 
 // base64로 1.4배쯤 커진 kMaxInlineMessageBytes를 덮는 크기. 넘으면 링크를 끊음
 const int kMaxFrameBytes = 2 * 1024 * 1024;
 
-// unlimited 모드의 마지막 상한 (진짜 무제한이면 악성 피어가 RAM을 다 먹음)
+// unlimited 모드의 마지막 상한 (진짜 무제한이면 악성 피어가 RAM을 고갈시킬 수 있음)
 const int kFrameCeilingBytes = 64 * 1024 * 1024;
 
 // spillToFile 모드에서 이보다 긴 글은 .txt 파일로 보냄
@@ -123,7 +123,7 @@ const int kSpillThresholdBytes = 64 * 1024;
 // 긴 글 파일의 미리보기 길이 (file_offer에 실림)
 const int kSpillPreviewBytes = 2 * 1024;
 
-// 수락 전 썸네일 상한(디코드 뒤 바이트). 보내는 쪽은 24 KB PNG까지만 만듦
+// 수락 전 썸네일 상한(base64 디코드 뒤 바이트). 보내는 쪽은 24 KB PNG까지만 만듦
 const int kMaxThumbBytes = 64 * 1024;
 
 const String kSasInfo = 'intragram/v2/sas';
@@ -136,11 +136,11 @@ const Duration kSocketPingInterval = Duration(seconds: 15);
 
 const Duration kHandshakeTimeout = Duration(seconds: 12);
 
-// 보낼 프레임 대기열 상한(개수·바이트). 느린 상대 때문에 메모리가 무한정 안 쌓이게 넘으면 실패 처리
+// 송신 프레임 대기열 상한(개수 및 바이트). 지연 피어로 메모리가 과도하게 쌓이는 걸 막으려 초과 시 실패 처리함
 const int kMaxPendingOutboundFrames = 64;
 const int kMaxPendingOutboundBytes = 1024 * 1024;
 
-// typing 갱신이 이만큼 없으면 '입력 중'을 끔 (상대가 앱을 덮어도 안 남게)
+// 입력 중 갱신이 없으면 상태를 해제함 (상대가 앱을 닫았을 때 입력 표시가 남지 않게 함)
 const Duration kTypingIdleTimeout = Duration(seconds: 6);
 
 const String kAppName = 'IntraGram';
@@ -154,7 +154,7 @@ const String kFileKdfInfoHighToLow = 'intragram/v2/file/high-to-low';
 // 동시 전송 상한. 나머지는 줄 섬
 const int kMaxConcurrentTransfers = 3;
 
-// 바이트가 이만큼 안 움직이면 멈춘 걸로 보고 실패 처리 (대기·읽기·쓰기 전부). 없으면 받는 쪽이 0%에서 영영 멈춤
+// 바이트가 이만큼 안 움직이면 멈춘 것으로 보고 실패 처리함 (대기·읽기·쓰기 전부). 없으면 받는 쪽이 0%에서 영영 멈춤
 const Duration kTransferStallTimeout = Duration(seconds: 25);
 
 // EOF 뒤 file_received ACK 대기 시간. EOF만으론 완료로 안 봄
@@ -181,5 +181,5 @@ const Duration kInboundWindow = Duration(seconds: 10);
 // 요청 전·사이 HTTP 연결이 놀 수 있는 시간 (dart:io 기본 120초)
 const Duration kHttpIdleTimeout = Duration(seconds: 10);
 
-// 포털 방 브라우저 게스트 수 상한 (입장 코드만 있으면 탭을 끝없이 열 수 있어서)
+// 포털 방 브라우저 게스트 수 상한 (입장 코드만 있으면 탭을 끝없이 열 수 있어 제한함)
 const int kMaxWebGuests = 32;

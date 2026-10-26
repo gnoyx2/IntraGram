@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intragram/core/target_platform.dart';
 
 // 앱이 비활성/숨김일 때 화면 전체를 블러로 덮음. 앱 전환기 스냅샷용 native 커버
-// (Android FLAG_SECURE, iOS AppDelegate 불투명 커버)가 못 막는 경우의 백업
+// (Android FLAG_SECURE, iOS AppDelegate 불투명 커버)가 못 막는 경우의 보조 수단임.
 // 데스크톱은 포커스만 잃어도 inactive라 hidden/paused에서만 덮음
 class PrivacyShield extends StatefulWidget {
   const PrivacyShield({required this.child, super.key});

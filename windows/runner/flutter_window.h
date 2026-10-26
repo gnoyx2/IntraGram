@@ -10,7 +10,6 @@
 
 #include "win32_window.h"
 
-// Flutter 뷰만 담는 창
 class FlutterWindow : public Win32Window {
  public:
   explicit FlutterWindow(const flutter::DartProject& project);

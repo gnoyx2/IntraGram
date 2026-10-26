@@ -125,7 +125,7 @@ class _MessageListState extends State<MessageList> {
     super.dispose();
   }
 
-  // 빌드돼 있으면 바로 맞추고, 화면 밖이면 평균 행 높이(76px)로 대충 뛴 뒤 빌드되면 맞춤.
+  // 빌드돼 있으면 바로 맞추고, 화면 밖이면 평균 행 높이(76px)로 먼저 대략 이동한 뒤 빌드되면 맞춤.
   // 말풍선 크기 편차가 크면 한 번에 안 맞지만 post-frame 재시도로 보정됨 (수백 개까진 충분)
   void _focus(String id) {
     if (!mounted) return;

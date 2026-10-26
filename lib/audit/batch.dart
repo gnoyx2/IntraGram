@@ -11,7 +11,7 @@ import 'package:intragram/network/protocol.dart' show wireBytes, wireInt;
 const String kBatchDomain = 'intragram/merkle-batch/v1';
 const int _kMaxWireInt = 9007199254740991;
 
-// 이 기기가 서명한 배치 머리: 번호·잎 수·루트·봉인 시각. 합의가 없어서 '확정'이 아니라 이 기기의 커밋일 뿐
+// 이 기기가 서명한 배치 머리: 번호·잎 수·루트·봉인 시각. 합의가 없어서 '확정'이 아니라 이 기기의 커밋일 뿐임
 @immutable
 final class BatchHeader {
   BatchHeader({

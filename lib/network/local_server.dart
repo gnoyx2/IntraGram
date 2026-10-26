@@ -24,7 +24,7 @@ part 'server_web_client.dart';
 // POST /api/transfer     인커밍 파일 바이트 스트림 수락
 // GET /api/download/<id> 보내는 파일을 당겨 가는 쪽(방 멤버·브라우저)에 흘림
 // GET /health            생존 + 신원 프로브
-// 사설 LAN 주소(사설·링크로컬 IPv4, 없으면 IPv6 ULA)에만 바인딩. 그런 주소가 없으면 start가 null이고 아무것도 안 들음
+// 사설 LAN 주소(사설·링크로컬 IPv4, 없으면 IPv6 ULA)에만 바인딩함. 해당 주소가 없으면 start가 null을 반환하고 포트를 열지 않음
 class LocalServer {
   LocalServer({
     required this.registry,
@@ -43,7 +43,7 @@ class LocalServer {
   // 테스트는 0을 넘겨 OS가 ephemeral 포트를 배정하게 함 (병렬 실행이 안 겹침)
   final int preferredPort;
 
-  // 테스트 전용: 인터페이스를 안 찾고 이 주소에 바로 바인드 (프로덕션은 null)
+  // 테스트 전용: 인터페이스를 탐색하지 않고 이 주소에 바로 바인드함 (프로덕션은 null)
   final InternetAddress? bindAddress;
 
   // 요청을 끝까지 안 보내는 연결을 닫기까지의 간격 (실제로는 이 값의 1~2배). 테스트는 짧게 줌

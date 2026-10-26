@@ -14,8 +14,8 @@ int main() {
     assert(!intragram_uses_header_bar(name, FALSE, "GNOME Shell"));
   }
   assert(!intragram_uses_header_bar(nullptr, TRUE, nullptr));
-  // First background = first Flutter frame: the engine reads the portal
-  // color-scheme when present, otherwise only a "-dark" theme suffix.
+  // 첫 배경색 = 첫 Flutter 프레임: 엔진은 포털 color-scheme이 있으면 이를 우선 읽고,
+  // 없을 때만 테마명의 '-dark' 접미사로 판정함
   for (const gchar* theme : {"Adwaita", "Adwaita-dark", "HighContrast",
                              "HighContrastInverse"}) {
     assert(intragram_prefers_dark(1, theme));
@@ -29,7 +29,7 @@ int main() {
     assert(!intragram_prefers_dark(-1, theme));
   }
   assert(!intragram_prefers_dark(-1, nullptr));
-  // Without a portal light/dark choice the session's GTK preference stays.
+  // 포털의 라이트/다크 선택이 없으면 세션의 기본 GTK 설정을 유지함
   assert(intragram_overrides_dark(1));
   assert(intragram_overrides_dark(2));
   assert(!intragram_overrides_dark(0));

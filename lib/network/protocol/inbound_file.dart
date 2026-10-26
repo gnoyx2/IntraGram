@@ -44,7 +44,7 @@ class FileOfferInner extends InboundInner {
   // 긴 글 파일의 앞부분 미리보기. thumb과 같이 안 옴
   final String? preview;
 
-  // 음성이면 받는 쪽이 자동 수락하고 RAM에서 재생
+  // 음성이면 받는 쪽이 자동 수락하고 RAM에서 재생함
   final bool voice;
 
   // 보내는 쪽 링크의 파일 서브키로 봉인했는지 (1:1만, 방 직접 pull은 공유 키가 없어 늘 false)
@@ -78,7 +78,7 @@ class FileAcceptInner extends InboundInner {
   });
   final String id;
 
-  // 수락하는 offer의 시도 id. 보내는 쪽은 자기가 아는 지금 attempt와 같을 때만 처리
+  // 수락하는 offer의 시도 id. 보내는 쪽은 현재 알고 있는 attempt와 일치할 때만 처리함
   final String attempt;
 
   // push 수신자가 발급한 POST /api/transfer 인가 토큰
@@ -125,7 +125,7 @@ class FileReceivedInner extends InboundInner {
   });
   final String id;
 
-  // 받는 쪽이 실제로 받은 시도. 보내는 쪽은 그 수신자의 지금 attempt와 같을 때만 완료 처리
+  // 받는 쪽이 실제로 받은 시도. 보내는 쪽은 해당 수신자의 현재 attempt와 일치할 때만 완료 처리함
   final String attempt;
   final String? from;
   final String? peerId;

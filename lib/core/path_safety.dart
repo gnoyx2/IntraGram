@@ -12,7 +12,7 @@ import 'package:intragram/core/path_safety_names.dart';
 // 전송·표시용 이름 전용 (실제 파일을 여는 원본 경로엔 쓰면 안 됨)
 String safeBasename(String rawName) {
   // 한 번 거른 이름을 또 걸러도 같아야 함: 받는 쪽은 제안 때 한 번, 저장할 때 또 거름.
-  // 길이를 자르다 ..가 새로 생기거나 _를 붙여 확장자가 달리 읽히면 다음 번에 바뀌어서 안 바뀔 때까지 돌림 (짧아지기만 해서 금방 멈춤)
+  // 길이를 자르다 ..가 새로 생기거나 _가 붙어 확장자가 달리 읽히면 다음 번에 바뀔 수 있어 수렴할 때까지 최대 4번 더 돌림
   var name = _sanitizeOnce(rawName);
   for (var i = 0; i < 4; i++) {
     final next = _sanitizeOnce(name);
@@ -65,7 +65,7 @@ String _fitLength(String name) {
   return '$stem$ext';
 }
 
-// safeBasename 결과가 정말 폴더 안인지 다시 증명하는 두 번째 레이어. 폴더 자체거나 밖이면 SecurityException
+// safeBasename 결과가 정말 폴더 안인지 다시 증명하는 두 번째 레이어임. 폴더 자체거나 밖이면 SecurityException을 던짐
 String resolveWithin(String directory, String fileName) {
   final base = p.normalize(p.absolute(directory));
   final target = p.normalize(p.join(base, safeBasename(fileName)));

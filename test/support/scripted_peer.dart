@@ -9,7 +9,7 @@ import 'package:intragram/network/crypto_engine.dart';
 import 'package:intragram/network/peer_auth.dart';
 import 'package:intragram/network/protocol.dart';
 
-// 진짜 링크의 반대편에서 와이어를 손으로 말하는 피어: hello/auth를 직접 만들어 넣고 링크가 보낸
+// 진짜 링크의 반대편에서 와이어 프레임을 직접 조립해 주고받는 피어: hello/auth를 직접 만들어 넣고 링크가 보낸
 // 프레임을 모아 둠. 신원 증명의 정상 경로와 위조 경로(남의 peerId 사칭·다른 세션 서명 재생·역할/상대
 // 바꿔치기·커밋과 다른 키 공개)를 프레임 단위로 시험하는 데 씀. 진짜 X25519 임시 세션을 갖고 있어
 // 키 합의도 진짜로 끝낼 수 있음

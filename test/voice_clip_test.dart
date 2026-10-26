@@ -11,7 +11,7 @@ import 'package:intragram/core/voice/voice_wav.dart';
 import 'package:intragram/features/chat/voice_recorder.dart';
 
 // 음성 재생기는 바이트를 메모리로만 넘김: 네이티브 채널엔 검사를 통과한 표준 WAV를, Linux pacat엔
-// PCM을 stdin 파이프로. 끝·일시정지·다시 듣기 상태가 위젯 쪽으로 제대로 흘러감
+// PCM을 stdin 파이프로 전달하며 끝·일시정지·다시 듣기 상태가 위젯 쪽으로 흘러감
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final pcm = Uint8List.fromList(List<int>.generate(32000, (i) => i % 251));
