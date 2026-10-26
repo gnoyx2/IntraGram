@@ -52,7 +52,7 @@ const Map<String, String> kStringsEnRoom = {
   'chat.burnTimer': 'Self-destruct timer',
   'chat.timerOff': 'Timer off',
   'chat.burnAfter': 'Burn after {n}s',
-  'chat.burn24h': 'Burns 24 h after sending even if unread.',
+  'chat.burn24h': 'Timer on: unread messages burn after 24 h.',
   'chat.more': 'More',
   'chat.addPeople': 'Add people',
   'chat.autoAcceptFiles': 'Auto-accept files',

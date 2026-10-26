@@ -25,9 +25,9 @@
 
 IntraGram is a peer-to-peer messenger for people on the same Wi-Fi or LAN. No cloud service, no account. The app's own traffic only goes to private addresses on your network (the [Security model](#security-model) says what that does and does not cover), and by default no chat is written to disk. The name joins *intranet* and *-gram* (something written). IntraGram is not affiliated with Instagram, Telegram or Meta.
 
-| Local network only | Zero-Disk, RAM only | X25519 E2EE (1:1) |
+| Local network only | Chats in RAM by default | X25519 E2EE (1:1) |
 | :--- | :--- | :--- |
-| No cloud service, no account, no internet needed. Every socket the app opens is checked against private (RFC 1918), link-local and IPv6 unique local ranges and refused otherwise. | Messages, keys and transfer records live in memory only. Quit the app or hit **Panic wipe** and they are gone. | App-to-app links use an ephemeral X25519 key agreement and ChaCha20-Poly1305, so a 1:1 chat is end-to-end encrypted. Compare a 6-digit code out loud to catch a man in the middle. Group rooms are encrypted hop by hop through the host. |
+| No cloud service, no account, no internet needed. Every socket the app opens is checked against private (RFC 1918), link-local and IPv6 unique local ranges and refused otherwise. | Chats stay in memory unless the vault is enabled. Accepted files and an optionally remembered display name can remain on disk. Quit or **Panic wipe** releases session references; physical erasure is not guaranteed. | App-to-app links use an ephemeral X25519 key agreement and ChaCha20-Poly1305, so a 1:1 chat is end-to-end encrypted. Compare a 6-digit code out loud to catch a man in the middle. Group rooms are encrypted hop by hop through the host. |
 
 **Contents:** [Status](#status) · [Features](#features) · [Why](#why-intragram) · [Install](#install) · [Troubleshooting](#troubleshooting) · [Build from source](#build-from-source) · [Security model](#security-model) · [Architecture](#architecture) · [Development](#development) · [Contributing](#contributing) · [Credits](#credits) · [License](#license)
 
@@ -52,8 +52,8 @@ Report bugs and questions in **Issues** with your OS and device, app version and
 
 ### Features
 
-- **Ephemeral by default.** Conversations live in the process heap: no SQLite, no `SharedPreferences`, no cache files of its own. Flutter and the OS still keep their usual caches (shader cache, window position, the app switcher snapshot, which iOS covers and Android blocks), none of which holds chat content. On desktop, picking a download folder records its path so a crash's half-received files can be cleaned up; Panic wipe removes that list. Quit or **Panic wipe** drops them at once and overwrites the buffers the app owns (session and vault keys, frame plaintext, file chunks, voice audio). Message strings and the crypto library's own key copies can only be released, not overwritten (see [SECURITY.md](SECURITY.md)).
-- **Burn timer.** Pick 5, 30 or 60 s. The countdown starts when the other side *reads* the message and runs on both screens. A read receipt or burn that cannot reach a device that is asleep or offline goes out when the two reconnect; if they never do, the sender's copy burns 24 h after sending. Unread messages burn after 24 h.
+- **Ephemeral by default.** Chats stay in process memory unless you enable the vault. Accepted files remain on disk; choosing to remember your display name also saves it, and desktop download-folder records support crash cleanup. File selection, sharing and the OS may create temporary copies, caches, swap or crash dumps. Startup and Panic wipe attempt to remove app-private temporary files. Quitting releases the running session; Panic wipe also attempts to erase the vault, saved name and folder list. It overwrites the buffers the app owns (session and vault keys, frame plaintext, file chunks, voice audio). Message strings and the crypto library's own key copies can only be released, not overwritten (see [SECURITY.md](SECURITY.md)).
+- **Burn timer.** Off by default; choose 5, 30 or 60 s. The countdown starts when the other side *reads* the message and runs on both screens. A read receipt or burn that cannot reach a device that is asleep or offline goes out when the two reconnect; if they never do, the sender's copy burns 24 h after sending. Only messages sent with the timer on have the 24-hour unread limit; untimed messages have no automatic burn deadline.
 - **Opt-in vault.** *Settings › Keep chats on this device* saves the scopes you pick (messages, transfer history) to one JSON file in the app folder, optionally sealed with a PIN (PBKDF2 + ChaCha20-Poly1305). Panic wipe erases it, and a message the peer deletes disappears from it. Rooms are never saved. A short PIN only slows down someone who copies the file.
 - **Files, no size cap.** Multi-file and folder batches stream in 2 MiB chunks, so the limit is the receiver's free disk, never RAM. Accept, decline, cancel and retry per transfer; drag and drop on desktop; one-tap clipboard send. In 1:1 chats the bytes are sealed with ChaCha20-Poly1305 under a sub-key derived from the session key. In a group room they go directly between devices, unencrypted; the offer, which travels over the encrypted links, carries the file's SHA-256, so a receiving app deletes bytes that were changed on the way. The sender reads the file once to hash it, so a very large file reaches the room a little later.
 - **Where received files go.** On desktop, to the folder you pick on the first accept. On iPhone and iPad, to *Files › On My iPhone › IntraGram*. On Android, to the app's private folder, which file managers cannot see, so use **Share or save** on the file to keep it in Downloads, Drive or another app.
@@ -72,7 +72,7 @@ Report bugs and questions in **Issues** with your OS and device, app version and
 
 ### Why IntraGram
 
-A message to a colleague two meters away usually travels through a data center on another continent and stays there. [LocalSend](https://github.com/localsend/localsend) fixed that for files: same Wi-Fi, no cloud, no account. But it moves files and one-off texts, not conversations, and a received file stays on disk. (IntraGram does not talk to LocalSend apps; discovery and protocol differ.) IntraGram brings the same idea to conversation (messages, typing, read receipts, files, a burn timer) with nothing left to leak: no account, no history, no server. Close the lid and the room is gone.
+A message to a colleague two meters away usually travels through a data center on another continent and stays there. [LocalSend](https://github.com/localsend/localsend) fixed that for files: same Wi-Fi, no cloud, no account. But it moves files and one-off texts, not conversations, and a received file stays on disk. (IntraGram does not talk to LocalSend apps; discovery and protocol differ.) IntraGram brings the same idea to conversation (messages, typing, read receipts, files, a burn timer) with no account or cloud server and chat history kept in memory by default. Quit the app to end the running session; sleeping a laptop can leave its data in memory.
 
 | | AirDrop | Telegram | LocalSend | **IntraGram** |
 | :--- | :---: | :---: | :---: | :---: |
@@ -193,7 +193,7 @@ graph TD
 
 #### Design rules
 
-1. **Zero-disk by default.** No SQLite, Hive, `SharedPreferences` or `LocalStorage` anywhere in the tree. Message text has to pass through Dart `String`s, which a copying GC will not let us scrub, so the reference is dropped the moment a message burns or the session is wiped, and no copy is kept. Byte buffers the app owns (frame plaintext, file chunks, voice audio) are overwritten zero, random, zero when done, and session and vault keys sit in app-owned buffers that are zeroed on destroy. Copies the crypto library makes on its own (the X25519 private key, HKDF intermediates) are only released. Only two disk writes are intended: a file **you** accept into a folder **you** chose (on desktop that folder is also noted in `download_directories.json`, as a sandbox bookmark on macOS, so a half-received file can be deleted after a crash), and the opt-in vault **you** turn on.
+1. **Zero-disk by default.** No SQLite, Hive, `SharedPreferences` or `LocalStorage` anywhere in the tree. Message text passes through Dart `String`s, which cannot be scrubbed; the store drops its body reference when a message burns or the session is wiped. Byte buffers the app owns (frame plaintext, file chunks, voice audio) are overwritten zero, random, zero when done, and session and vault keys sit in app-owned buffers that are zeroed on destroy. Copies the crypto library makes on its own (the X25519 private key, HKDF intermediates) are only released. App-managed persistent data is limited to: a file **you** accept into a folder **you** chose (on desktop that folder is also noted in `download_directories.json`, as a sandbox bookmark on macOS, so a half-received file can be deleted after a crash), the opt-in vault **you** turn on, and a display name **you** choose to remember (inside the vault, or plaintext `identity.json` when the vault is off). File selection/sharing plugins and the OS can also create temporary copies and caches.
 2. **Private addresses only.** `NetworkGuard` classifies every address. The server binds to a private IPv4 address (a link-local one if that is all the network gives, and an IPv6 unique local address on a network with no IPv4 LAN), and every outbound socket throws `SecurityException` unless the target is in `10/8`, `172.16/12`, `192.168/16`, loopback, `169.254/16`, `::1` or `fc00::/7`. Dialing a peer is stricter: `NetworkGuard.parsePeerEndpoint` accepts only canonical dotted-decimal RFC 1918 IPv4 (no loopback, no APIPA, no leading-zero, octal or hex forms). APIPA remains permitted for the link-local fallback: browser guests reach the server there, and a 1:1 file is sent back to the address an inbound peer connected from. Loopback remains for tests. Targets from discovery, a QR code or the IP dialog all pass through `parsePeerEndpoint` before an app peer socket is opened, so neither loopback nor APIPA can be dialled through those inputs. This checks the destination of the app's own sockets; it is not a packet filter and not an air gap. The Wi-Fi itself is usually online, a VPN or overlay that hands out private addresses (a company VPN, WireGuard, Tailscale, ZeroTier) carries the traffic across the internet inside its tunnel, a link you tap opens in your browser, and a received file you open is handed to another app.
 3. **One codebase, every platform.** iOS, iPadOS, Android, macOS, Windows and Linux from a single Flutter codebase, plus a responsive browser client served by the embedded server.
 
@@ -234,7 +234,7 @@ PRs are welcome. The codebase is small on purpose: no code generation, and each 
 Rules for every pull request:
 
 - `flutter analyze` stays at 0 issues, all tests stay green, `dart format` is clean, and no first-party `.dart` file exceeds 250 lines (`tool/check_loc.py`).
-- **Zero-disk.** No SQLite, Hive, `SharedPreferences` or `LocalStorage`. The only disk writes are a file the user accepted (plus, on desktop, a note of its folder for cleanup after a crash) and the opt-in vault.
+- **Zero-disk.** No SQLite, Hive, `SharedPreferences` or `LocalStorage`. App-managed persistent data is limited to accepted files, desktop download-folder records, the opt-in vault and an optionally saved display name. Temporary plugin/OS copies and caches are described above.
 - **LAN only.** Every socket dial goes through `NetworkGuard`. A change that skips it is out of scope.
 - **Wire changes bump the protocol.** Move `kProtocolVersion` and `PROTOCOL_VERSION` in `assets/web/js/socket.js` together. A new broadcast-style frame needs an entry in the `relayable` set (`lib/network/link_registry/room.dart`) before a room host forwards it; `file_*` frames are routed per transfer instead (`room_file_routing.dart`).
 - **Strings and state.** User-facing strings go through `s.t('key')` in `lib/l10n/` (English and Korean). State models are immutable (`copyWith`).
@@ -258,9 +258,9 @@ MIT. See [LICENSE](LICENSE) for the text and [THIRD_PARTY_NOTICES.md](THIRD_PART
 
 IntraGram은 같은 Wi-Fi/LAN 안에 있는 사람끼리 쓰는 P2P 메신저입니다. 클라우드 서비스도 계정도 없습니다. 앱이 직접 보내는 트래픽은 네트워크 안의 사설 주소로만 가고([보안 모델](#보안-모델)에 이게 무엇을 막고 무엇을 못 막는지 적었습니다), 기본값으로는 대화를 디스크에 쓰지 않습니다. 이름은 *intranet*과 *-gram*(쓴 것)을 합친 것입니다. IntraGram은 Instagram, Telegram, Meta와 관계가 없습니다.
 
-| 로컬 네트워크 전용 | Zero-Disk, RAM 전용 | X25519 E2EE (1:1) |
+| 로컬 네트워크 전용 | 기본은 RAM에 대화 보관 | X25519 E2EE (1:1) |
 | :--- | :--- | :--- |
-| 클라우드 서비스·계정·인터넷이 필요 없습니다. 앱이 여는 모든 소켓은 사설(RFC 1918)·링크 로컬·IPv6 고유 로컬 대역만 허용하고 나머지는 거부합니다. | 메시지·키·전송 기록은 메모리에만 있습니다. 앱을 끄거나 **긴급 소거**(Panic wipe)를 누르면 사라집니다. | 앱 간 연결은 임시 X25519 키 합의와 ChaCha20-Poly1305를 쓰므로 1:1 대화는 종단 간 암호화됩니다. 6자리 코드를 소리 내어 맞춰 중간자를 잡아냅니다. 그룹 방은 호스트를 거치는 구간별(hop-by-hop) 암호화입니다. |
+| 클라우드 서비스·계정·인터넷이 필요 없습니다. 앱이 여는 모든 소켓은 사설(RFC 1918)·링크 로컬·IPv6 고유 로컬 대역만 허용하고 나머지는 거부합니다. | 보관소를 켜지 않으면 대화는 메모리에 둡니다. 수락한 파일·저장한 기기 이름은 디스크에 남을 수 있습니다. 종료·**긴급 소거**는 세션 참조를 해제하지만 물리적 완전 삭제는 보장하지 않습니다. | 앱 간 연결은 임시 X25519 키 합의와 ChaCha20-Poly1305를 쓰므로 1:1 대화는 종단 간 암호화됩니다. 6자리 코드를 소리 내어 맞춰 중간자를 잡아냅니다. 그룹 방은 호스트를 거치는 구간별(hop-by-hop) 암호화입니다. |
 
 **목차:** [현재 상태](#현재-상태) · [핵심 기능](#핵심-기능) · [왜 만들었나](#왜-만들었나) · [설치](#설치) · [문제 해결](#문제-해결) · [소스에서 빌드](#소스에서-빌드) · [보안 모델](#보안-모델) · [아키텍처](#아키텍처) · [개발](#개발) · [기여](#기여) · [감사의 말](#감사의-말) · [라이선스](#라이선스)
 
@@ -285,8 +285,8 @@ IntraGram은 같은 Wi-Fi/LAN 안에 있는 사람끼리 쓰는 P2P 메신저입
 
 ### 핵심 기능
 
-- **기본은 휘발성.** 대화는 프로세스 힙에만 있습니다. SQLite도, `SharedPreferences`도, 앱이 만드는 캐시 파일도 없습니다. Flutter와 OS의 보통 캐시(셰이더 캐시, 창 위치, 앱 전환 스냅샷: iOS는 가리고 Android는 막음)는 남지만 대화 내용은 담기지 않습니다. 데스크톱에서 받을 폴더를 고르면 크래시 뒤 덜 받은 파일을 치우려고 그 경로를 기록하고, 긴급 소거가 그 목록을 지웁니다. 앱을 끄거나 **긴급 소거**를 누르면 즉시 참조를 끊고, 앱이 소유한 버퍼(세션·보관소 키, 프레임 평문, 파일 청크, 음성)를 덮어씁니다. 메시지 문자열과 암호 라이브러리가 따로 만든 키 사본은 해제만 되고 덮어쓰지는 못합니다([SECURITY.md](SECURITY.md) 참고).
-- **소각 타이머.** 5·30·60초 중에서 고릅니다. 상대가 메시지를 *읽는* 순간부터 양쪽 화면에서 같은 카운트다운이 돕니다. 한쪽 기기가 절전 중이거나 오프라인이라 읽음·소각 신호가 닿지 못하면 다시 연결될 때 보내고, 끝내 연결되지 않으면 보낸 쪽 사본은 보낸 지 24시간 뒤에 소각됩니다. 읽지 않은 메시지는 보낸 지 24시간 뒤에 소각됩니다.
+- **기본은 휘발성.** 보관소를 켜지 않으면 대화는 프로세스 메모리에 둡니다. 수락한 파일은 디스크에 남고, 다음에도 쓸 기기 이름을 고르면 그 이름도 저장하며, 데스크톱은 크래시 뒤 정리용으로 다운로드 폴더를 기록합니다. 파일 선택·공유·OS가 임시 사본·캐시·스왑·크래시 덤프를 만들 수 있습니다. 시작과 긴급 소거 때 앱 전용 임시 파일 정리를 시도합니다. 앱을 종료하면 실행 중 세션을 해제하고, 긴급 소거는 보관소·저장한 이름·폴더 목록 삭제도 시도합니다. 앱이 소유한 버퍼(세션·보관소 키, 프레임 평문, 파일 청크, 음성)를 덮어씁니다. 메시지 문자열과 암호 라이브러리가 따로 만든 키 사본은 해제만 되고 덮어쓰지는 못합니다([SECURITY.md](SECURITY.md) 참고).
+- **소각 타이머.** 기본은 꺼짐이고, 5·30·60초 중에서 고릅니다. 상대가 메시지를 *읽는* 순간부터 양쪽 화면에서 같은 카운트다운이 돕니다. 한쪽 기기가 절전 중이거나 오프라인이라 읽음·소각 신호가 닿지 못하면 다시 연결될 때 보내고, 끝내 연결되지 않으면 보낸 쪽 사본은 보낸 지 24시간 뒤에 소각됩니다. 타이머를 켜고 보낸 메시지만 24시간 미읽음 상한이 적용되며, 타이머 없는 메시지에는 자동 소각 기한이 없습니다.
 - **옵트인 보관소.** *설정 › 이 기기에 대화 보관*을 켜면 고른 범위(메시지, 전송 이력)를 앱 폴더의 JSON 파일 하나에 저장합니다. PIN으로 봉인할 수 있고(PBKDF2 + ChaCha20-Poly1305), 긴급 소거가 이 파일도 지웁니다. 상대가 삭제한 메시지는 여기서도 사라집니다. 방은 저장하지 않습니다. 짧은 PIN은 파일을 복사해 간 사람을 늦출 뿐, 못 뚫는다는 보장은 아닙니다.
 - **용량 제한 없는 파일 전송.** 여러 파일과 폴더를 2 MiB 청크로 스트리밍하므로 한계는 받는 쪽 여유 디스크이고 RAM이 아닙니다. 전송마다 수락·거절·취소·재시도, 데스크톱 드래그 앤 드롭, 클립보드 즉시 전송을 지원합니다. 1:1 대화에서는 세션 키에서 유도한 서브키로 ChaCha20-Poly1305 봉인합니다. 그룹 방에서는 기기끼리 암호화 없이 바로 주고받되, 암호화된 링크로 가는 제안에 파일의 SHA-256이 실려서 받는 앱이 도중에 바뀐 바이트를 지웁니다. 보내는 쪽이 해시하려고 파일을 한 번 읽어서 아주 큰 파일은 방에 조금 늦게 뜹니다.
 - **받은 파일 위치.** 데스크톱은 처음 수락할 때 고른 폴더, iPhone·iPad는 *파일 › 나의 iPhone › IntraGram*입니다. Android는 파일 관리자에 보이지 않는 앱 전용 폴더라, 파일의 **공유·저장**으로 다운로드·드라이브·다른 앱에 옮기세요.
@@ -306,7 +306,7 @@ IntraGram은 같은 Wi-Fi/LAN 안에 있는 사람끼리 쓰는 P2P 메신저입
 
 ### 왜 만들었나
 
-2미터 옆에 앉은 동료에게 보낸 메시지가 다른 대륙의 데이터센터를 거쳐 거기 남습니다. [LocalSend](https://github.com/localsend/localsend)는 파일 전송에서 이 문제를 풀었습니다. 같은 Wi-Fi 안에서, 클라우드도 계정도 없이요. 하지만 대화가 아니라 파일과 한 번짜리 텍스트이고, 받은 파일은 디스크에 남습니다. (IntraGram은 LocalSend 앱과 통하지 않습니다. 탐색과 프로토콜이 다릅니다.) IntraGram은 같은 발상을 대화에 적용합니다. 메시지, 입력 중 표시, 읽음, 파일, 소각 타이머까지 쓰되 새어 나갈 것이 없습니다. 계정도, 기록도, 서버도 없고, 노트북을 덮으면 방이 사라집니다.
+2미터 옆에 앉은 동료에게 보낸 메시지가 다른 대륙의 데이터센터를 거쳐 거기 남습니다. [LocalSend](https://github.com/localsend/localsend)는 파일 전송에서 이 문제를 풀었습니다. 같은 Wi-Fi 안에서, 클라우드도 계정도 없이요. 하지만 대화가 아니라 파일과 한 번짜리 텍스트이고, 받은 파일은 디스크에 남습니다. (IntraGram은 LocalSend 앱과 통하지 않습니다. 탐색과 프로토콜이 다릅니다.) IntraGram은 같은 발상을 대화에 적용합니다. 메시지, 입력 중 표시, 읽음, 파일, 소각 타이머를 제공하며 계정·클라우드 서버 없이 기본적으로 대화 기록을 메모리에 둡니다. 앱을 종료하면 실행 중 세션이 끝나지만, 절전 상태에선 메모리에 남을 수 있습니다.
 
 | | AirDrop | Telegram | LocalSend | **IntraGram** |
 | :--- | :---: | :---: | :---: | :---: |
@@ -427,9 +427,9 @@ graph TD
 
 #### 설계 원칙
 
-1. **기본은 제로 디스크.** 코드 트리 어디에도 SQLite, Hive, `SharedPreferences`, `LocalStorage`가 없습니다. 메시지 텍스트는 Dart `String`을 거칠 수밖에 없고 복사형 GC 특성상 지울 수 없으므로, 메시지가 소각되거나 세션이 초기화되는 즉시 참조를 해제하고 복사본을 남기지 않습니다. 앱이 소유한 바이트 버퍼(프레임 평문, 파일 청크, 음성)는 다 쓰면 0, 랜덤, 0 순서로 덮어쓰고, 세션 키와 보관소 키는 앱 소유 버퍼에 두어 파기할 때 0으로 덮습니다. 암호 라이브러리가 자체로 만드는 사본(X25519 개인키, HKDF 중간값)은 해제만 됩니다. 의도된 디스크 쓰기는 둘뿐입니다. **사용자가** 수락한 파일을 **사용자가** 고른 폴더에 저장하는 것(데스크톱은 크래시 뒤 받다 만 파일을 지우려고 그 폴더를 `download_directories.json`에 적고, macOS는 샌드박스 북마크로 적음)과, **사용자가** 켠 옵트인 보관소입니다.
+1. **기본은 제로 디스크.** 코드 트리 어디에도 SQLite, Hive, `SharedPreferences`, `LocalStorage`가 없습니다. 메시지 텍스트는 지울 수 없는 Dart `String`을 거치므로, 메시지 소각이나 세션 초기화 때 스토어의 본문 참조를 버립니다. 앱이 소유한 바이트 버퍼(프레임 평문, 파일 청크, 음성)는 다 쓰면 0, 랜덤, 0 순서로 덮어쓰고, 세션 키와 보관소 키는 앱 소유 버퍼에 두어 파기할 때 0으로 덮습니다. 암호 라이브러리가 자체로 만드는 사본(X25519 개인키, HKDF 중간값)은 해제만 됩니다. 앱이 관리하는 영구 저장 데이터는 다음으로 제한합니다. **사용자가** 수락한 파일을 **사용자가** 고른 폴더에 저장하는 것(데스크톱은 크래시 뒤 받다 만 파일을 지우려고 그 폴더를 `download_directories.json`에 적고, macOS는 샌드박스 북마크로 적음), **사용자가** 켠 옵트인 보관소, **사용자가** 다음에도 쓰도록 고른 기기 이름(보관소 안, 보관소가 꺼져 있으면 평문 `identity.json`)입니다. 파일 선택·공유 플러그인과 OS가 임시 사본이나 캐시를 만들 수도 있습니다.
 2. **사설 주소만.** `NetworkGuard`가 모든 주소를 분류합니다. 서버는 사설 IPv4에 바인딩하고(네트워크가 그것만 주면 링크 로컬 IPv4, IPv4 LAN이 없는 네트워크면 IPv6 고유 로컬 주소), 모든 아웃바운드 소켓은 대상이 `10/8`, `172.16/12`, `192.168/16`, 루프백, `169.254/16`, `::1`, `fc00::/7`이 아니면 `SecurityException`을 던집니다. 피어 다이얼은 더 엄격해서 `NetworkGuard.parsePeerEndpoint`가 정규 dotted-decimal RFC 1918 IPv4만 받습니다(루프백, APIPA, 선행 0·octal·hex 표기는 모두 거부). APIPA는 링크 로컬 폴백 때문에 허용됩니다. 브라우저 게스트가 그 서버 주소로 접속하고, 1:1 파일은 인바운드 피어가 접속해 온 주소로 보냅니다. 루프백은 테스트용으로 남아 있습니다. discovery·QR·IP 입력으로 받은 대상은 앱 피어 소켓을 열기 전에 모두 `parsePeerEndpoint`를 거치므로, 이 입력으로는 루프백이나 APIPA에 다이얼할 수 없습니다. 이건 앱 자신의 소켓 목적지 검사이지 패킷 필터나 에어갭이 아닙니다. Wi-Fi 자체는 대개 인터넷에 붙어 있고, 사설 주소를 나눠 주는 VPN·오버레이(회사 VPN, WireGuard, Tailscale, ZeroTier)로 이어진 상대에게는 트래픽이 그 터널 안에서 인터넷을 건너가며, 탭한 링크는 브라우저로 열리고, 받은 파일을 열면 다른 앱으로 넘어갑니다.
-3. **하나의 코드베이스, 모든 플랫폼.** 단일 Flutter 코드베이스로 iOS, iPadOS, Android, macOS, Windows, Linux를 지원하고, 임베디드 서버가 반응형 브라우저 클라이언트도 제공합니다.
+3. **하나의 코드베이스, 모든 플랫폼.** 단일 Flutter 코드베이스로 iOS, iPadOS, Android, macOS, Windows, Linux를 대상으로 하고, 임베디드 서버가 반응형 브라우저 클라이언트도 제공합니다.
 
 ### 개발
 
@@ -468,7 +468,7 @@ PR은 언제든 환영합니다. 코드는 일부러 작게 유지합니다. 코
 모든 PR에 적용되는 규칙:
 
 - `flutter analyze` 0건, 모든 테스트 통과, `dart format` 클린, 자체 `.dart` 파일은 250줄 이하(`tool/check_loc.py`).
-- **제로 디스크.** SQLite, Hive, `SharedPreferences`, `LocalStorage`를 쓰지 않습니다. 디스크 쓰기는 사용자가 수락한 파일(데스크톱은 크래시 뒤 정리용으로 그 폴더도 적음)과 옵트인 보관소뿐입니다.
+- **제로 디스크.** SQLite, Hive, `SharedPreferences`, `LocalStorage`를 쓰지 않습니다. 앱이 관리하는 영구 저장 데이터는 수락한 파일·데스크톱 다운로드 폴더 기록·옵트인 보관소·선택적으로 저장한 기기 이름입니다. 플러그인·OS의 임시 사본과 캐시는 위에 설명했습니다.
 - **LAN 전용.** 모든 소켓 연결은 `NetworkGuard`를 거칩니다. 이를 우회하는 변경은 범위 밖입니다.
 - **와이어 변경은 프로토콜 버전을 올립니다.** `kProtocolVersion`과 `assets/web/js/socket.js`의 `PROTOCOL_VERSION`을 함께 올립니다. 브로드캐스트 성격의 새 프레임은 방 호스트가 전달하기 전에 `relayable` 집합(`lib/network/link_registry/room.dart`)에 넣어야 하고, `file_*` 프레임은 전송 단위로 따로 라우팅합니다(`room_file_routing.dart`).
 - **문자열과 상태.** 사용자에게 보이는 문자열은 `lib/l10n/`의 `s.t('key')`로 씁니다(영어·한국어). 상태 모델은 불변(`copyWith`)입니다.

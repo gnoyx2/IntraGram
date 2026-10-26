@@ -127,7 +127,7 @@ const Map<String, String> kStringsKoCore = {
   'chat.burnTimer': '자동 삭제 타이머',
   'chat.timerOff': '타이머 끔',
   'chat.burnAfter': '{n}초 후 삭제',
-  'chat.burn24h': '안 읽어도 보낸 지 24시간이면 삭제돼요.',
+  'chat.burn24h': '타이머를 켠 메시지는 안 읽어도 24시간 뒤 삭제돼요.',
   'chat.more': '더 보기',
   'chat.addPeople': '사람 추가',
   'chat.autoAcceptFiles': '파일 자동 수락',

@@ -18,9 +18,11 @@ not include a working exploit against a third party.
 
 ## Supported versions
 
-Only the latest release is supported. The wire protocol is versioned (`v7`
-today) and a device speaking any other version is refused at the handshake, so
-all devices in a conversation must run the same release.
+This is a release candidate; no platform has completed real-device QA yet.
+Platform support requires the checks in `DEVICE_QA.md`. The wire protocol is
+versioned (`v7` today), and a device speaking any other version is refused at
+the handshake. Peers must use the same wire protocol. Use the current build
+for available security fixes.
 
 ## Independent review
 
@@ -42,16 +44,20 @@ Do not rely on it where a failure would put someone in danger.
   dotted-decimal RFC 1918 IPv4. This checks destinations, not the route: a VPN
   or overlay that assigns private addresses carries the traffic over the
   internet inside its own tunnel.
-- **Data left behind.** By default no chat is written to disk; only a file you
-  accept is saved. On desktop the folders you picked for downloads are listed in
+- **Data left behind.** By default no chat is written to disk. Accepted files
+  are saved. On desktop the folders you picked for downloads are listed in
   `download_directories.json` so half-received files can be cleaned up after a
   crash (on macOS with a sandbox bookmark, because the sandbox forgets a picked
   folder when the app quits). The optional local vault is off until you turn it
-  on, can be sealed with a PIN, and is erased by Panic wipe, which also removes
-  that folder list and replaces the identity key. Android's OS backup of app
+  on and can be sealed with a PIN. A display name you choose to remember is
+  stored in that vault, or in plaintext `identity.json` when the vault is off.
+  Panic wipe attempts to erase the vault, saved name and folder list and
+  replaces the identity key. Android's OS backup of app
   data is disabled. Flutter and the OS keep their own caches (shader cache,
   window position, the app switcher snapshot, which iOS covers and Android
-  blocks); they hold no chat content.
+  blocks). File selection/sharing plugins and the OS can leave temporary
+  copies or caches; startup and Panic wipe attempt to sweep app-private temp
+  folders. No physical erasure of those copies is guaranteed.
 - **Malicious peers.** Filenames are sanitized and checked against path
   traversal, frames are strictly parsed, a room's host routes file offers per
   recipient, and unauthenticated sockets are capped (4 per host, 16 overall, 24
@@ -105,7 +111,9 @@ Do not rely on it where a failure would put someone in danger.
   have none of these author/checkpoint guarantees.
 - **Audit clipboard.** Whole bundles, individual proofs and witness receipts
   all use `OsPrivacy.copySensitive`: Android sensitive marking, Apple local-only
-  copying, Windows history/cloud exclusion, and a 60-second own-copy expiry.
+  copying and Windows history/cloud exclusion. The app attempts to clear its
+  own copy after 60 seconds; on Android this can wait until the app returns
+  to the foreground.
   On Windows the expiry compares the clipboard owner window and the sequence
   number read after `CloseClipboard`, which bumps the number when Windows
   synthesizes text formats; a copy made by another app, even of the same text,
@@ -152,7 +160,8 @@ Do not rely on it where a failure would put someone in danger.
 - **Copied text on Linux.** Copying a message, the security code, the portal
   link or an audit bundle/proof/witness receipt marks the copy as sensitive on Android, keeps it on this device on iOS
   and macOS (no Universal Clipboard) and keeps it out of clipboard history and
-  cloud sync on Windows, then clears it after 60 seconds if it is still ours.
+  cloud sync on Windows, then attempts to clear it after 60 seconds if it is
+  still ours. Android can defer that check until the app is in the foreground.
   On Linux the app keeps ownership of the copy, offers the KDE
   `x-kde-passwordManagerHint` secret hint and clears it after 60 seconds only
   while it still owns the clipboard; a clipboard manager may ignore the hint
@@ -174,11 +183,15 @@ Do not rely on it where a failure would put someone in danger.
 - **Availability.** A device on the LAN can still use up handshake capacity or
   flood a link. The caps above limit, not prevent, that.
 - **Screenshots.** Android enables `FLAG_SECURE` to block ordinary OS screenshots
-  and screen recordings, and Windows leaves the window out of captures
-  (`WDA_EXCLUDEFROMCAPTURE`). macOS marks the window as not shareable, which
+  and screen recordings. Windows requests capture exclusion
+  (`WDA_EXCLUDEFROMCAPTURE`), which can fail or be ignored. macOS marks the
+  window as not shareable, which
   recent capture tools may ignore, and reports the screenshots it notices. iOS
   detects screenshots after capture and obscures app switcher snapshots; it
   cannot prevent a screenshot. Linux has no such control, and nothing stops an
   external camera.
-- **Unsigned binaries.** Release binaries other than a release-key-signed
-  Android build are not code-signed or notarized; verify `SHA256SUMS.txt`.
+- **Distribution signing.** CI signs Android with a release key only when
+  configured. Its iOS builds are unsigned, macOS builds are ad-hoc signed and
+  not notarized, and Windows builds are unsigned; Linux has no OS-level signing.
+  Check the release's measured `SIGNING-<platform>.txt`, `SHA256SUMS.txt` and
+  available build provenance.

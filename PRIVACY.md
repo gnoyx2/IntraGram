@@ -10,11 +10,11 @@ IntraGram automatically sends no data to the developer or to a cloud service, an
 
 ### What stays on this device
 
-Messages, transfer records and session keys live in memory. Burning a message drops its body; up to 512 body-free signed receipts with salted commitments, 64 signed Merkle batches and 64 witness-root observations can remain in RAM. Receipt metadata includes event/subject/attempt IDs, peer IDs and public keys, commitments, policy/outcome, nonce and time. File receipts contain a SHA-256 content digest, which permits known-file comparisons. Evidence, organization credentials and room integrity state are excluded from the vault. Panic wipe blocks new evidence and clears these states synchronously before waiting for shutdown, then clears them again; quitting also clears them. The app writes accepted files and, if enabled in Settings, the optional PIN-sealed vault to disk. On desktop it also records picked download folders to clean up interrupted downloads. Panic erases the vault and folder list; removing the app removes its own folder.
+Messages, transfer records and session keys are held in memory; selected messages and transfer history can also be saved when the vault is enabled. Burning a message drops its body; up to 512 body-free signed receipts with salted commitments, 64 signed Merkle batches and 64 witness-root observations can remain in RAM. Receipt metadata includes event/subject/attempt IDs, peer IDs and public keys, commitments, policy/outcome, nonce and time. File receipts contain a SHA-256 content digest, which permits known-file comparisons. Evidence, organization credentials and room integrity state are excluded from the vault. Panic wipe blocks new evidence and clears these states synchronously before waiting for shutdown, then clears them again; quitting also clears them. The app writes accepted files and, if enabled, a vault with optional PIN protection. Choosing to remember a display name stores it in the vault, or in a plaintext identity.json when the vault is off. On desktop it also records picked download folders to clean up interrupted downloads. Panic wipe attempts to erase the vault, saved name and folder list. Uninstalling can leave desktop app data and accepted files behind. File selection, sharing and the OS may also leave temporary copies or caches.
 
 ### What leaves this device
 
-Messages go to devices you connect to on this local network. App-to-app 1:1 chats are end-to-end encrypted; the host reads an app group room and room files cross the LAN unencrypted. Browser portal rooms are separate and their traffic is plaintext on Wi-Fi. Optional offline organization credentials contain organization, department, role, issuer, policy, trust snapshot, expiry and the session identity public key. They are held in RAM and presented only after an encrypted app link is established, with proof of key possession; they do not verify the security code. The bundled demo issuer is public and proves no real affiliation; offline revocation checks cover only the selected snapshot. Signed author events and checkpoints accompany app room messages. When you explicitly copy an audit bundle, it contains selected signed receipts, IDs, public keys, commitments, times, salts/proof paths, a signed batch header and any attached witness receipt, without message bodies. Manual witness exchange lets another device inspect that exported metadata and sign its root; no gateway is contacted automatically. Audit copying uses the sensitive clipboard route with a 60-second expiry; Linux clipboard managers may keep copies. You control who receives an exported copy.
+Messages go to devices you connect to on this local network. App-to-app 1:1 chats are end-to-end encrypted; the host reads an app group room and room files cross the LAN unencrypted. Browser portal rooms are separate and their traffic is plaintext on Wi-Fi. Optional offline organization credentials contain organization, department, role, issuer, policy, trust snapshot, expiry and the session identity public key. They are held in RAM and presented only after an encrypted app link is established, with proof of key possession; they do not verify the security code. The bundled demo issuer is public and proves no real affiliation; offline revocation checks cover only the selected snapshot. Signed author events and checkpoints accompany app room messages. When you explicitly copy an audit bundle, it contains selected signed receipts, IDs, public keys, commitments, times, salts/proof paths, a signed batch header and any attached witness receipt, without message bodies. Manual witness exchange lets another device inspect that exported metadata and sign its root; no gateway is contacted automatically. Audit copying uses sensitive clipboard handling and attempts to clear the app's own copy after 60 seconds; on Android this can wait until the app returns to the foreground. Linux clipboard managers may keep copies. You control who receives an exported copy.
 
 ### Desktop and browser privacy
 
@@ -34,7 +34,7 @@ IntraGram sends no telemetry or automatic reports to third parties. Your connect
 
 ### Questions
 
-Open an issue on the project's GitHub page. Report security problems privately as described in SECURITY.md.
+Open an issue on the project's GitHub page for general questions. Report security problems privately to jung@yonghun.pro.
 
 ## 한국어
 
@@ -44,11 +44,11 @@ IntraGram은 개발자나 클라우드 서비스에 데이터를 자동으로 �
 
 ### 이 기기에 남는 것
 
-메시지·전송 기록·세션 키는 메모리에 있어요. 메시지를 소각하면 본문 참조를 버리지만 본문 없는 서명 영수증과 Salted 커밋먼트 최대 512건, 서명된 Merkle 배치 64개, 증인 루트 관측 64건은 RAM에 남을 수 있어요. 영수증에는 사건·대상·시도 ID, 피어 ID와 공개키, 커밋먼트, 정책·결과, 난수와 시각이 담겨요. 파일 영수증에는 SHA-256 내용 해시가 있어 아는 파일과 대조할 수 있어요. 증적·조직 자격·방 무결성 상태는 보관소에 저장하지 않아요. 긴급 소거는 종료를 기다리기 전에 신규 증적을 차단하고 이 상태를 동기적으로 비운 뒤, 종료 정리 뒤에도 다시 비워요. 앱을 꺼도 사라져요. 디스크에는 수락한 파일과 설정에서 켠 보관소(선택적 PIN 봉인)를 써요. 컴퓨터에선 끊긴 다운로드 조각을 지우려고 저장 폴더 목록도 적어 둬요. 긴급 소거는 보관소와 그 목록을 지우고, 앱을 지우면 앱 폴더도 지워져요.
+메시지·전송 기록·세션 키는 메모리에 두며, 보관소를 켜면 선택한 메시지와 전송 기록도 저장할 수 있어요. 메시지를 소각하면 본문 참조를 버리지만 본문 없는 서명 영수증과 Salted 커밋먼트 최대 512건, 서명된 Merkle 배치 64개, 증인 루트 관측 64건은 RAM에 남을 수 있어요. 영수증에는 사건·대상·시도 ID, 피어 ID와 공개키, 커밋먼트, 정책·결과, 난수와 시각이 담겨요. 파일 영수증에는 SHA-256 내용 해시가 있어 아는 파일과 대조할 수 있어요. 증적·조직 자격·방 무결성 상태는 보관소에 저장하지 않아요. 긴급 소거는 종료를 기다리기 전에 신규 증적을 차단하고 이 상태를 동기적으로 비운 뒤, 종료 정리 뒤에도 다시 비워요. 앱을 꺼도 사라져요. 디스크에는 수락한 파일과 설정에서 켠 보관소를 쓰며, PIN 보호는 선택 사항이에요. 기기 이름을 다음에도 쓰도록 고르면 보관소에 저장하고, 보관소가 꺼져 있으면 평문 identity.json에 저장해요. 컴퓨터에선 끊긴 다운로드 조각을 지우려고 저장 폴더 목록도 적어 둬요. 긴급 소거는 보관소·저장한 이름·폴더 목록 삭제를 시도해요. 데스크톱 앱을 제거해도 앱 데이터와 수락한 파일이 남을 수 있어요. 파일 선택·공유·OS가 임시 사본이나 캐시를 남길 수도 있어요.
 
 ### 이 기기 밖으로 나가는 것
 
-메시지는 이 로컬 네트워크에서 연결한 기기로 가요. 앱끼리 1:1 대화는 종단 간 암호화돼요. 앱 그룹 방은 호스트가 읽을 수 있고 방 파일은 LAN에서 평문이에요. 브라우저 포털 방은 앱 그룹 방과 별개이며 Wi-Fi에서 평문이에요. 선택적으로 제시하는 오프라인 조직 자격에는 기관·부서·역할·발급기관·정책·신뢰 스냅샷·만료와 이번 실행의 신원 공개키가 들어가요. RAM에만 두고 암호화된 앱 링크가 선 뒤 키 소유 증명과 함께 제시하며, 보안 코드 확인과는 별개예요. 기본 시연 발급기관은 공개돼 있어 실제 소속을 보증하지 않고, 오프라인 폐기 확인은 선택한 스냅샷까지만 반영해요. 앱 방 메시지에는 작성자 서명 사건과 체크포인트가 따라가요. 직접 감사 번들을 복사하면 선택한 서명 영수증·ID·공개키·커밋먼트·시각·salt·증명 경로·서명된 배치 헤더·연결된 증인 영수증이 담기며 메시지 본문은 없어요. 수동 증인 교환에서는 다른 기기가 이 반출 메타데이터를 보고 루트에 서명해요. 자동으로 게이트웨이에 보내지 않아요. 감사 복사는 60초 만료의 민감 클립보드 경로를 쓰지만 Linux 클립보드 관리자는 사본을 남길 수 있어요. 반출본을 누구에게 줄지는 사용자가 정해요.
+메시지는 이 로컬 네트워크에서 연결한 기기로 가요. 앱끼리 1:1 대화는 종단 간 암호화돼요. 앱 그룹 방은 호스트가 읽을 수 있고 방 파일은 LAN에서 평문이에요. 브라우저 포털 방은 앱 그룹 방과 별개이며 Wi-Fi에서 평문이에요. 선택적으로 제시하는 오프라인 조직 자격에는 기관·부서·역할·발급기관·정책·신뢰 스냅샷·만료와 이번 실행의 신원 공개키가 들어가요. RAM에만 두고 암호화된 앱 링크가 선 뒤 키 소유 증명과 함께 제시하며, 보안 코드 확인과는 별개예요. 기본 시연 발급기관은 공개돼 있어 실제 소속을 보증하지 않고, 오프라인 폐기 확인은 선택한 스냅샷까지만 반영해요. 앱 방 메시지에는 작성자 서명 사건과 체크포인트가 따라가요. 직접 감사 번들을 복사하면 선택한 서명 영수증·ID·공개키·커밋먼트·시각·salt·증명 경로·서명된 배치 헤더·연결된 증인 영수증이 담기며 메시지 본문은 없어요. 수동 증인 교환에서는 다른 기기가 이 반출 메타데이터를 보고 루트에 서명해요. 자동으로 게이트웨이에 보내지 않아요. 감사 복사는 민감 클립보드 경로로 처리하고 60초 뒤 앱 소유 복사본 삭제를 시도해요. Android에서는 앱이 화면에 돌아올 때까지 미뤄질 수 있고, Linux 클립보드 관리자는 사본을 남길 수 있어요. 반출본을 누구에게 줄지는 사용자가 정해요.
 
 ### 데스크톱과 브라우저 개인정보
 
@@ -68,8 +68,6 @@ IntraGram은 제3자에게 원격 분석이나 자동 보고를 보내지 않아
 
 ### 문의
 
-프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제는 SECURITY.md의 비공개 신고 절차를 따라 주세요.
-
-Engineering verification / 엔지니어링 검증 (2026-10-26): **1,411 Flutter tests**, **21 browser guard groups**, **88 web design assertions**, 0 analyzer issues. All ten required commands exit 0; the macOS debug build succeeded with third-party plugin warnings and a local CoreSimulator version diagnostic. Headless Firefox 158 checked the app-served page under its CSP, download cancellation, BFCache voice release and forced colors. Windows and Linux debug builds passed in private CI; physical target-OS QA remains pending. Test counts do not certify capture prevention or memory erasure.
+일반 문의는 프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제는 jung@yonghun.pro로 비공개 신고해 주세요.
 
 Capture API scope: [Apple NSWindow sharing type](https://developer.apple.com/documentation/appkit/nswindow/sharingtype-swift.enum), [Microsoft SetWindowDisplayAffinity](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity).

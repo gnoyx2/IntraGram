@@ -36,14 +36,23 @@ Open-source licenses*, next to IntraGram's own license and this file. Counts fro
 (119 hosted packages): BSD-3-Clause 89, MIT 22, Apache-2.0 6, BSD-2-Clause 1
 (`timezone`), MPL-2.0 1 (`dbus`, used by the Linux build only). `flutter`,
 `flutter_localizations`, `flutter_test`, `flutter_web_plugins` and `sky_engine`
-are SDK packages.
+are SDK packages. This inventory includes development dependencies; it is not
+a list of packages shipped on every platform.
+
+`dbus` 0.7.15 is used unmodified under MPL-2.0. Its exact source is available
+from [the pub.dev source archive](https://pub.dev/api/archives/dbus-0.7.15.tar.gz)
+(SHA-256 `a48d5da28e89bd02196e80d81ed8d7954923d00a0f4a68cc20b575038f023383`).
+The [MPL-2.0 license](https://www.mozilla.org/en-US/MPL/2.0/) applies to those
+files; IntraGram's MIT license does not replace it. Keep this source-availability
+notice when redistributing the Linux executable.
 
 ## Voice playback
 
 Voice messages are played by each operating system's own audio API from memory:
 AVAudioPlayer on iOS and macOS, MediaPlayer on Android, the Windows waveOut API,
-and `pacat` from the system `pulseaudio-utils` package on Linux. No third-party
-media library is bundled.
+and system PulseAudio (`parecord`/`pacat`) or PipeWire
+(`pw-record`/`pw-play`, with `pw-cat` fallback) tools on Linux. These tools are
+installed separately; no third-party media library is bundled.
 
 ## QR scanning
 

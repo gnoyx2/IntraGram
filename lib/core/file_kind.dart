@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT AND Apache-2.0
-// Portions adapted from LocalSend (Apache-2.0); see THIRD_PARTY_NOTICES.md.
+// Portions modified from LocalSend (Apache-2.0); see THIRD_PARTY_NOTICES.md.
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 

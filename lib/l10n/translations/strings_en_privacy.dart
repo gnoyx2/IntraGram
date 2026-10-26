@@ -7,41 +7,49 @@ const Map<String, String> kStringsEnPrivacy = {
       "service, and needs no sign-up, phone number or email address.",
   'privacy.onDeviceTitle': "What stays on this device",
   'privacy.onDeviceBody':
-      "Messages, transfer records and session keys live in memory. Burning a "
-      "message drops its body; up to 512 body-free signed receipts with salted "
-      "commitments, 64 signed Merkle batches and 64 witness-root observations "
-      "can remain in RAM. Receipt metadata includes event/subject/attempt IDs, "
-      "peer IDs and public keys, commitments, policy/outcome, nonce and time. "
-      "File receipts contain a SHA-256 content digest, which permits known-file "
-      "comparisons. Evidence, organization credentials and room integrity state "
-      "are excluded from the vault. Panic wipe blocks new evidence and clears "
-      "these states synchronously before waiting for shutdown, then clears them "
-      "again; quitting also clears them. The app writes accepted files and, if "
-      "enabled in Settings, the optional PIN-sealed vault to disk. On desktop "
-      "it also records picked download folders to clean up interrupted "
-      "downloads. Panic erases the vault and folder list; removing the app "
-      "removes its own folder.",
+      "Messages, transfer records and session keys are held in memory; "
+      "selected messages and transfer history can also be saved when the "
+      "vault is enabled. Burning a message drops its body; up to 512 "
+      "body-free signed receipts with salted commitments, 64 signed Merkle "
+      "batches and 64 witness-root observations can remain in RAM. Receipt "
+      "metadata includes event/subject/attempt IDs, peer IDs and public "
+      "keys, commitments, policy/outcome, nonce and time. File receipts "
+      "contain a SHA-256 content digest, which permits known-file "
+      "comparisons. Evidence, organization credentials and room integrity "
+      "state are excluded from the vault. Panic wipe blocks new evidence "
+      "and clears these states synchronously before waiting for shutdown, "
+      "then clears them again; quitting also clears them. The app writes "
+      "accepted files and, if enabled, a vault with optional PIN "
+      "protection. Choosing to remember a display name stores it in the "
+      "vault, or in a plaintext identity.json when the vault is off. On "
+      "desktop it also records picked download folders to clean up "
+      "interrupted downloads. Panic wipe attempts to erase the vault, saved "
+      "name and folder list. Uninstalling can leave desktop app data and "
+      "accepted files behind. File selection, sharing and the OS may also "
+      "leave temporary copies or caches.",
   'privacy.networkTitle': "What leaves this device",
   'privacy.networkBody':
-      "Messages go to devices you connect to on this local network. App-to-app "
-      "1:1 chats are end-to-end encrypted; the host reads an app group room and "
-      "room files cross the LAN unencrypted. Browser portal rooms are separate "
-      "and their traffic is plaintext on Wi-Fi. Optional offline organization "
-      "credentials contain organization, department, role, issuer, policy, "
-      "trust snapshot, expiry and the session identity public key. They are "
-      "held in RAM and presented only after an encrypted app link is "
-      "established, with proof of key possession; they do not verify the "
-      "security code. The bundled demo issuer is public and proves no real "
-      "affiliation; offline revocation checks cover only the selected snapshot. "
-      "Signed author events and checkpoints accompany app room messages. When "
-      "you explicitly copy an audit bundle, it contains selected signed "
-      "receipts, IDs, public keys, commitments, times, salts/proof paths, a "
-      "signed batch header and any attached witness receipt, without message "
-      "bodies. Manual witness exchange lets another device inspect that "
-      "exported metadata and sign its root; no gateway is contacted "
-      "automatically. Audit copying uses the sensitive clipboard route with a "
-      "60-second expiry; Linux clipboard managers may keep copies. You control "
-      "who receives an exported copy.",
+      "Messages go to devices you connect to on this local network. "
+      "App-to-app 1:1 chats are end-to-end encrypted; the host reads an app "
+      "group room and room files cross the LAN unencrypted. Browser portal "
+      "rooms are separate and their traffic is plaintext on Wi-Fi. Optional "
+      "offline organization credentials contain organization, department, "
+      "role, issuer, policy, trust snapshot, expiry and the session "
+      "identity public key. They are held in RAM and presented only after "
+      "an encrypted app link is established, with proof of key possession; "
+      "they do not verify the security code. The bundled demo issuer is "
+      "public and proves no real affiliation; offline revocation checks "
+      "cover only the selected snapshot. Signed author events and "
+      "checkpoints accompany app room messages. When you explicitly copy an "
+      "audit bundle, it contains selected signed receipts, IDs, public "
+      "keys, commitments, times, salts/proof paths, a signed batch header "
+      "and any attached witness receipt, without message bodies. Manual "
+      "witness exchange lets another device inspect that exported metadata "
+      "and sign its root; no gateway is contacted automatically. Audit "
+      "copying uses sensitive clipboard handling and attempts to clear the "
+      "app's own copy after 60 seconds; on Android this can wait until the "
+      "app returns to the foreground. Linux clipboard managers may keep "
+      "copies. You control who receives an exported copy.",
   'privacy.desktopWebTitle': "Desktop and browser privacy",
   'privacy.desktopWebBody':
       "macOS does not donate conversations or aliases to Siri, Spotlight or "
@@ -77,6 +85,6 @@ const Map<String, String> kStringsEnPrivacy = {
       "open-source code that has no network component.",
   'privacy.contactTitle': "Questions",
   'privacy.contactBody':
-      "Open an issue on the project's GitHub page. Report security problems "
-      "privately as described in SECURITY.md.",
+      "Open an issue on the project's GitHub page for general questions. "
+      "Report security problems privately to jung@yonghun.pro.",
 };

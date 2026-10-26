@@ -6,8 +6,9 @@ request needs.
 
 ## Setup
 
-- Flutter 3.44 (the version CI pins) and its platform toolchains for what you
-  build: Xcode for iOS and macOS, Android SDK 36 with JDK 17, Visual Studio
+- Flutter 3.44.9 (the version CI pins) and its platform toolchains for what you
+  build: Xcode 27.1 with the iOS 27.1 SDK for iOS, Xcode for macOS,
+  Android SDK 36 with JDK 17, Visual Studio
   2022 for Windows, `clang cmake ninja-build pkg-config libgtk-3-dev` for Linux.
 - `flutter pub get --enforce-lockfile`
 

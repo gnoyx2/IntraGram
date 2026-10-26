@@ -161,9 +161,10 @@ bars transparent. Verify a 320×360 floating bubble with the keyboard (F4).
 
 ## 4. iOS and macOS
 
-`flutter build ios --release --no-codesign` and a plain
-`flutter build macos --release` produce files that run only on the build
-machine or after re-signing. They are not store or distribution evidence.
+`flutter build ios --release --no-codesign` produces an unsigned iOS app.
+A plain `flutter build macos --release` produces an ad-hoc-signed macOS app
+that is not notarized; Gatekeeper may require manual approval on another Mac.
+Neither command proves App Store signing or notarized distribution.
 
 - **iOS (TestFlight / App Store)** needs an Apple Developer Program team for
   automatic signing. The project does not name one: put
@@ -174,12 +175,14 @@ machine or after re-signing. They are not store or distribution evidence.
   `flutter build ipa --release` and an upload with Xcode Organizer or
   Transporter. The app runs its own standard
   encryption (X25519, ChaCha20-Poly1305 from the Dart `cryptography` package,
-  not Apple's OS crypto), and `Info.plist` sets `ITSAppUsesNonExemptEncryption`
-  to `false`, so App Store Connect skips the export compliance questions. That
-  holds only while France is left out of the availability list: Apple says
-  France controls secure communication apps and wants a French encryption
-  declaration for apps that use standard algorithms. To ship there, set the key
-  to `true`, answer "standard encryption algorithms" and upload the declaration.
+  not Apple's OS crypto). `Info.plist` currently sets
+  `ITSAppUsesNonExemptEncryption` to `false`; this is not a completed export
+  determination. Before uploading, answer Apple's encryption questions for
+  the actual build and countries, then align this key and any declaration/code
+  with that result. Apple's documentation table calls for a French declaration
+  when distributing in France with standard encryption implemented outside the
+  OS; do not infer the app's complete compliance from a country checkbox.
+  See the export-compliance gate in section 6.
   For App Review notes: there is no operator server, account or public feed;
   people on the same LAN talk directly. A device can be blocked from a chat's
   menu, and Settings, Only chats I start refuses devices the user has not
@@ -242,19 +245,17 @@ file picking and call-interruption checks in DEVICE_QA.
 
 ## 6. Publishing
 
-Before the repository or a store listing goes public, tick each of these by
-hand; nothing in the repository can enforce them:
+### Source publication
 
-- [ ] **History.** Publish a fresh snapshot of the release commit as a new
-  history (one initial commit), not this working history: early commits carry
-  a personal name and a machine hostname as author e-mail, and removed internal
-  notes are still in older trees. Check the snapshot's author line and run a
-  secret scan over it before the first push.
-- [ ] **App Store availability.** France stays unticked in App Store Connect
-  while `ITSAppUsesNonExemptEncryption` is `false` (see section 4); the
-  setting lives in App Store Connect, so re-check it on every submission.
-  France's own declaration rule (décret 2007-663) applies to any distribution
-  there, not only Apple's.
+- [x] **Separate public history.** This repository contains the selected public
+  snapshot and its subsequent reviewed changes, not the development repository's
+  history. Keep that separation: do not merge private development branches or
+  copy its raw `.git` directory into a publication. Re-check all refs, commit
+  identities and secrets on the final publication commit; a single root commit
+  is not required for an already sanitized public history.
+- [x] **License notices.** The LocalSend modifications retain attribution and
+  the Apache-2.0 text. The resolved package license inventory and exact MPL-2.0
+  `dbus` source are recorded in `THIRD_PARTY_NOTICES.md` and bundled in the app.
 - [ ] **Security email before publication.** Confirm that the monitored
   `jung@yonghun.pro` address in `SECURITY.md` and the issue chooser is correct,
   and verify receipt of a harmless test email. Configuring a mailto link or
@@ -265,8 +266,6 @@ hand; nothing in the repository can enforce them:
   confirm the Report a vulnerability button and maintainer notifications,
   and verify receipt of a harmless test report. Do not use the private CI
   mirror as the public reporting destination.
-- [ ] **Store listing support contact.** App Review and Play want a support
-  e-mail or URL; decide it before submitting.
 
 Repository settings: enable Issues and confirm that the issue chooser shows
 `jung@yonghun.pro`. GitHub does not support mailto contact-link URLs; keep a
@@ -281,6 +280,22 @@ not call any platform supported before that QA. `DEVICE_QA.md` section 9 sets
 what each publishing stage needs: source only, an `-rc` pre-release with the
 platforms whose smoke set passed (leave the others' files out of the release),
 and "supported" after the full list including accessibility.
+
+### Binary and store distribution
+
+- [ ] **Device QA.** Pass the required `DEVICE_QA.md` stage for each platform
+  whose binary will be attached. Debug compilation is not a device PASS.
+- [ ] **Release build and signing.** Run the release workflow on the exact
+  candidate commit and inspect `SIGNING-<platform>.txt` and checksums. Keep
+  debug-signed test APKs out of public distribution.
+- [ ] **App Store export compliance.** Before a TestFlight or App Store upload,
+  complete Apple's encryption determination for the actual build and intended
+  countries. Reconcile `ITSAppUsesNonExemptEncryption` and any required
+  declaration/code with that result; the current `false` value is not proof of
+  exemption. See [Apple's process](https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/)
+  and [France-specific documentation](https://developer.apple.com/help/app-store-connect/reference/export-compliance-documentation-for-encryption/).
+- [ ] **Store listing support contact.** Set the monitored support address or
+  URL in the actual App Review/Play listing before submission.
 
 1. Before the first tag, run the `release` workflow by hand (Actions, Run
    workflow) and read the `SIGNING-<platform>.txt` files it attaches. The
