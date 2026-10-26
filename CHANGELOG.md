@@ -9,6 +9,12 @@ different protocol versions refuse to talk to each other.
 Protocol 7. Not a supported release yet: device QA is pending on every
 platform (see `DEVICE_QA.md`).
 
+- Fixed: serialized and coalesced mDNS broadcast restarts (`DiscoveryController`)
+  and excluded browser guest portal rooms (`PeerTransport.web`) from app-peer
+  mDNS room hints, preventing an iOS/macOS main-thread `DNSServiceProcessResult`
+  hang (`0x8BADF00D`) when a browser guest connects to the Guest Portal or an
+  app group room starts.
+
 - Fixed: native and release Apple CI jobs select the `xcode-27` runner and
   pin Xcode 27.1 through `DEVELOPER_DIR` for the iOS 27.1 hinge APIs; the
   selected Xcode version and iOS SDK are logged.

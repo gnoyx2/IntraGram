@@ -16,10 +16,18 @@ part 'discovery_engine/scan.dart';
 // 사용자가 뭘 하기 전에 도는 유일한 네트워크 일이지만 링크 밖으론 안 나감 (mDNS 224.0.0.251은 라우터가 안 넘김).
 // 광고를 멈춘 피어(앱 종료, 망 이탈)는 목록에서 빠짐
 class DiscoveryController extends Notifier<List<PeerDevice>> {
-  BonsoirBroadcast? _broadcast;
+  BroadcastSession? _broadcast;
+  _BroadcastSpec? _activeBroadcastSpec;
+  Future<void> _broadcastSerial = Future<void>.value();
+  bool _advertising = false;
   BonsoirDiscovery? _discovery;
   StreamSubscription<BonsoirDiscoveryEvent>? _subscription;
   Timer? _staleSweep;
+
+  // 테스트가 가짜 광고 핸들을 끼워 동시 재시작·정지 순서를 검증할 자리 (앱은 BonsoirBroadcast 사용)
+  @visibleForTesting
+  static BroadcastSession Function(BonsoirService service) createBroadcast =
+      _BonsoirBroadcastSession.new;
 
   // peerId로 키: 서비스 name엔 alias가 들어가서 이름을 바꿀 때마다 새 항목이 생겨 옛 이름이 최대 60초 같이 떴음
   final Map<String, PeerDevice> _peers = <String, PeerDevice>{};
@@ -43,49 +51,44 @@ class DiscoveryController extends Notifier<List<PeerDevice>> {
 
   bool get isRunning => _discovery != null;
 
-  // stop마다 오름. 그사이 바뀌었으면 방금 만든 것도 버리고 물러남
+  // stop·재시작마다 오름. 그사이 바뀌었으면 방금 만든 것도 버리고 물러남
   int _generation = 0;
 
   // 다시 불러도 안전 (예: 서버 포트가 바뀐 뒤 재시작)
   Future<void> start({required AppIdentity identity, required int port}) async {
-    await stop();
-    final generation = _generation;
+    final generation = ++_generation;
+    await _stopInternal(bumpGeneration: false);
+    if (generation != _generation) return;
     _selfPeerId = identity.peerId;
     _identity = identity;
     _port = port;
+    _advertising = true;
 
-    // mDNSResponder 연결이 막 죽은 순간(Wi-Fi를 갈아탄 직후 DefunctConnection)엔 initialize부터 던짐. 안 잡으면 앱이 죽어서 광고 실패는 삼키고 다음 start가 복구함
-    BonsoirBroadcast? broadcast;
-    try {
-      broadcast = BonsoirBroadcast(service: _service(identity, port));
-      await broadcast.initialize();
-      await broadcast.start();
-      if (generation != _generation) {
-        await broadcast.stop();
-        return;
-      }
-      _broadcast = broadcast;
-    } on Object {
-      // 반쯤 만든 인스턴스는 안 남김
-      await broadcast?.stop();
-      _broadcast = null;
-    }
+    await _syncBroadcast();
+    if (generation != _generation) return;
 
     await _restartScan(generation);
     if (generation != _generation) return;
     _staleSweep = Timer.periodic(kDiscoveryRefresh, (_) => _sweepStale());
   }
 
-  Future<void> stop() async {
-    _generation++; // 도는 start·refresh가 알아서 물러남
+  Future<void> stop() => _stopInternal(bumpGeneration: true);
+
+  Future<void> _stopInternal({required bool bumpGeneration}) async {
+    if (bumpGeneration) _generation++; // 도는 start·refresh가 알아서 물러남
+    _advertising = false;
+    _identity = null;
+    _port = null;
     _staleSweep?.cancel();
     _staleSweep = null;
     await _subscription?.cancel();
     _subscription = null;
-    await _discovery?.stop();
-    _discovery = null;
-    await _broadcast?.stop();
-    _broadcast = null;
+    try {
+      await _discovery?.stop();
+    } finally {
+      _discovery = null;
+      await _syncBroadcast();
+    }
     _peers.clear();
     _serviceNames.clear();
     if (ref.mounted) state = const <PeerDevice>[];
@@ -135,22 +138,27 @@ class DiscoveryController extends Notifier<List<PeerDevice>> {
     }
   }
 
-  // room=1 TXT를 넣거나 빼서 광고를 다시 뿌림. bonsoir엔 TXT만 바꾸는 API가 없어서 재시작이라 남의 목록에서 잠깐 깜빡임 (부가 정보라 감수)
-  Future<void> setHostsRoom(bool value) async {
-    if (value == _hostsRoom) return;
-    _hostsRoom = value;
-    await _restartBroadcast();
+  // room=1·inRoom=1을 한 번에 갱신: 따로 부르면 광고 재시작이 두 번 겹쳐 Darwin mDNSResponder가 메인 스레드를 멈춤
+  Future<void> setRoomHints({
+    required bool hostsRoom,
+    required bool inRoom,
+  }) async {
+    if (hostsRoom == _hostsRoom && inRoom == _inRoom) return;
+    _hostsRoom = hostsRoom;
+    _inRoom = inRoom;
+    await _syncBroadcast();
   }
+
+  // room=1 TXT를 넣거나 빼서 광고를 다시 뿌림. bonsoir엔 TXT만 바꾸는 API가 없어서 재시작이라 남의 목록에서 잠깐 깜빡임 (부가 정보라 감수)
+  Future<void> setHostsRoom(bool value) =>
+      setRoomHints(hostsRoom: value, inRoom: _inRoom);
 
   // setHostsRoom과 같은 깜빡임 트레이드오프
-  Future<void> setInRoom(bool value) async {
-    if (value == _inRoom) return;
-    _inRoom = value;
-    await _restartBroadcast();
-  }
+  Future<void> setInRoom(bool value) =>
+      setRoomHints(hostsRoom: _hostsRoom, inRoom: value);
 
   // 새 이름으로 광고를 다시 뿌림 (같은 깜빡임)
-  Future<void> restartBroadcast() => _restartBroadcast();
+  Future<void> restartBroadcast() => _syncBroadcast();
 
   // ref·state가 @protected라 extension에선 못 건드려서 이것만 클래스 본체에 둠
   void _publish() {

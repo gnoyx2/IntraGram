@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:bonsoir/bonsoir.dart';
+import 'package:fake_async/fake_async.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:intragram/core/app_identity.dart';
 import 'package:intragram/core/constants.dart';
 import 'package:intragram/network/discovery_engine.dart';
 
@@ -131,4 +136,104 @@ void main() {
       expect(isDiscoveryPeerStale(seenAt, now), isTrue);
     });
   });
+
+  group('DiscoveryController broadcast serialization', () {
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    test(
+      'back-to-back room hint updates stop prior broadcast first and coalesce',
+      () {
+        fakeAsync((async) {
+          var active = 0;
+          var maxActive = 0;
+          final started = <BonsoirService>[];
+          final original = DiscoveryController.createBroadcast;
+          DiscoveryController.createBroadcast = (service) => _DelayedBroadcast(
+            service,
+            onStart: () {
+              active++;
+              if (active > maxActive) maxActive = active;
+              started.add(service);
+            },
+            onStop: () => active--,
+          );
+          addTearDown(() => DiscoveryController.createBroadcast = original);
+
+          final container = ProviderContainer();
+          addTearDown(container.dispose);
+          final identity = AppIdentity(
+            peerId: 'me',
+            alias: 'swift-heron-3',
+            platform: 'iOS',
+          );
+          final notifier = container.read(discoveryControllerProvider.notifier);
+
+          unawaited(notifier.start(identity: identity, port: 7890));
+          async.elapse(const Duration(seconds: 2));
+          expect(started, hasLength(1));
+          expect(active, 1);
+
+          // 이전 버그 재현: setHostsRoom(true)와 setInRoom(true)를 동시에 발사해도 중복 등록 없이 1회만 재시작
+          unawaited(notifier.setHostsRoom(true));
+          unawaited(notifier.setInRoom(true));
+          async.elapse(const Duration(milliseconds: 200));
+
+          expect(maxActive, 1);
+          expect(active, 1);
+          expect(started, hasLength(2));
+          expect(started.last.attributes['room'], '1');
+          expect(started.last.attributes['inRoom'], '1');
+
+          // 이름 변경이 없으면 restartBroadcast는 불필요한 재등록을 건너뛰고, 바뀌면 안전하게 교체
+          unawaited(notifier.restartBroadcast());
+          async.elapse(const Duration(milliseconds: 200));
+          expect(started, hasLength(2));
+
+          identity.rename('bright-lynx-8');
+          unawaited(notifier.restartBroadcast());
+          async.elapse(const Duration(milliseconds: 200));
+          expect(maxActive, 1);
+          expect(started, hasLength(3));
+          expect(started.last.name, 'IntraGram bright-lynx-8');
+
+          unawaited(notifier.stop());
+          async.elapse(const Duration(milliseconds: 200));
+          expect(active, 0);
+        });
+      },
+    );
+  });
+}
+
+class _DelayedBroadcast implements BroadcastSession {
+  _DelayedBroadcast(
+    this.service, {
+    required this.onStart,
+    required this.onStop,
+  });
+
+  final BonsoirService service;
+  final void Function() onStart;
+  final void Function() onStop;
+  bool _running = false;
+
+  @override
+  Future<void> initialize() =>
+      Future<void>.delayed(const Duration(milliseconds: 10));
+
+  @override
+  Future<void> start() async {
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    _running = true;
+    onStart();
+  }
+
+  @override
+  Future<void> stop() async {
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    if (_running) {
+      _running = false;
+      onStop();
+    }
+  }
 }
