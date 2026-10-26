@@ -23,46 +23,57 @@ node tool/web_design_test.js
 sh -n linux/install.sh
 flutter build macos --debug
 git diff --check
-# Optional, outside the ten required gates; not run in the verification below.
+# Optional, outside the ten required gates; verified on 25ec1b6 (64/256 MiB and 1/4 GiB).
 flutter test --tags large     # 64/256 MiB; add --dart-define=LARGE_SIZES_MIB=1024,4096 for 1/4 GiB
 ```
 
-Historical local verification (2026-10-26, development snapshot): all ten
-required commands exit 0;
+Candidate verification on `25ec1b6` (`25ec1b6e0fb4042d1e1f3ecca1e66e4c66e791b7`,
+2026-10-26; later commits touch documentation only unless re-verified): all ten
+required commands exit 0 in a clean clone;
 **1,411 Flutter tests** (`large` excluded, 0 failed, 0 skipped), **21 browser
 guard groups** (374 assertion calls), **88 web design assertion calls** and 0
-analyzer issues. The macOS debug app builds, but not warning-free. Which warning
-appears depends on the build:
+analyzer issues. Both `large` suites (`test/large_transfer_test.dart` at
+`64,256` MiB and `LARGE_SIZES_MIB=1024,4096`) also passed within the 384 MiB RSS
+growth cap (peak growth 41 MiB and 50 MiB, 0 leftover temporary directories).
+The macOS build succeeds, but not warning-free:
 
 - Clean build (fresh copy, every plugin compiled): `bonsoir_darwin` 7.1.1 warns
   `result of call to 'resolveAddress(for:hostname:)' is unused`
   (BonsoirServiceDiscovery.swift:227); Xcode 27.1 also prints those lines as
-  `error: ... failed with exit code 0` while the build succeeds. An incremental
-  build of an already compiled plugin does not repeat it.
-- Every build: Flutter lists `flutter_local_notifications` and `pasteboard` as
-  plugins without Swift Package Manager support for macOS.
-- This Mac only: CoreSimulator 1171.7.0 is older than Xcode 27.1's 1174.9.2, so
-  xcodebuild disables simulator support; the macOS build is unaffected.
+  `error: ... failed with exit code 0` while the build succeeds.
+- Every build: Flutter lists plugins without Swift Package Manager support
+  (`flutter_local_notifications` and `pasteboard` on macOS; iOS plugins on iOS),
+  and Xcode notes the `Flutter Assemble` Run Script phase lacks declared outputs.
+- Universal macOS release build and CI Apple runner: `objective_c` logs a
+  framework-name architecture warning, and the `xcode-27` runner logs cryptexd
+  Metal linker search-path warnings.
 
-No app (Runner) warning appeared. These warnings are not suppressed and no
-dependency or signing team setting changed. The application code and tests
-match private CI snapshot `95a1db6` (branch `desktop-web-20261026`,
-tree `508b1c4`); documentation and Apple CI configuration changed afterward.
-Check this commit's own Actions runs before release. In the private snapshot:
-`native` run 40309070215 passed windows (windows-2022 debug, no compiler
-warnings), linux (ubuntu-24.04: Linux desktop logic test, CMake debug build and
-link, bundle `install.sh` syntax) and the macOS debug step, and `ci` run
-40309070292 passed verify (1,411 tests on Linux) and the Android debug APK. The
-`apple` job's iOS debug step failed: the macos-15 runner's Xcode has no
-`UIHinge` (iOS 27.1 SDK) used by `ios/Runner/DisplayRegions.swift` from c5b247b.
-The current `native` and `release` Apple jobs use `xcode-27` with
-`DEVELOPER_DIR=/Applications/Xcode_27.1.app/Contents/Developer` and log the
-selected Xcode version and iOS SDK. Run both workflows on the release commit
-before relying on their results. The [runner image lists Xcode 27.1](https://github.com/actions/runner-images/releases/tag/xcode-27-arm64%2F20261023.0307);
-[Apple requires macOS 26.6 or later](https://developer.apple.com/xcode/system-requirements),
-so `macos-15` cannot supply this toolchain. Headless Firefox 158 checks are
-browser automation, not device QA. Large-transfer and physical target-OS QA
-were not run.
+No app (Runner) compiler warning appeared. These warnings are not suppressed and
+no dependency or signing team setting changed in the repository. On private
+staging of `gnoyx2/IntraGram` at `25ec1b6`:
+
+- `ci` run `40326362289` passed `verify` (1,411 tests on `ubuntu-24.04`) and the
+  `android` debug APK.
+- `native` run `40326438431` passed `windows` (`windows-2022` debug), `linux`
+  (`ubuntu-24.04`: Linux desktop logic test, CMake debug build and bundle
+  `install.sh` syntax) and `apple` (`xcode-27`,
+  `DEVELOPER_DIR=/Applications/Xcode_27.1.app/Contents/Developer`, Xcode 27.1,
+  iOS SDK 27.1: macOS debug and unsigned iOS debug, confirming `UIHinge` from
+  `ios/Runner/DisplayRegions.swift` compiles cleanly). The [runner image lists Xcode 27.1](https://github.com/actions/runner-images/releases/tag/xcode-27-arm64%2F20261023.0307);
+  [Apple requires macOS 26.6 or later](https://developer.apple.com/xcode/system-requirements).
+- `release` run `40326442848` (`workflow_dispatch`, untagged; the `release`
+  publishing job stayed skipped because `refs/tags/v*` was not pushed) built all
+  platform artifacts and recorded `SIGNING-<platform>.txt`: Android debug-signed
+  APKs only (`*-debugsigned.apk`, `CN=Android Debug`, `.aab` skipped), unsigned
+  iOS `.ipa` (`4367981fd9d8...`), ad-hoc unnotarized macOS `.zip`/`.dmg`
+  (`482e4b1cdfc0...` / `eac7264236a0...`, `app-sandbox=true`, no
+  `get-task-allow`), unsigned Windows `.zip` (`0330ece05b85...`, `NotSigned`)
+  and Linux `.tar.gz` (`e4669e7ed733...`, no OS-level signing). None is
+  production-signed.
+
+Headless Firefox 158 checks and isolated `com.yonghun0310.intragram.qa` smoke
+checks on macOS 27.0.1 and iPhone SE (iOS 27.0.1) do not replace release-binary
+`DEVICE_QA.md` stages; physical target-OS QA remains pending.
 
 Desktop/Web scope: live accessibility and native menus on macOS 27 (requested
 Golden Gate profile), Windows 11 25H2/26H2 taskbar attention without Toast,
@@ -286,8 +297,12 @@ and "supported" after the full list including accessibility.
 
 - [ ] **Device QA.** Pass the required `DEVICE_QA.md` stage for each platform
   whose binary will be attached. Debug compilation is not a device PASS.
-- [ ] **Release build and signing.** Run the release workflow on the exact
-  candidate commit and inspect `SIGNING-<platform>.txt` and checksums. Keep
+- [ ] **Release build and signing.** Untagged `release` `workflow_dispatch`
+  build and `SIGNING-<platform>.txt` measurement succeeded on `25ec1b6` (run
+  `40326442848`), confirming debug-signed Android APKs stay suffixed
+  `*-debugsigned.apk` without an `.aab`, iOS is unsigned, macOS is ad-hoc/not
+  notarized and Windows is `NotSigned`. Configure production signing/notarization
+  and re-run on the exact tagged commit before binary distribution. Keep
   debug-signed test APKs out of public distribution.
 - [ ] **App Store export compliance.** Before a TestFlight or App Store upload,
   complete Apple's encryption determination for the actual build and intended

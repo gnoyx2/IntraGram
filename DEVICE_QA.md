@@ -13,20 +13,20 @@
   기록 표를 커밋할 때도 IP, 기기 시리얼, 계정명 같은 식별 정보는 빼고 모델과 OS만
   적을 것.
 
-이전 자동 검증(2026-10-26, 개발 스냅샷): 필수 10개 명령 exit 0, `large` 제외
-**Flutter 테스트 1,411개 통과**(실패·스킵 0), **브라우저 가드 21개 그룹**(단정 374회),
-**웹 디자인 단정 88회**, 정적 분석 이슈 0건. macOS 디버그 빌드는 성공했지만 서드파티
-`bonsoir_darwin` 경고(클린 빌드에서만), SPM 미지원 플러그인 안내, 로컬 CoreSimulator 버전
-진단이 있어 무경고 빌드는 아님. macOS의 헤드리스 Firefox 158 자동 점검(앱이 내려준
-페이지의 CSP, 실제 입력의 👍·`/`, 스트림 취소·ACK, BFCache 음성 해제, 강제 색상)은
-실기기 QA가 아님. 헤드리스 창은 문서 포커스가 없어 `:focus`·`:focus-within`과 버튼의
-Enter/Space 기본 실행은 확인하지 못함. Windows·Linux·macOS 디버그 빌드와 Android 디버그
-APK는 비공개 CI에서 통과(iOS 디버그는 러너 Xcode에 iOS 27.1 `UIHinge`가 없어 실패).
-이번 공개 스냅샷의 앱 코드·테스트는 비공개 CI의 개발 스냅샷 `95a1db6`과 같음.
-그 뒤 문서와 Apple CI 설정을 바꿨음: native·release Apple 잡은 `xcode-27`에서
-Xcode 27.1을 `DEVELOPER_DIR`로 고정하고 버전·SDK를 기록함. 출시 전에
-해당 커밋의 Actions 실행 결과를 확인할 것.
-대용량 테스트·아래 실기기 QA는 미실시.
+후보 커밋 자동 검증(`25ec1b6`, 2026-10-26; 이후 커밋은 문서 기록만 갱신): 클린 클론에서
+필수 10개 명령 모두 exit 0, `large` 제외 **Flutter 테스트 1,411개 통과**(실패·스킵 0),
+**브라우저 가드 21개 그룹**(단정 374회), **웹 디자인 단정 88회**, 정적 분석 이슈 0건.
+대용량 자동 테스트(`test/large_transfer_test.dart`)도 기본(`64/256 MiB`)과 확장(`1/4 GiB`)
+모두 통과(최대 RSS 증가 41 MiB·50 MiB < 384 MiB, 임시 파일 잔존 0). macOS·iOS 빌드는
+성공했지만 서드파티 `bonsoir_darwin` 경고(`exit code 0` 진단 줄 포함), SPM 미지원 플러그인
+안내, `objective_c` 아키텍처 프레임워크 경고, 러너 링크 경로·Run Script 출력 경고가 있어
+무경고 빌드는 아님. `gnoyx2/IntraGram`(비공개 스테이징)에서 `ci`(`40326362289`),
+`native`(`40326438431`, `xcode-27` Xcode 27.1·iOS SDK 27.1의 iOS/macOS 디버그와
+Windows·Linux 디버그), 태그 없는 `release`(`40326442848`, `workflow_dispatch`)가 모두
+성공했고 `SIGNING-*.txt`로 정식 배포 서명이 아직 없음을 확인함. 헤드리스 Firefox 158 자동
+점검과, 기존 설치 앱을 보존하기 위해 분리 번들(`com.yonghun0310.intragram.qa`,
+`"IntraGram QA"`)로 수행한 macOS 27.0.1·iPhone SE(iOS 27.0.1) 부분 스모크 확인은 실제
+릴리스 산출물 기준 단계 1·2 통과를 대체하지 못하므로 전체 플랫폼 지원 상태는 `NOT RUN`임.
 
 데스크톱·웹 추가 점검 대상(모두 실기기 NOT RUN):
 
@@ -264,4 +264,11 @@ Xcode 27.1을 `DEVELOPER_DIR`로 고정하고 버전·SDK를 기록함. 출시 �
 
 | ID | 플랫폼/기기 | OS | 빌드(SHA-256 앞 12자) | LAN | 시각 | 결과 | 비고 |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| | | | | | | PASS / FAIL / NOT RUN | |
+| I1, N9, Z1(기본), 8절(메뉴·임시소거) | Mac (분리 QA 번들) | macOS 27.0.1 | 소스 `25ec1b6e0fb4` (`com.yonghun0310.intragram.qa`) | 사설 Wi-Fi (RFC 1918) | 2026-10-26 22:24 KST | 참고(QA 번들) | 첫 실행·한국어 메뉴·포털 인라인 CSP·사설 소켓만 바인드(`lsof`/`nettop` 공인 연결 0)·`kill -9` 재시작 뒤 `tmp`/`Caches` 소거·기본 디스크 대화 잔존 0건 확인. 실제 배포 산출물(`482e4b1cdfc0`) QA 아님 |
+| I1, I2(로컬 네트워크), N1, Z1(기본) | iPhone SE (분리 QA 번들) | iOS 27.0.1 | 소스 `25ec1b6e0fb4` (`com.yonghun0310.intragram.qa`) | 사설 Wi-Fi (RFC 1918) | 2026-10-26 22:31 KST | 참고(QA 번들) | 기존 설치 앱과 분리 설치·첫 실행, 로컬 네트워크 허용 후 Mac QA와 실제 LAN TCP 세션 수립, 컨테이너에 `identity.json`(`alias`만) 외 대화 파일 없음 확인. 개발 서명 QA 번들이라 단계 1 산출물 통과 아님 |
+| 단계 1·2 전 항목 (실제 릴리스 산출물) | macOS universal | macOS 27.0.1 | `482e4b1cdfc0` (`intragram-macos.zip`), `eac7264236a0` (`.dmg`) | — | 2026-10-26 | NOT RUN | 기존 설치 앱 데이터 보존을 위해 정식 번들(`com.yonghun0310.intragram`) 미실행; 파일 전송·포털·보관소·긴급 소거·캡처·접근성 실기기 미실시 |
+| 단계 1·2 전 항목 (실제 릴리스 산출물) | iPhone / iPad | iOS 27.0.1 / 27.1 | `4367981fd9d8` (`intragram-ios-unsigned.ipa`) | — | 2026-10-26 | NOT RUN | CI 산출물 미서명, 배포 서명 미구성; 파일 전송·포털 QR·보관소 PIN·긴급 소거·접근성 및 iPadOS·iOS 27.1 폴더블(`5a F1`~`F10`) 실기기 없음 |
+| 단계 1·2 전 항목 | Android | — | `e62d4a8fbc03` (`arm64-v8a-debugsigned.apk`, 배포 제외) | — | 2026-10-26 | NOT RUN | 릴리스 서명키 및 연결된 Android 실기기 없음 (`5a F4`, `F7`, `F10` 포함 미실시) |
+| 단계 1·2 전 항목 | Windows x64 | — | `0330ece05b85` (`intragram-windows-x64.zip`) | — | 2026-10-26 | NOT RUN | Authenticode 미서명(`NotSigned`), Windows 실기기 런타임 환경 없음 |
+| 단계 1·2 전 항목 | Linux x64 | — | `e4669e7ed733` (`intragram-linux-x64.tar.gz`) | — | 2026-10-26 | NOT RUN | Linux 데스크톱 런타임 환경 없음 |
+| N3, F5, U15, 5a F8 | 브라우저 게스트 | — | 호스트 내장 웹(`25ec1b6e0fb4`) | — | 2026-10-26 | NOT RUN | Safari·Chrome·Firefox·Edge·iOS Safari·Android Chrome 실기기 수동 검증 미실시 (헤드리스 자동 점검·CSP 응답만 확인) |
