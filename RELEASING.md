@@ -255,15 +255,28 @@ hand; nothing in the repository can enforce them:
   setting lives in App Store Connect, so re-check it on every submission.
   France's own declaration rule (décret 2007-663) applies to any distribution
   there, not only Apple's.
-- [ ] **Vulnerability reports.** Turn on private vulnerability reporting, send
-  one test report to confirm it arrives, and add a second private contact to
-  `SECURITY.md`.
+- [ ] **Security email before publication.** Confirm that the monitored
+  `jung@yonghun.pro` address in `SECURITY.md` and the issue chooser is correct,
+  and verify receipt of a harmless test email. Configuring a mailto link or
+  checking DNS does not prove delivery.
+- [ ] **GitHub reports when publishing.** Private vulnerability reporting is
+  available only for public repositories. After creating the actual public
+  repository, enable it in Settings, Security and quality, Advanced Security;
+  confirm the Report a vulnerability button and maintainer notifications,
+  and verify receipt of a harmless test report. Do not use the private CI
+  mirror as the public reporting destination.
 - [ ] **Store listing support contact.** App Review and Play want a support
   e-mail or URL; decide it before submitting.
 
-Repository settings: enable Issues and private vulnerability reporting, and
-confirm that the bug-report template and the private route in `SECURITY.md`
-work. Keep Linux labeled unreviewed until its `DEVICE_QA.md` checks pass; do
+Repository settings: enable Issues and confirm that the issue chooser shows
+`jung@yonghun.pro`. GitHub does not support mailto contact-link URLs; keep a
+valid HTTPS link. Once the actual public repository is known, replace the
+chooser's general GitHub guide URL with
+`https://github.com/OWNER/REPO/security/policy` and verify the rendered chooser.
+After publication, enable private vulnerability reporting and verify that
+`GET /repos/OWNER/REPO/private-vulnerability-reporting` returns `enabled: true`
+([GitHub setup](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository)).
+Keep Linux labeled unreviewed until its `DEVICE_QA.md` checks pass; do
 not call any platform supported before that QA. `DEVICE_QA.md` section 9 sets
 what each publishing stage needs: source only, an `-rc` pre-release with the
 platforms whose smoke set passed (leave the others' files out of the release),

@@ -2,15 +2,19 @@
 
 ## Reporting a vulnerability
 
-Use GitHub's private vulnerability reporting (the repository's Security tab,
-"Report a vulnerability"). Please do not open a public issue for a
-vulnerability, and do not include a working exploit against a third party.
+Report privately to [jung@yonghun.pro](mailto:jung@yonghun.pro?subject=IntraGram%20security%20report),
+with the subject **IntraGram security report**. Reports in English or Korean
+are welcome.
 
-Secondary private contact: **not configured yet**. Before publishing, the
-maintainer must replace this notice with a monitored private address or URL,
-as required by `RELEASING.md` section 6, and test both reporting routes. If the
-GitHub private route is unavailable meanwhile, do not post exploit details in
-an issue; wait for a private route.
+If this repository's Security tab offers **Report a vulnerability**, you can
+use that private form instead. GitHub private vulnerability reporting must be
+enabled on the public repository; the security policy alone does not enable it.
+Use the email address above whenever the GitHub form is unavailable.
+
+Include the app version or commit, OS, steps to reproduce and expected impact.
+Use synthetic data instead of real conversations, private keys, tokens or PINs.
+Please do not open a public issue or pull request for a vulnerability, and do
+not include a working exploit against a third party.
 
 ## Supported versions
 
