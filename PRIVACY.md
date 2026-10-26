@@ -34,7 +34,7 @@ IntraGram sends no telemetry or automatic reports to third parties. Your connect
 
 ### Questions
 
-Open an issue on the project's GitHub page for general questions. Report security problems privately to jung@yonghun.pro.
+Open an issue on the project's GitHub page for general questions. See https://github.com/gnoyx2/IntraGram/security/policy for private security reporting instructions and current availability. GitHub's private reporting form must be enabled on a public repository before it can be used. Backup email jung@yonghun.pro is not yet available and cannot receive reports. Do not post vulnerability details in public issues.
 
 ## 한국어
 
@@ -68,6 +68,6 @@ IntraGram은 제3자에게 원격 분석이나 자동 보고를 보내지 않아
 
 ### 문의
 
-일반 문의는 프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제는 jung@yonghun.pro로 비공개 신고해 주세요.
+일반 문의는 프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제의 비공개 신고 절차와 사용 가능 여부는 https://github.com/gnoyx2/IntraGram/security/policy 페이지에서 확인해 주세요. GitHub 비공개 신고 폼은 공개 저장소에서 활성화해야 사용할 수 있어요. 보조 이메일 jung@yonghun.pro는 아직 수신할 수 없어 신고에 사용할 수 없어요. 취약점 세부 내용은 공개 이슈에 남기지 마세요.
 
 Capture API scope: [Apple NSWindow sharing type](https://developer.apple.com/documentation/appkit/nswindow/sharingtype-swift.enum), [Microsoft SetWindowDisplayAffinity](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity).

@@ -2,14 +2,17 @@
 
 ## Reporting a vulnerability
 
-Report privately to [jung@yonghun.pro](mailto:jung@yonghun.pro?subject=IntraGram%20security%20report),
-with the subject **IntraGram security report**. Reports in English or Korean
-are welcome.
+Use this repository's **Security › Report a vulnerability** form when it is
+available. The publication repository is
+[gnoyx2/IntraGram](https://github.com/gnoyx2/IntraGram/security/policy).
+GitHub private vulnerability reporting must be enabled on the public
+repository; this policy alone does not enable it.
 
-If this repository's Security tab offers **Report a vulnerability**, you can
-use that private form instead. GitHub private vulnerability reporting must be
-enabled on the public repository; the security policy alone does not enable it.
-Use the email address above whenever the GitHub form is unavailable.
+Planned backup contact: **jung@yonghun.pro — not yet available**. The receiving
+mail service is not activated, so do not rely on this address until its status
+is updated after a successful receipt check. If no private reporting form is
+available either, wait for a working private route; do not post details in an
+issue or pull request. Reports in English or Korean are welcome.
 
 Include the app version or commit, OS, steps to reproduce and expected impact.
 Use synthetic data instead of real conversations, private keys, tokens or PINs.

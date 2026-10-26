@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Security report - email jung@yonghun.pro
-    url: https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately
-    about: Email jung@yonghun.pro privately; see SECURITY.md. This link explains GitHub reporting. Do not open a public issue.
+  - name: Report a security vulnerability privately
+    url: https://github.com/gnoyx2/IntraGram/security/policy
+    about: Read the policy for private reporting. The backup email is not yet available. Do not open a public issue.

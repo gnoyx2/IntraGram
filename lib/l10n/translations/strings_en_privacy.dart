@@ -86,5 +86,10 @@ const Map<String, String> kStringsEnPrivacy = {
   'privacy.contactTitle': "Questions",
   'privacy.contactBody':
       "Open an issue on the project's GitHub page for general questions. "
-      "Report security problems privately to jung@yonghun.pro.",
+      "See https://github.com/gnoyx2/IntraGram/security/policy for private "
+      "security reporting instructions and current availability. GitHub's "
+      "private reporting form must be enabled on a public repository before "
+      "it can be used. Backup email jung@yonghun.pro is not yet available "
+      "and cannot receive reports. Do not post vulnerability details in "
+      "public issues.",
 };

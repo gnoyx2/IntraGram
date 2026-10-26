@@ -256,10 +256,11 @@ file picking and call-interruption checks in DEVICE_QA.
 - [x] **License notices.** The LocalSend modifications retain attribution and
   the Apache-2.0 text. The resolved package license inventory and exact MPL-2.0
   `dbus` source are recorded in `THIRD_PARTY_NOTICES.md` and bundled in the app.
-- [ ] **Security email before publication.** Confirm that the monitored
-  `jung@yonghun.pro` address in `SECURITY.md` and the issue chooser is correct,
-  and verify receipt of a harmless test email. Configuring a mailto link or
-  checking DNS does not prove delivery.
+- [ ] **Backup security email.** The maintainer-selected `jung@yonghun.pro`
+  receiving service is not activated. Keep it marked unavailable in
+  `SECURITY.md` and the app until a harmless test is actually received.
+  An MX record or accepted send does not prove delivery. A working GitHub
+  private reporting route can serve as the primary channel meanwhile.
 - [ ] **GitHub reports when publishing.** Private vulnerability reporting is
   available only for public repositories. After creating the actual public
   repository, enable it in Settings, Security and quality, Advanced Security;
@@ -267,13 +268,13 @@ file picking and call-interruption checks in DEVICE_QA.
   and verify receipt of a harmless test report. Do not use the private CI
   mirror as the public reporting destination.
 
-Repository settings: enable Issues and confirm that the issue chooser shows
-`jung@yonghun.pro`. GitHub does not support mailto contact-link URLs; keep a
-valid HTTPS link. Once the actual public repository is known, replace the
-chooser's general GitHub guide URL with
-`https://github.com/OWNER/REPO/security/policy` and verify the rendered chooser.
-After publication, enable private vulnerability reporting and verify that
-`GET /repos/OWNER/REPO/private-vulnerability-reporting` returns `enabled: true`
+Repository settings: enable Issues and confirm that the issue chooser directs
+reporters to the security policy. The publication repository is `gnoyx2/IntraGram`, staged
+privately until publication is authorized. The chooser uses its HTTPS policy
+URL, `https://github.com/gnoyx2/IntraGram/security/policy`; GitHub does not
+support mailto contact-link URLs. Verify the rendered chooser after publication.
+Then enable private vulnerability reporting and verify that
+`GET /repos/gnoyx2/IntraGram/private-vulnerability-reporting` returns `enabled: true`
 ([GitHub setup](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository)).
 Keep Linux labeled unreviewed until its `DEVICE_QA.md` checks pass; do
 not call any platform supported before that QA. `DEVICE_QA.md` section 9 sets

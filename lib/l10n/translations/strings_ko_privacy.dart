@@ -52,6 +52,8 @@ const Map<String, String> kStringsKoPrivacy = {
       "설명한 데이터를 받아요. QR 코드는 네트워크를 쓰지 않는 오픈소스 코드가 기기 안에서 읽어요.",
   'privacy.contactTitle': "문의",
   'privacy.contactBody':
-      "일반 문의는 프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제는 jung@yonghun.pro로 비공개 신고해 "
-      "주세요.",
+      "일반 문의는 프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제의 비공개 신고 절차와 사용 가능 여부는 "
+      "https://github.com/gnoyx2/IntraGram/security/policy 페이지에서 확인해 주세요. "
+      "GitHub 비공개 신고 폼은 공개 저장소에서 활성화해야 사용할 수 있어요. 보조 이메일 jung@yonghun.pro는 "
+      "아직 수신할 수 없어 신고에 사용할 수 없어요. 취약점 세부 내용은 공개 이슈에 남기지 마세요.",
 };
