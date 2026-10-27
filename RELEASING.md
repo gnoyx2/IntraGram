@@ -23,19 +23,19 @@ node tool/web_design_test.js
 sh -n linux/install.sh
 flutter build macos --debug
 git diff --check
-# Optional, outside the ten required gates; verified on 25ec1b6 (64/256 MiB and 1/4 GiB; transfer code unchanged in 3b48d44).
+# Optional, outside the ten required gates; verified on 3535ecf (64/256 MiB and 1/4 GiB; transfer code has only comment changes since).
 flutter test --tags large     # 64/256 MiB; add --dart-define=LARGE_SIZES_MIB=1024,4096 for 1/4 GiB
 ```
 
-Candidate verification on `3b48d44` (`3b48d44b33d4a0295d8d2f5b29c677fc653beb3b`,
-2026-10-26; later commits touch documentation only unless re-verified): all ten
-required commands exit 0 in a clean clone;
+Candidate verification on `79152c2` (`79152c2def55587be1acac20a9935bf6b4f88b47`,
+2026-10-27; later commits touch documentation only unless re-verified): all ten
+required commands exit 0 in a fresh clone;
 **1,414 Flutter tests** (`large` excluded, 0 failed, 0 skipped), **21 browser
 guard groups** (374 assertion calls), **88 web design assertion calls** and 0
 analyzer issues. Both `large` suites (`test/large_transfer_test.dart` at
-`64,256` MiB and `LARGE_SIZES_MIB=1024,4096`) passed on `25ec1b6` within the
+`64,256` MiB and `LARGE_SIZES_MIB=1024,4096`) passed on `3535ecf` within the
 384 MiB RSS growth cap (peak growth 41 MiB and 50 MiB, 0 leftover temporary
-directories; file-transfer and streaming code did not change in `3b48d44`).
+directories); file-transfer and streaming code has only comment changes since.
 The macOS build succeeds, but not warning-free:
 
 - Clean build (fresh copy, every plugin compiled): `bonsoir_darwin` 7.1.1 warns
@@ -50,31 +50,31 @@ The macOS build succeeds, but not warning-free:
   Metal linker search-path warnings.
 
 No app (Runner) compiler warning appeared. These warnings are not suppressed and
-no dependency or signing team setting changed in the repository. On private
-staging of `gnoyx2/IntraGram` at `3b48d44`:
+no dependency or signing team setting changed in the repository. In private
+staging at `79152c2`:
 
-- `ci` run `40335208929` passed `verify` (1,414 tests on `ubuntu-24.04`) and the
+- `ci` passed `verify` (1,414 tests on `ubuntu-24.04`) and the
   `android` debug APK.
-- `native` run `40335600636` (`workflow_dispatch`) passed `windows`
+- `native` (`workflow_dispatch`) passed `windows`
   (`windows-2022` debug), `linux` (`ubuntu-24.04`: Linux desktop logic test,
   CMake debug build and bundle `install.sh` syntax) and `apple` (`xcode-27`,
   `DEVELOPER_DIR=/Applications/Xcode_27.1.app/Contents/Developer`, Xcode 27.1,
   iOS SDK 27.1: macOS debug and unsigned iOS debug, confirming `UIHinge` from
   `ios/Runner/DisplayRegions.swift` compiles cleanly). The [runner image lists Xcode 27.1](https://github.com/actions/runner-images/releases/tag/xcode-27-arm64%2F20261023.0307);
   [Apple requires macOS 26.6 or later](https://developer.apple.com/xcode/system-requirements).
-- `release` run `40335209050` (`workflow_dispatch`, untagged; the `release`
+- `release` (`workflow_dispatch`, untagged; the `release`
   publishing job stayed skipped because `refs/tags/v*` was not pushed) built all
   platform artifacts and recorded `SIGNING-<platform>.txt`: Android debug-signed
-  APKs only (`*-debugsigned.apk`, `e4dcb409af36...` on `arm64-v8a`,
-  `CN=Android Debug`, `.aab` skipped), unsigned iOS `.ipa` (`65ec22d8fa45...`),
-  ad-hoc unnotarized macOS `.zip`/`.dmg` (`55b4eceb7436...` / `02fcafdd9133...`,
+  APKs only (`*-debugsigned.apk`, `cbedf9da1bac...` on `arm64-v8a`,
+  `CN=Android Debug`, `.aab` skipped), unsigned iOS `.ipa` (`47e40fa809ad...`),
+  ad-hoc unnotarized macOS `.zip`/`.dmg` (`a1b081875e2b...` / `62a9ae26a30c...`,
   `app-sandbox=true`, no `get-task-allow`), unsigned Windows `.zip`
-  (`25fa4ddd3b8d...`, `NotSigned`) and Linux `.tar.gz` (`1fd28287a152...`, no
+  (`716621351020...`, `NotSigned`) and Linux `.tar.gz` (`83e2b4248958...`, no
   OS-level signing). None is production-signed.
 
 Headless Firefox 158 checks and isolated `com.yonghun0310.intragram.qa` smoke
 checks on macOS 27.0.1 and iPhone SE (iOS 27.0.1) — which also caught and
-verified the `3b48d44` fix for an iOS Guest Portal host freeze (`0x8BADF00D`) —
+verified the `7dc9a53` fix for an iOS Guest Portal host freeze (`0x8BADF00D`) —
 do not replace release-binary `DEVICE_QA.md` stages; physical target-OS QA
 remains pending.
 
@@ -283,8 +283,7 @@ file picking and call-interruption checks in DEVICE_QA.
   mirror as the public reporting destination.
 
 Repository settings: enable Issues and confirm that the issue chooser directs
-reporters to the security policy. The publication repository is `gnoyx2/IntraGram`, staged
-privately until publication is authorized. The chooser uses its HTTPS policy
+reporters to the security policy. The publication repository is `gnoyx2/IntraGram`. The chooser uses its HTTPS policy
 URL, `https://github.com/gnoyx2/IntraGram/security/policy`; GitHub does not
 support mailto contact-link URLs. Verify the rendered chooser after publication.
 Then enable private vulnerability reporting and verify that
@@ -301,8 +300,8 @@ and "supported" after the full list including accessibility.
 - [ ] **Device QA.** Pass the required `DEVICE_QA.md` stage for each platform
   whose binary will be attached. Debug compilation is not a device PASS.
 - [ ] **Release build and signing.** Untagged `release` `workflow_dispatch`
-  build and `SIGNING-<platform>.txt` measurement succeeded on `3b48d44` (run
-  `40335209050`), confirming debug-signed Android APKs stay suffixed
+  build and `SIGNING-<platform>.txt` measurement succeeded on `79152c2` in
+  private staging, confirming debug-signed Android APKs stay suffixed
   `*-debugsigned.apk` without an `.aab`, iOS is unsigned, macOS is ad-hoc/not
   notarized and Windows is `NotSigned`. Configure production signing/notarization
   and re-run on the exact tagged commit before binary distribution. Keep
