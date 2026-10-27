@@ -11,6 +11,8 @@ No server, no account. Chats stay in memory unless you choose to keep them.
 [![ci](https://github.com/gnoyx2/IntraGram/actions/workflows/ci.yml/badge.svg)](https://github.com/gnoyx2/IntraGram/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+**[Downloads / 다운로드](https://github.com/gnoyx2/IntraGram/releases)** · [Install](#install) · [설치 안내](#설치)
+
 [English](#english) · [한국어](#한국어)
 
 </div>
@@ -31,7 +33,7 @@ IntraGram is a release candidate (app 1.0.0, wire protocol 7). It builds for six
 
 | Platform | Minimum version | Release build | Signing | Device QA |
 | :--- | :--- | :--- | :--- | :--- |
-| Android | 7.0 (API 24) | APK per ABI | no release key yet, so no APK is published | not run |
+| Android | 7.0 (API 24) | universal `.apk`, store `.aab` | release key required; check `SIGNING-android.txt` | not run |
 | iOS, iPadOS | 15.0 | `.ipa` | unsigned | not run |
 | macOS | 12.0 | universal app (`.zip`, `.dmg`) | ad-hoc, not notarized | not run |
 | Windows | 10, x64 | portable `.zip` | not signed | not run |
@@ -88,17 +90,27 @@ It fits places where the internet is blocked, slow or unwanted: an internal netw
 
 ### Install
 
-Phones have no signed build yet. Android has no release key, so no APK is published, and the iOS `.ipa` is unsigned. The quickest way to try IntraGram today is a desktop build with phones joining through *Guest portal* in a browser, or a build from source.
+**[Open Downloads (GitHub Releases)](https://github.com/gnoyx2/IntraGram/releases)**, select a version and expand **Assets**. The first public binary release has not been published yet; the filenames below describe the release outputs. Until then, use [Build from source](#build-from-source). Store and TestFlight links will be added when available.
 
-Tagged builds are attached to [Releases](https://github.com/gnoyx2/IntraGram/releases) as pre-releases, together with `SHA256SUMS.txt` and a `SIGNING-<platform>.txt` per platform that records how each file was signed. Check a download with `shasum -a 256 -c --ignore-missing SHA256SUMS.txt` on macOS, `sha256sum -c --ignore-missing SHA256SUMS.txt` on Linux, or `Get-FileHash <file> -Algorithm SHA256` in PowerShell. The checksums only catch a broken download. `gh attestation verify <file> --repo gnoyx2/IntraGram` checks that the release workflow built the file.
+| Device | File to download from Assets | Installation |
+| :--- | :--- | :--- |
+| Android | `intragram-android.apk` | One APK for supported ARM and x64 devices. Open it on the phone and allow installation from that browser or file manager if prompted. |
+| iPhone, iPad | `intragram-ios-unsigned.ipa` | Advanced users only: requires re-signing with an Apple provisioning profile. It cannot be installed by tapping the download. Use TestFlight or the App Store when available. |
+| macOS | `intragram-macos.dmg` (or `intragram-macos.zip`) | Open the disk image or extract the ZIP, then copy `IntraGram.app` to Applications. |
+| Windows x64 | `intragram-windows-x64.zip` | Extract the entire folder, then run `intragram.exe`. Keep its DLLs and `data` folder together. |
+| Linux x64 | `intragram-linux-x64.tar.gz` | Extract it, then run `./intragram`; `./install.sh` adds a launcher. |
+
+GitHub's **Source code (zip/tar.gz)** files are source code, not installed apps. `intragram.aab` is for Google Play submission, not direct installation. Android APK/AAB files are included only when CI has the project's release signing key; debug-signed test APKs are never published.
+
+Version tags create a **draft** release. Downloads become public only after the maintainer publishes it; early releases remain marked **Pre-release** until device QA passes. Each release includes `SHA256SUMS.txt` and a `SIGNING-<platform>.txt` per platform that records how each file was signed. Check a download with `shasum -a 256 -c --ignore-missing SHA256SUMS.txt` on macOS, `sha256sum -c --ignore-missing SHA256SUMS.txt` on Linux, or `Get-FileHash <file> -Algorithm SHA256` in PowerShell. The checksums only catch a broken download. `gh attestation verify <file> --repo gnoyx2/IntraGram` checks that the release workflow built the file.
 
 IntraGram only listens on and connects to private addresses, so allow firewall prompts for private networks only.
 
 - **macOS**: ad-hoc signed and not notarized, so Gatekeeper blocks the first launch. On macOS 15 and later, open the app once, then click *Open Anyway* in *System Settings › Privacy & Security*. On macOS 12 to 14, right-click the app and choose *Open*. Allow the Local Network prompt.
 - **Windows**: unzip the whole folder and run `intragram.exe`. SmartScreen warns about an unsigned app (*More info*, then *Run anyway*). With Smart App Control turned on, Windows blocks unsigned apps without an exception, so IntraGram won't run on that PC until it is signed.
 - **Linux**: extract the archive and run `./intragram`. `./install.sh` adds it to the app menu with its icon (`./install.sh --uninstall` removes it; run it again if you move the folder). It needs `libgtk-3`, `avahi-daemon` for discovery, `xdg-desktop-portal` with a GTK, GNOME or KDE backend for file dialogs, PulseAudio tools (`parecord`, `pacat`) or PipeWire tools (`pw-record`, `pw-play`) for voice, and `xdg-utils` to open received files. Package names differ between distributions.
-- **iOS, iPadOS**: the `.ipa` is unsigned. Sideload it with AltStore or Sideloadly, which sign it with your Apple ID (a free account's signature expires after 7 days), or build from source in Xcode with your own team.
-- **Android**: an APK will be attached once it can be signed with the project's release key. Pick `arm64-v8a` for any recent phone.
+- **iOS, iPadOS**: the downloadable unsigned `.ipa` is not an App Store submission build. Building and distributing a signed IPA requires the appropriate Apple team and provisioning; see [RELEASING.md](RELEASING.md#4-ios-and-macos).
+- **Android**: install updates over the existing app using an APK signed by the same release key. Keep a copy of any data you need before removing an existing test installation.
 
 The vault (`vault.json`) and a remembered display name (`identity.json`) live in the app's Application Support/IntraGram folder, apart from received files. On iOS the app asks for backup exclusion and complete file protection for that folder. macOS backups can include the vault. Android's OS backup and device transfer of app data are turned off. [PRIVACY.md](PRIVACY.md) lists everything the app keeps and sends.
 
@@ -129,8 +141,9 @@ flutter run     # pick a device, then start IntraGram on a second device on the 
 
 | OS | Release build | Output |
 | :--- | :--- | :--- |
-| Android | `flutter build apk --release --split-per-abi` | `build/app/outputs/flutter-apk/` |
-| iOS, iPadOS | `flutter build ios --release` (needs signing) | Xcode archive |
+| Android APK | `flutter build apk --release` | `build/app/outputs/flutter-apk/app-release.apk` |
+| Google Play AAB | `flutter build appbundle --release` | `build/app/outputs/bundle/release/app-release.aab` |
+| iOS, iPadOS | `flutter build ipa --release` (requires distribution signing) | `build/ios/archive/`, `build/ios/ipa/` |
 | macOS | `flutter build macos --release` | `build/macos/Build/Products/Release/` |
 | Windows | `flutter build windows --release` | `build/windows/x64/runner/Release/` |
 | Linux | `flutter build linux --release` | `build/linux/x64/release/bundle/` |
@@ -318,7 +331,7 @@ IntraGram은 같은 Wi-Fi나 LAN에 있는 폰, 태블릿, 컴퓨터끼리 쓰�
 
 | 플랫폼 | 최소 버전 | 릴리스 빌드 | 서명 | 실기기 QA |
 | :--- | :--- | :--- | :--- | :--- |
-| Android | 7.0 (API 24) | ABI별 APK | 릴리스 키가 아직 없어 APK를 공개하지 않음 | 미실시 |
+| Android | 7.0 (API 24) | 통합 `.apk`, 스토어용 `.aab` | 릴리스 키 필요, `SIGNING-android.txt` 확인 | 미실시 |
 | iOS, iPadOS | 15.0 | `.ipa` | 서명 없음 | 미실시 |
 | macOS | 12.0 | universal 앱 (`.zip`, `.dmg`) | ad-hoc 서명, 공증 없음 | 미실시 |
 | Windows | 10, x64 | 포터블 `.zip` | 서명 없음 | 미실시 |
@@ -375,17 +388,27 @@ CI는 push마다 테스트와 Android 디버그 빌드를 돌리고, 네이티�
 
 ### 설치
 
-폰용 서명 빌드는 아직 없습니다. Android는 릴리스 키가 없어 APK를 공개하지 않고, iOS `.ipa`는 서명되지 않았습니다. 지금 써 보려면 데스크톱 빌드를 띄우고 폰은 *게스트 포털*로 브라우저에서 들어오게 하거나, 소스에서 직접 빌드하는 쪽이 가장 빠릅니다.
+**[다운로드 페이지(GitHub Releases)](https://github.com/gnoyx2/IntraGram/releases)**에서 버전을 고른 뒤 **Assets**를 펼치세요. 아직 첫 공개 바이너리 릴리스는 게시되지 않았으며, 아래 파일명은 릴리스에서 제공할 빌드 결과물입니다. 그전에는 [소스에서 빌드](#소스에서-빌드)할 수 있습니다. 스토어와 TestFlight 링크는 배포가 준비되면 추가합니다.
 
-버전 태그를 올리면 빌드가 [Releases](https://github.com/gnoyx2/IntraGram/releases)에 프리릴리스로 올라옵니다. `SHA256SUMS.txt`와 함께, 플랫폼마다 서명 상태를 빌드 중에 직접 잰 `SIGNING-<platform>.txt`가 붙습니다. 내려받은 파일은 macOS에서 `shasum -a 256 -c --ignore-missing SHA256SUMS.txt`, Linux에서 `sha256sum -c --ignore-missing SHA256SUMS.txt`, Windows PowerShell에서 `Get-FileHash <파일> -Algorithm SHA256`으로 확인합니다. 체크섬은 깨진 다운로드만 잡아냅니다. 릴리스 워크플로가 직접 만든 파일인지는 `gh attestation verify <파일> --repo gnoyx2/IntraGram`으로 확인합니다.
+| 기기 | Assets에서 받을 파일 | 설치 방법 |
+| :--- | :--- | :--- |
+| Android | `intragram-android.apk` | 지원하는 ARM·x64 기기용 통합 APK입니다. 폰에서 파일을 열고, 요청이 뜨면 해당 브라우저나 파일 관리자의 앱 설치를 허용하세요. |
+| iPhone, iPad | `intragram-ios-unsigned.ipa` | 고급 사용자용입니다. Apple 프로비저닝 프로파일로 다시 서명해야 하며, 파일을 누르는 것만으로 설치되지 않습니다. TestFlight나 App Store 배포가 준비되면 그 경로를 이용하세요. |
+| macOS | `intragram-macos.dmg` (또는 `intragram-macos.zip`) | 디스크 이미지를 열거나 ZIP을 풀고 `IntraGram.app`을 응용 프로그램 폴더로 복사하세요. |
+| Windows x64 | `intragram-windows-x64.zip` | 폴더 전체의 압축을 풀고 `intragram.exe`를 실행하세요. DLL과 `data` 폴더를 함께 유지해야 합니다. |
+| Linux x64 | `intragram-linux-x64.tar.gz` | 압축을 풀고 `./intragram`을 실행하세요. `./install.sh`로 앱 메뉴에 등록합니다. |
+
+GitHub의 **Source code (zip/tar.gz)**는 설치 파일이 아닌 소스 코드입니다. `intragram.aab`는 Google Play 제출용으로, 직접 설치하는 파일이 아닙니다. Android APK와 AAB는 CI에 프로젝트 릴리스 서명 키가 설정된 경우에만 첨부하며, 디버그 키로 서명한 시험용 APK는 공개하지 않습니다.
+
+버전 태그를 올리면 먼저 **초안(Draft)** 릴리스가 만들어집니다. 관리자가 게시해야 사용자가 다운로드할 수 있고, 실기기 QA를 통과하기 전까지는 **Pre-release**로 표시합니다. 릴리스에는 `SHA256SUMS.txt`와 플랫폼별 실제 서명 상태를 기록한 `SIGNING-<platform>.txt`가 붙습니다. 내려받은 파일은 macOS에서 `shasum -a 256 -c --ignore-missing SHA256SUMS.txt`, Linux에서 `sha256sum -c --ignore-missing SHA256SUMS.txt`, Windows PowerShell에서 `Get-FileHash <파일> -Algorithm SHA256`으로 확인합니다. 체크섬은 깨진 다운로드만 잡아냅니다. 릴리스 워크플로가 직접 만든 파일인지는 `gh attestation verify <파일> --repo gnoyx2/IntraGram`으로 확인합니다.
 
 IntraGram은 사설 주소에서만 연결을 받고 겁니다. 방화벽 팝업은 개인 네트워크에서만 허용하세요.
 
 - **macOS**: ad-hoc 서명에 공증이 없어서 처음 실행할 때 Gatekeeper가 막습니다. macOS 15 이상은 앱을 한 번 연 뒤 *시스템 설정 › 개인정보 보호 및 보안*에서 *그래도 열기*를 누르고, macOS 12~14는 앱을 우클릭해서 *열기*를 고릅니다. 로컬 네트워크 접근 팝업은 허용합니다.
 - **Windows**: 폴더째 압축을 풀고 `intragram.exe`를 실행합니다. 서명이 없어 SmartScreen이 경고하면 *추가 정보*를 누른 뒤 *실행*을 누르세요. 스마트 앱 컨트롤이 켜진 PC는 서명 없는 앱을 예외 없이 막으므로, 서명하기 전까지는 그 PC에서 실행할 수 없습니다.
 - **Linux**: 압축을 풀고 `./intragram`을 실행합니다. `./install.sh`는 아이콘과 함께 앱 메뉴에 등록합니다(`./install.sh --uninstall`로 제거, 폴더를 옮겼다면 다시 실행). 실행하려면 `libgtk-3`, 기기 탐색용 `avahi-daemon`, 파일 대화상자용 `xdg-desktop-portal`과 GTK·GNOME·KDE 백엔드 중 하나, 음성용 PulseAudio 도구(`parecord`, `pacat`)나 PipeWire 도구(`pw-record`, `pw-play`), 받은 파일을 열 `xdg-utils`가 필요합니다. 패키지 이름은 배포판마다 다릅니다.
-- **iOS, iPadOS**: `.ipa`는 서명이 없습니다. AltStore나 Sideloadly로 본인 Apple ID 서명을 해서 설치하거나(무료 계정 서명은 7일 뒤 만료), Xcode에서 본인 팀으로 소스를 빌드하세요.
-- **Android**: 프로젝트 릴리스 키로 서명할 수 있게 되면 APK를 첨부합니다. 최근 폰이면 `arm64-v8a`를 고르면 됩니다.
+- **iOS, iPadOS**: 다운로드용 미서명 `.ipa`는 App Store 제출용 빌드가 아닙니다. 서명된 IPA를 빌드하고 배포하려면 해당 Apple 팀과 프로비저닝 설정이 필요합니다. [RELEASING.md](RELEASING.md#4-ios-and-macos)를 참고하세요.
+- **Android**: 업데이트할 때는 같은 릴리스 키로 서명된 APK를 기존 앱 위에 설치하세요. 기존 시험용 앱을 삭제해야 한다면 필요한 데이터를 먼저 따로 보관하세요.
 
 보관소(`vault.json`)와 기억해 둔 기기 이름(`identity.json`)은 받은 파일과 떨어진 앱의 Application Support/IntraGram 폴더에 있습니다. iOS에서는 이 폴더에 백업 제외와 완전 파일 보호를 요청합니다. macOS 백업에는 보관소가 들어갈 수 있습니다. Android는 앱 데이터의 OS 백업과 기기 간 전송을 꺼 두었습니다. 앱이 남기고 보내는 것은 [PRIVACY.md](PRIVACY.md)에 모두 적어 두었습니다.
 
@@ -416,8 +439,9 @@ flutter run     # 기기를 고른 뒤, 같은 Wi-Fi의 다른 기기에서도 I
 
 | OS | 릴리스 빌드 | 결과물 |
 | :--- | :--- | :--- |
-| Android | `flutter build apk --release --split-per-abi` | `build/app/outputs/flutter-apk/` |
-| iOS, iPadOS | `flutter build ios --release` (서명 필요) | Xcode 아카이브 |
+| Android APK | `flutter build apk --release` | `build/app/outputs/flutter-apk/app-release.apk` |
+| Google Play AAB | `flutter build appbundle --release` | `build/app/outputs/bundle/release/app-release.aab` |
+| iOS, iPadOS | `flutter build ipa --release` (배포 서명 필요) | `build/ios/archive/`, `build/ios/ipa/` |
 | macOS | `flutter build macos --release` | `build/macos/Build/Products/Release/` |
 | Windows | `flutter build windows --release` | `build/windows/x64/runner/Release/` |
 | Linux | `flutter build linux --release` | `build/linux/x64/release/bundle/` |
