@@ -16,6 +16,7 @@ development Git history, local build state and signing material are excluded.
 flutter pub get --enforce-lockfile
 dart format --output=none --set-exit-if-changed .
 python3 tool/check_loc.py
+python3 tool/release_workflow_test.py
 flutter analyze
 flutter test --exclude-tags large
 node tool/browser_guard_test.js
@@ -128,10 +129,10 @@ keyPassword=<password>
 Build, then verify the signer before shipping:
 
 ```bash
-flutter build apk --release --split-per-abi
+flutter build apk --release
 flutter build appbundle --release
 APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-"$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+"$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk
 keytool -J-Duser.language=en -J-Duser.country=US -printcert -jarfile build/app/outputs/bundle/release/app-release.aab
 ```
 
@@ -145,7 +146,17 @@ libraries" and exits non-zero, although Gradle did build the `.aab`.
 
 For CI, store the keystore as base64 in the `ANDROID_KEYSTORE_BASE64` secret,
 plus `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and
-`ANDROID_KEY_PASSWORD`; `release.yml` restores it and checks the result.
+`ANDROID_KEY_PASSWORD`; configure all four under Settings → Secrets and
+variables → Actions → Repository secrets. A keystore on a local machine does
+not configure GitHub Actions. `release.yml` restores it and checks the result;
+a partial secret configuration fails the build. With all four absent, only a
+clearly named debug-signed test APK is kept as a workflow artifact, never as a
+public release asset.
+
+The workflow names the universal APK `intragram-android.apk` and the bundle
+`intragram.aab`. Users install the APK without choosing a CPU architecture;
+upload the AAB to Google Play. Keep the signing key stable so APK updates can
+replace previous releases. See [Flutter's Android release guide](https://docs.flutter.dev/deployment/android).
 
 Play Console notes: `applicationId` (see `android/app/build.gradle.kts`) cannot
 change after the first upload. Use Play App Signing with the key above as the
@@ -186,8 +197,12 @@ Neither command proves App Store signing or notarized distribution.
   git ignores and the Debug and Release configs include. If Xcode's Signing &
   Capabilities pane writes the team into `project.pbxproj`, move it back to that
   file before committing (`test/apple_signing_test.dart` fails otherwise). Then
-  `flutter build ipa --release` and an upload with Xcode Organizer or
-  Transporter. The app runs its own standard
+  `flutter build ipa --release` creates the archive under `build/ios/archive/`
+  and, when distribution signing/export succeeds, the store IPA under
+  `build/ios/ipa/`. An archive alone is not a successful IPA export; verify the
+  export result before an upload with Xcode Organizer or Transporter. The
+  workflow's `intragram-ios-unsigned.ipa` is for re-signing, not for submission
+  to App Store Connect. See [Flutter's iOS release guide](https://docs.flutter.dev/deployment/ios). The app runs its own standard
   encryption (X25519, ChaCha20-Poly1305 from the Dart `cryptography` package,
   not Apple's OS crypto). `Info.plist` currently sets
   `ITSAppUsesNonExemptEncryption` to `false`; this is not a completed export
@@ -327,4 +342,16 @@ and "supported" after the full list including accessibility.
    set to `true` (Settings, Secrets and variables, Variables), which you do
    only after `DEVICE_QA.md` passes. Pushing the tag creates a **draft**
    release with `SHA256SUMS.txt`.
-3. Check the draft against the README status table, then publish it.
+3. Check the draft against the README status table, inspect the files and
+   signing reports, then choose **Publish release** in GitHub. A draft is
+   invisible to ordinary users even though its build completed. Keep the
+   pre-release flag until its QA stage is satisfied. Confirm the published
+   page's **Assets** contains the expected installer files; the automatically
+   added **Source code** archives are not apps.
+4. The README's download link points to
+   `https://github.com/gnoyx2/IntraGram/releases`, which also lists pre-releases.
+   Update its availability note after publishing the first binary release.
+   Do not use `/releases/latest/download/...` while only pre-releases exist.
+   Add App Store, Google Play and TestFlight links only after those destinations
+   are available. Store submission and review are separate from publishing a
+   GitHub release.

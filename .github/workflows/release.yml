@@ -38,6 +38,7 @@ jobs:
       - run: flutter pub get --enforce-lockfile
       - run: dart format --output=none --set-exit-if-changed .
       - run: python3 tool/check_loc.py
+      - run: python3 tool/release_workflow_test.py
       - run: flutter analyze
       # 'large' 태그(1GiB·4GiB 전송 회귀)는 느리고 디스크를 수 GiB 써서 릴리즈 게이트에서도 제외함 (필요하면 별도 실행함)
       - run: flutter test --exclude-tags large
@@ -67,17 +68,27 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_B64" ]; then
+          set -euo pipefail
+          rm -f android/key.properties "$RUNNER_TEMP/release.jks"
+          if [ -z "$KEYSTORE_B64$STORE_PASSWORD$KEY_ALIAS$KEY_PASSWORD" ]; then
             echo "No release keystore secret: the build will be debug-signed."
             exit 0
           fi
-          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          for name in KEYSTORE_B64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::All four Android signing secrets must be configured together."
+              exit 1
+            fi
+          done
+          umask 077
+          python3 -c 'import base64, os, sys; sys.stdout.buffer.write(base64.b64decode("".join(os.environ["KEYSTORE_B64"].split()), validate=True))' \
+            > "$RUNNER_TEMP/release.jks"
           printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
             "$RUNNER_TEMP/release.jks" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" \
             > android/key.properties
       # 키가 없으면 Gradle이 release 빌드를 거부하므로 allowDebugSigning으로 debug 서명 APK 생성을 허용함.
       # 생성된 APK는 *-debugsigned로 이름을 바꾸고 릴리즈에는 절대 첨부하지 않음
-      - run: flutter build apk --release --split-per-abi
+      - run: flutter build apk --release
         env:
           ORG_GRADLE_PROJECT_allowDebugSigning: 'true'
       - name: Build app bundle only with a release key
@@ -92,21 +103,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
+          rm -f dist/*.apk dist/*.aab dist/SIGNING-android.txt
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           echo "Using $APKSIGNER"
           if [ -f android/key.properties ]; then KEY=release; SUFFIX=""; else KEY=debug; SUFFIX="-debugsigned"; fi
-          for f in build/app/outputs/flutter-apk/app-*-release.apk; do
-            abi=$(basename "$f" -release.apk); abi=${abi#app-}
-            cp "$f" "dist/intragram-${abi}${SUFFIX}.apk"
-          done
+          APK="dist/intragram-android${SUFFIX}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "$APK"
           if [ "$KEY" = release ]; then cp build/app/outputs/bundle/release/app-release.aab dist/intragram.aab; fi
           {
             echo "commit: $GITHUB_SHA"
             echo "flutter: $FLUTTER_VERSION, runner: ubuntu-24.04 x64"
             echo "android key: $KEY (debug means the public debug key: not for distribution)"
-            for f in dist/*.apk; do
-              echo "$(basename "$f")"
-            if ! certs=$("$APKSIGNER" verify --print-certs "$f" 2>&1); then
+            echo "$(basename "$APK")"
+            if ! certs=$("$APKSIGNER" verify --print-certs "$APK" 2>&1); then
               printf '%s\n' "$certs" >&2
               exit 1
             fi
@@ -114,10 +123,9 @@ jobs:
             if ! grep -q 'certificate DN:' <<< "$certs" ||
                ! grep -q 'certificate SHA-256 digest:' <<< "$certs"; then
               printf '%s\n' "$certs" >&2
-              echo "::error::missing APK signer identity or digest for $f" >&2
+              echo "::error::missing APK signer identity or digest for $APK" >&2
               exit 1
             fi
-            done
             if [ -f dist/intragram.aab ]; then
               echo "intragram.aab"
               keytool -J-Duser.language=en -J-Duser.country=US -printcert -jarfile dist/intragram.aab | grep -E 'Owner|SHA256'
@@ -132,6 +140,7 @@ jobs:
         with:
           name: android
           path: dist/*
+          if-no-files-found: error
 
   linux:
     needs: verify
@@ -293,6 +302,7 @@ jobs:
         with:
           files: release/*
           generate_release_notes: true
+          fail_on_unmatched_files: true
           draft: true
           # DEVICE_QA.md를 통과하고 관리자가 저장소 변수 DEVICE_QA_PASSED=true를 두기 전까진 늘 pre-release로 표시함
           prerelease: ${{ contains(github.ref_name, '-') || vars.DEVICE_QA_PASSED != 'true' }}
@@ -319,5 +329,6 @@ jobs:
 
             Licenses: `LICENSE` (MIT) and `THIRD_PARTY_NOTICES.md` are attached.
 
-            This release is a **draft**. Real-device test status and open items are in
-            `README.md` (Status) and `DEVICE_QA.md`. Review them before publishing.
+            Real-device test status and open items are in `README.md` (Status) and
+            `DEVICE_QA.md`. Review the signing reports and device QA before publishing
+            or installing these builds.
