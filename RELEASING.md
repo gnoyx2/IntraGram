@@ -24,7 +24,7 @@ node tool/web_design_test.js
 sh -n linux/install.sh
 flutter build macos --debug
 git diff --check
-# Optional, outside the ten required gates; verified on 3535ecf (64/256 MiB and 1/4 GiB; transfer code has only comment changes since).
+# Optional, outside the required gates; verified on 3535ecf (64/256 MiB and 1/4 GiB; transfer code has only comment changes since).
 flutter test --tags large     # 64/256 MiB; add --dart-define=LARGE_SIZES_MIB=1024,4096 for 1/4 GiB
 ```
 
