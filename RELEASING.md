@@ -312,6 +312,8 @@ and "supported" after the full list including accessibility.
 
 ### Binary and store distribution
 
+For `v1.0.0-rc.1` only, the maintainer approved an untested preview on 2026-10-27. Publish it as a **pre-release** with real-device QA explicitly marked **NOT RUN**. This exception does not pass the device-QA gate, enable `DEVICE_QA_PASSED`, or complete store submission/review. See `DEVICE_QA.md` section 9.
+
 - [ ] **Device QA.** Pass the required `DEVICE_QA.md` stage for each platform
   whose binary will be attached. Debug compilation is not a device PASS.
 - [ ] **Release build and signing.** Untagged `release` `workflow_dispatch`

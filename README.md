@@ -90,15 +90,15 @@ It fits places where the internet is blocked, slow or unwanted: an internal netw
 
 ### Install
 
-**[Open Downloads (GitHub Releases)](https://github.com/gnoyx2/IntraGram/releases)**, select a version and expand **Assets**. The first public binary release has not been published yet; the filenames below describe the release outputs. Until then, use [Build from source](#build-from-source). Store and TestFlight links will be added when available.
+**[Open Downloads (GitHub Releases)](https://github.com/gnoyx2/IntraGram/releases)**, select a version and expand **Assets**. [v1.0.0-rc.1](https://github.com/gnoyx2/IntraGram/releases/tag/v1.0.0-rc.1) is available as a **testing pre-release**. Automated tests and artifact verification passed, but **real-device QA has not been completed on any platform**. Store and TestFlight links will be added when available.
 
 | Device | File to download from Assets | Installation |
 | :--- | :--- | :--- |
-| Android | `intragram-android.apk` | One APK for supported ARM and x64 devices. Open it on the phone and allow installation from that browser or file manager if prompted. |
-| iPhone, iPad | `intragram-ios-unsigned.ipa` | Advanced users only: requires re-signing with an Apple provisioning profile. It cannot be installed by tapping the download. Use TestFlight or the App Store when available. |
-| macOS | `intragram-macos.dmg` (or `intragram-macos.zip`) | Open the disk image or extract the ZIP, then copy `IntraGram.app` to Applications. |
-| Windows x64 | `intragram-windows-x64.zip` | Extract the entire folder, then run `intragram.exe`. Keep its DLLs and `data` folder together. |
-| Linux x64 | `intragram-linux-x64.tar.gz` | Extract it, then run `./intragram`; `./install.sh` adds a launcher. |
+| Android | [intragram-android.apk](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-android.apk) | One APK for supported ARM and x64 devices. Open it on the phone and allow installation from that browser or file manager if prompted. |
+| iPhone, iPad | [intragram-ios-unsigned.ipa](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-ios-unsigned.ipa) | Advanced users only: requires re-signing with an Apple provisioning profile. It cannot be installed by tapping the download. Use TestFlight or the App Store when available. |
+| macOS | [intragram-macos.dmg](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-macos.dmg) (or [intragram-macos.zip](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-macos.zip)) | Open the disk image or extract the ZIP, then copy `IntraGram.app` to Applications. |
+| Windows x64 | [intragram-windows-x64.zip](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-windows-x64.zip) | Extract the entire folder, then run `intragram.exe`. Keep its DLLs and `data` folder together. |
+| Linux x64 | [intragram-linux-x64.tar.gz](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-linux-x64.tar.gz) | Extract it, then run `./intragram`; `./install.sh` adds a launcher. |
 
 GitHub's **Source code (zip/tar.gz)** files are source code, not installed apps. `intragram.aab` is for Google Play submission, not direct installation. Android APK/AAB files are included only when CI has the project's release signing key; debug-signed test APKs are never published.
 
@@ -388,15 +388,15 @@ CI는 push마다 테스트와 Android 디버그 빌드를 돌리고, 네이티�
 
 ### 설치
 
-**[다운로드 페이지(GitHub Releases)](https://github.com/gnoyx2/IntraGram/releases)**에서 버전을 고른 뒤 **Assets**를 펼치세요. 아직 첫 공개 바이너리 릴리스는 게시되지 않았으며, 아래 파일명은 릴리스에서 제공할 빌드 결과물입니다. 그전에는 [소스에서 빌드](#소스에서-빌드)할 수 있습니다. 스토어와 TestFlight 링크는 배포가 준비되면 추가합니다.
+**[다운로드 페이지(GitHub Releases)](https://github.com/gnoyx2/IntraGram/releases)**에서 버전을 고른 뒤 **Assets**를 펼치세요. [v1.0.0-rc.1](https://github.com/gnoyx2/IntraGram/releases/tag/v1.0.0-rc.1)을 **테스트용 프리릴리스**로 제공합니다. 자동 테스트와 빌드 파일 검증은 통과했지만, **모든 플랫폼의 실기기 QA는 아직 미완료**입니다. 스토어와 TestFlight 링크는 배포가 준비되면 추가합니다.
 
 | 기기 | Assets에서 받을 파일 | 설치 방법 |
 | :--- | :--- | :--- |
-| Android | `intragram-android.apk` | 지원하는 ARM·x64 기기용 통합 APK입니다. 폰에서 파일을 열고, 요청이 뜨면 해당 브라우저나 파일 관리자의 앱 설치를 허용하세요. |
-| iPhone, iPad | `intragram-ios-unsigned.ipa` | 고급 사용자용입니다. Apple 프로비저닝 프로파일로 다시 서명해야 하며, 파일을 누르는 것만으로 설치되지 않습니다. TestFlight나 App Store 배포가 준비되면 그 경로를 이용하세요. |
-| macOS | `intragram-macos.dmg` (또는 `intragram-macos.zip`) | 디스크 이미지를 열거나 ZIP을 풀고 `IntraGram.app`을 응용 프로그램 폴더로 복사하세요. |
-| Windows x64 | `intragram-windows-x64.zip` | 폴더 전체의 압축을 풀고 `intragram.exe`를 실행하세요. DLL과 `data` 폴더를 함께 유지해야 합니다. |
-| Linux x64 | `intragram-linux-x64.tar.gz` | 압축을 풀고 `./intragram`을 실행하세요. `./install.sh`로 앱 메뉴에 등록합니다. |
+| Android | [intragram-android.apk](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-android.apk) | 지원하는 ARM·x64 기기용 통합 APK입니다. 폰에서 파일을 열고, 요청이 뜨면 해당 브라우저나 파일 관리자의 앱 설치를 허용하세요. |
+| iPhone, iPad | [intragram-ios-unsigned.ipa](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-ios-unsigned.ipa) | 고급 사용자용입니다. Apple 프로비저닝 프로파일로 다시 서명해야 하며, 파일을 누르는 것만으로 설치되지 않습니다. TestFlight나 App Store 배포가 준비되면 그 경로를 이용하세요. |
+| macOS | [intragram-macos.dmg](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-macos.dmg) (또는 [intragram-macos.zip](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-macos.zip)) | 디스크 이미지를 열거나 ZIP을 풀고 `IntraGram.app`을 응용 프로그램 폴더로 복사하세요. |
+| Windows x64 | [intragram-windows-x64.zip](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-windows-x64.zip) | 폴더 전체의 압축을 풀고 `intragram.exe`를 실행하세요. DLL과 `data` 폴더를 함께 유지해야 합니다. |
+| Linux x64 | [intragram-linux-x64.tar.gz](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-linux-x64.tar.gz) | 압축을 풀고 `./intragram`을 실행하세요. `./install.sh`로 앱 메뉴에 등록합니다. |
 
 GitHub의 **Source code (zip/tar.gz)**는 설치 파일이 아닌 소스 코드입니다. `intragram.aab`는 Google Play 제출용으로, 직접 설치하는 파일이 아닙니다. Android APK와 AAB는 CI에 프로젝트 릴리스 서명 키가 설정된 경우에만 첨부하며, 디버그 키로 서명한 시험용 APK는 공개하지 않습니다.
 
