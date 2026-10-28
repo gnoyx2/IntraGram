@@ -10,6 +10,7 @@ on:
       - 'windows/**'
       - 'linux/**'
       - 'tool/linux_desktop_test.cc'
+      - 'tool/macos_resource_signing*.py'
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - '.github/workflows/native.yml'
@@ -20,6 +21,7 @@ on:
       - 'windows/**'
       - 'linux/**'
       - 'tool/linux_desktop_test.cc'
+      - 'tool/macos_resource_signing*.py'
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - '.github/workflows/native.yml'
@@ -53,6 +55,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get --enforce-lockfile
+      - run: python3 tool/macos_resource_signing_test.py
       - run: flutter build macos --debug
       - run: flutter build ios --debug --no-codesign
 

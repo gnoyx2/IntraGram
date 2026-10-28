@@ -231,10 +231,24 @@ Without those, users must approve the app by hand: on macOS 15 and later
 through System Settings, Privacy & Security, Open Anyway, and on 12 to 14 by
 right-clicking the app and choosing Open.
 
-The Mac App Store is a different path: the app would need a sandboxed App
-Store build and its own `PrivacyInfo.xcprivacy` (the macOS runner reads
+The Mac App Store uses a sandboxed App Store build and distribution-signed
+`.pkg`, with `macos/Runner/PrivacyInfo.xcprivacy` (the macOS runner reads
 `UserDefaults` to restore the window frame, a required-reason API, `CA92.1`).
 iOS already ships one in `ios/Runner/PrivacyInfo.xcprivacy`.
+
+The final macOS Runner build phase removes signatures only from verified
+codeless resource bundles before the app is signed. Xcode's export can leave
+Swift Package Manager resource bundles signed with an Apple Development
+certificate, causing App Store error 90284 even when the app itself has a valid
+Apple Distribution signature. Privacy manifests stay intact and are sealed by
+the enclosing app signature; executable bundles, Mach-O files and symlinks
+make this phase fail rather than removing a code signature. Check this with
+`python3 tool/macos_resource_signing_test.py`. Before submission, expand the
+**final exported PKG** with `pkgutil --expand-full`, verify its installer
+signature and the contained app with `codesign --verify --deep --strict`, and
+confirm every signed nested code item's leaf certificate is included in the
+embedded distribution provisioning profile. A successful archive or deep
+signature verification alone does not detect a stale development certificate.
 
 iOS 27 Liquid Glass accessibility follows live Reduce Transparency and high
 contrast with opaque surfaces and defined borders; Safari guests use CSS

@@ -256,6 +256,7 @@
 				33CC110E2044A8840003C045 /* Bundle Framework */,
 				3399D490228B24CF009A79C7 /* ShellScript */,
 				0E53796F5AE5FECB304ACF20 /* [CP] Embed Pods Frameworks */,
+				B1035E8C2F001A0000000001 /* Prepare Resource Bundle Signatures */,
 			);
 			buildRules = (
 			);
@@ -347,6 +348,18 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		B1035E8C2F001A0000000001 /* Prepare Resource Bundle Signatures */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "Prepare Resource Bundle Signatures";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "python3 \"${PROJECT_DIR}/../tool/macos_resource_signing.py\" \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\n";
+			showEnvVarsInLog = 0;
+		};
 		0E53796F5AE5FECB304ACF20 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
