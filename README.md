@@ -2,8 +2,6 @@
 
 # Intragram
 
-The official project and app name is **Intragram**: a capital **I**, followed by lowercase **ntragram**.
-
 Peer-to-peer messenger for devices on the same network.<br>
 No server, no account. Chats stay in memory unless you choose to keep them.
 
@@ -320,8 +318,6 @@ MIT, see [LICENSE](LICENSE). The two files modified from LocalSend also carry th
 ---
 
 ## 한국어
-
-프로젝트와 앱의 공식 이름은 **Intragram**입니다. 첫 글자 **I**만 대문자로 표기합니다.
 
 Intragram은 같은 Wi-Fi나 LAN에 있는 폰, 태블릿, 컴퓨터끼리 쓰는 메신저입니다. 앱끼리 mDNS로 서로를 찾아 직접 연결하므로 서버도, 가입도, 전화번호도 필요 없습니다. 앱이 여는 소켓은 모두 사설 주소로만 가야 하고, 그 밖의 주소는 거부합니다. 대화는 메모리에 두며, 로컬 보관소를 켰을 때만 디스크에 저장합니다. 앱이 없는 사람도 QR 코드를 찍어 브라우저로 들어올 수 있습니다.
 
