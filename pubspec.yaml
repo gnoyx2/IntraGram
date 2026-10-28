@@ -5,7 +5,7 @@ publish_to: 'none'
 
 # 버전+빌드 번호. Android는 versionName·versionCode, iOS는 CFBundleShortVersionString·CFBundleVersion,
 # Windows는 제품·파일 버전과 빌드 접미사가 됨 (flutter build의 --build-name·--build-number로 덮을 수 있음)
-version: 1.0.0+7
+version: 1.0.0+8
 
 environment:
   sdk: ^3.12.2

@@ -16,7 +16,7 @@ var KO = detectLang() === "ko";
 // 언어를 바꿀 때 새로고침 없이 문구를 다시 만들어서 RAM 대화를 지킴
 function buildI18N() {
   return {
-    guestTitle: KO ? "IntraGram 게스트" : "IntraGram Guest",
+    guestTitle: KO ? "Intragram 게스트" : "Intragram Guest",
     connecting: KO ? "연결 중…" : "Connecting…",
     burn: KO ? "자동 삭제" : "Self-destruct",
     burnLeft: KO ? "{n}초" : "{n}s",

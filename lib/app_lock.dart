@@ -50,7 +50,7 @@ Future<void> relockSession({
   if (error != null) Error.throwWithStackTrace(error, failureStack!);
 }
 
-extension _AppLock on _IntraGramAppState {
+extension _AppLock on _IntragramAppState {
   // hidden/paused에 들어간 시각부터 잼. OS가 앱을 멈춰 타이머가 못 돌았어도
   // 복귀(resumed) 때 실제 경과 시간으로 다시 판단함 (기기 잠자기 동안도 흐르는 벽시계 기준)
   void _handleAutoLock(AppLifecycleState state) {
@@ -100,7 +100,7 @@ extension _AppLock on _IntraGramAppState {
         FlutterErrorDetails(
           exception: error,
           stack: stack,
-          library: 'IntraGram lock',
+          library: 'Intragram lock',
         ),
       );
     } finally {

@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:intragram/network/link_registry.dart';
 
-// IP 직결이 왜 실패했는지 가려서 안내함: 응답 없음, 거부, 경로 없음, IntraGram 아님
+// IP 직결이 왜 실패했는지 가려서 안내함: 응답 없음, 거부, 경로 없음, Intragram 아님
 void main() {
   SocketException os(int code) =>
       SocketException('connect', osError: OSError('x', code));
@@ -32,14 +32,14 @@ void main() {
     }
   });
 
-  test('an answer that is not a WebSocket upgrade is not IntraGram', () {
+  test('an answer that is not a WebSocket upgrade is not Intragram', () {
     expect(
       classifyDialError(const WebSocketException('not upgraded')),
-      PeerUnreachableReason.notIntraGram,
+      PeerUnreachableReason.notIntragram,
     );
     expect(
       classifyDialError(const HttpException('bad response')),
-      PeerUnreachableReason.notIntraGram,
+      PeerUnreachableReason.notIntragram,
     );
   });
 

@@ -1,6 +1,6 @@
 ---
 name: Bug report or usage question
-about: Report an app problem or ask how to use IntraGram
+about: Report an app problem or ask how to use Intragram
 ---
 
 <!-- Security vulnerabilities belong in SECURITY.md's private reporting path. -->
@@ -8,7 +8,7 @@ about: Report an app problem or ask how to use IntraGram
 
 **Platform, OS version and device:**
 
-**IntraGram version or build:**
+**Intragram version or build:**
 
 **What happened, or what is your question?**
 

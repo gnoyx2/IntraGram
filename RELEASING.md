@@ -1,4 +1,4 @@
-# Releasing IntraGram
+# Releasing Intragram
 
 Maintainer notes for cutting a release. Signing material never goes in the
 repository: `*.jks`, `*.keystore`, `key.properties`, `*.p12`, `*.p8`, `*.pfx`,
@@ -222,9 +222,9 @@ Neither command proves App Store signing or notarized distribution.
   then notarization and stapling:
 
   ```bash
-  xcrun notarytool submit IntraGram.zip --keychain-profile <profile> --wait
-  xcrun stapler staple IntraGram.app
-  spctl --assess --type execute --verbose IntraGram.app   # expect: accepted, source=Notarized Developer ID
+  xcrun notarytool submit Intragram.zip --keychain-profile <profile> --wait
+  xcrun stapler staple Intragram.app
+  spctl --assess --type execute --verbose Intragram.app   # expect: accepted, source=Notarized Developer ID
   ```
 
 Without those, users must approve the app by hand: on macOS 15 and later
@@ -298,11 +298,11 @@ file picking and call-interruption checks in DEVICE_QA.
   mirror as the public reporting destination.
 
 Repository settings: enable Issues and confirm that the issue chooser directs
-reporters to the security policy. The publication repository is `gnoyx2/IntraGram`. The chooser uses its HTTPS policy
-URL, `https://github.com/gnoyx2/IntraGram/security/policy`; GitHub does not
+reporters to the security policy. The publication repository is `gnoyx2/Intragram`. The chooser uses its HTTPS policy
+URL, `https://github.com/gnoyx2/Intragram/security/policy`; GitHub does not
 support mailto contact-link URLs. Verify the rendered chooser after publication.
 Then enable private vulnerability reporting and verify that
-`GET /repos/gnoyx2/IntraGram/private-vulnerability-reporting` returns `enabled: true`
+`GET /repos/gnoyx2/Intragram/private-vulnerability-reporting` returns `enabled: true`
 ([GitHub setup](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository)).
 Keep Linux labeled unreviewed until its `DEVICE_QA.md` checks pass; do
 not call any platform supported before that QA. `DEVICE_QA.md` section 9 sets
@@ -351,7 +351,7 @@ For `v1.0.0-rc.1` only, the maintainer approved an untested preview on 2026-10-2
    page's **Assets** contains the expected installer files; the automatically
    added **Source code** archives are not apps.
 4. The README's download link points to
-   `https://github.com/gnoyx2/IntraGram/releases`, which also lists pre-releases.
+   `https://github.com/gnoyx2/Intragram/releases`, which also lists pre-releases.
    Update its availability note after publishing the first binary release.
    Do not use `/releases/latest/download/...` while only pre-releases exist.
    Add App Store, Google Play and TestFlight links only after those destinations

@@ -143,7 +143,7 @@ const int kMaxPendingOutboundBytes = 1024 * 1024;
 // 입력 중 갱신이 없으면 상태를 해제함 (상대가 앱을 닫았을 때 입력 표시가 남지 않게 함)
 const Duration kTypingIdleTimeout = Duration(seconds: 6);
 
-const String kAppName = 'IntraGram';
+const String kAppName = 'Intragram';
 
 // 방향별 HKDF info. 메시지·파일 × 양방향 네 키가 다 달라서 다른 방향·채널로 되돌려 보내도 안 열림
 const String kMessageKdfInfoLowToHigh = 'intragram/v2/message/low-to-high';

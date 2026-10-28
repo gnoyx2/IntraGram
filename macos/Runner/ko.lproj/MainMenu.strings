@@ -1,9 +1,9 @@
 /* 메뉴 막대 한국어. 키는 Base.lproj/MainMenu.xib의 객체 ID (ibtool --generate-strings-file로 뽑음) */
-"1Xt-HY-uBw.title" = "IntraGram";
+"1Xt-HY-uBw.title" = "Intragram";
 "4J7-dP-txa.title" = "전체 화면 시작";
-"4sb-4s-VLi.title" = "IntraGram 종료";
+"4sb-4s-VLi.title" = "Intragram 종료";
 "5QF-Oa-p0T.title" = "편집";
-"5kV-Vb-QxS.title" = "IntraGram에 관하여";
+"5kV-Vb-QxS.title" = "Intragram에 관하여";
 "6dh-zS-Vam.title" = "실행 복귀";
 "AYu-sK-qS6.title" = "주 메뉴";
 "BOF-NM-1cW.title" = "설정…";
@@ -13,8 +13,8 @@
 "LE2-aR-0XJ.title" = "모두 앞으로 가져오기";
 "NMo-om-nkz.title" = "서비스";
 "OY7-WF-poV.title" = "최소화";
-"Olw-nP-bQN.title" = "IntraGram 가리기";
-"QvC-M9-y7g.title" = "IntraGram";
+"Olw-nP-bQN.title" = "Intragram 가리기";
+"QvC-M9-y7g.title" = "Intragram";
 "R4o-n2-Eq4.title" = "확대/축소";
 "Ruw-6m-B2m.title" = "전체 선택";
 "Td7-aD-5lo.title" = "윈도우";
@@ -26,7 +26,7 @@
 "gVA-U4-sdL.title" = "붙여넣기";
 "hz9-B4-Xy5.title" = "서비스";
 "pa3-QI-u2k.title" = "삭제";
-"uQy-DD-JDr.title" = "IntraGram";
+"uQy-DD-JDr.title" = "Intragram";
 "uRl-iY-unG.title" = "오려두기";
 "x3v-GG-iWU.title" = "복사하기";
 "fL7-mE-2nU.title" = "파일";

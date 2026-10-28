@@ -48,7 +48,7 @@ void main() {
         mockPrivacyChannel([]);
         await tester.pumpWidget(
           h.wrap(
-            const IntraGramApp(),
+            const IntragramApp(),
             overrides: [
               vaultAccessProvider.overrideWith(_LockedAccess.new),
               notificationBridgeProvider.overrideWith((ref) {}),
@@ -126,7 +126,7 @@ void main() {
         addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
         await tester.pumpWidget(
           h.wrap(
-            const IntraGramApp(),
+            const IntragramApp(),
             overrides: [
               vaultAccessProvider.overrideWith(_LockedAccess.new),
               notificationBridgeProvider.overrideWith((ref) {}),

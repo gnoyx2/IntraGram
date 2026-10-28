@@ -1,6 +1,6 @@
 part of 'incoming_transfers.dart';
 
-// 파일 전송 제안을 수락함: 저장 경로를 확보하고 피어에게 알림. 데스크톱은 사용자가 폴더를 선택하고 모바일은 앱 문서 디렉터리 내 IntraGram/을 사용함
+// 파일 전송 제안을 수락함: 저장 경로를 확보하고 피어에게 알림. 데스크톱은 사용자가 폴더를 선택하고 모바일은 기존 앱 문서 디렉터리의 전용 폴더를 사용함
 Future<void> _acceptIncoming(IncomingTransfers self, String transferId) async {
   final transfer = self.store.transfer(transferId);
   if (transfer == null ||

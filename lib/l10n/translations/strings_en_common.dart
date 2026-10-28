@@ -3,7 +3,7 @@ const Map<String, String> kStringsEnCommon = {
   'sys.disconnected': 'Disconnected.',
   'sys.protocolVersionMismatch':
       "Peer uses an incompatible app version — can't connect securely. "
-      'Update IntraGram on both devices.',
+      'Update Intragram on both devices.',
   'sys.peerMismatch':
       'A different device answered at this address, so this chat was not '
       'reconnected. Find the person again on the home screen and connect '
@@ -13,11 +13,11 @@ const Map<String, String> kStringsEnCommon = {
       'closed. Try again, or connect by scanning its device code.',
   'sys.peerBlocked':
       "You blocked this device for this session. Device IDs change when "
-      'IntraGram restarts, so turn on Settings › Only chats I start to keep '
+      'Intragram restarts, so turn on Settings › Only chats I start to keep '
       'strangers out.',
   'sys.handshakeTimedOut':
       "The other device didn't finish the secure handshake in time. Check "
-      'that IntraGram is open there and try again.',
+      'that Intragram is open there and try again.',
   'sys.reconnect': 'Reconnect',
   'sys.reconnecting': 'Reconnecting…',
   'sys.encrypted': 'Encrypted. Tap the shield to check the 6-digit code.',
@@ -79,13 +79,13 @@ const Map<String, String> kStringsEnCommon = {
   'home.noChatOpenBody':
       'Pick a conversation or a device on this network from the list.',
   'home.lookingForDevices':
-      'Looking for IntraGram on this Wi-Fi…\n'
+      'Looking for Intragram on this Wi-Fi…\n'
       'Open the app on another device on the same network.',
   'home.localNetworkWhy':
-      'If asked, allow Local Network: IntraGram uses it only to find and '
+      'If asked, allow Local Network: Intragram uses it only to find and '
       'reach devices on this Wi-Fi.',
   'home.noDevicesFound':
-      "No other IntraGram found on this Wi-Fi yet.\n"
+      "No other Intragram found on this Wi-Fi yet.\n"
       "Connect by IP if you know the other device's address.",
   'home.noWifi': 'No Wi-Fi connection. Join a network to find nearby devices.',
   'home.discoveryError': 'Device search stopped unexpectedly. Try refreshing.',

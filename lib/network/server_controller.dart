@@ -94,7 +94,7 @@ class ServerController extends Notifier<ServerState> {
             FlutterErrorDetails(
               exception: error,
               stack: stack,
-              library: 'IntraGram network',
+              library: 'Intragram network',
               context: ErrorDescription('registering an inbound WebSocket'),
             ),
           );

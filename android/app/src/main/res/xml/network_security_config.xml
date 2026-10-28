@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- IntraGram은 RFC 1918·링크로컬 주소에만 평문 HTTP/WebSocket으로 붙음 (TLS면 기기마다 인증서가 필요해서
+<!-- Intragram은 RFC 1918·링크로컬 주소에만 평문 HTTP/WebSocket으로 붙음 (TLS면 기기마다 인증서가 필요해서
      설정 없는 LAN 페어링이 깨짐). 이 설정엔 CIDR·IP 범위 표현이 없어서(<domain>은 호스트 이름이나 IP 하나만 맞춤)
      lib/core/network_guard.dart처럼 RFC 1918만으로 좁힐 수가 없음. 그래서 예전 usesCleartextTraffic만큼 일부러
      넓게 두고, 진짜 경계는 Dart의 NetworkGuard.isLinkLocalOrPrivate가 소켓을 열기 전에 연결마다 지킴 -->

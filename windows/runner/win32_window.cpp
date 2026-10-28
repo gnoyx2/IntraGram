@@ -216,7 +216,7 @@ void Win32Window::ProtectContent(HWND const window) {
                           ? ERROR_SUCCESS
                           : GetLastError();
   if (error != ERROR_SUCCESS && error != last_error) {
-    std::fprintf(stderr, "IntraGram: capture exclusion failed (error %lu)\n",
+    std::fprintf(stderr, "Intragram: capture exclusion failed (error %lu)\n",
                  static_cast<unsigned long>(error));
   }
   last_error = error;

@@ -134,7 +134,7 @@ void main() {
       final service = NotificationService();
       await tester.pumpWidget(
         h.wrap(
-          const IntraGramApp(),
+          const IntragramApp(),
           overrides: [
             vaultAccessProvider.overrideWith(_LockedAccess.new),
             notificationServiceProvider.overrideWithValue(service),

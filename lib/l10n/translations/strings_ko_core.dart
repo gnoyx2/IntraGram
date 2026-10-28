@@ -1,12 +1,12 @@
 const Map<String, String> kStringsKoCore = {
   'sys.disconnected': '연결 끊김.',
   'sys.protocolVersionMismatch':
-      '상대 앱 버전이 달라 안전하게 연결할 수 없어요. 두 기기 모두 IntraGram을 업데이트하세요.',
+      '상대 앱 버전이 달라 안전하게 연결할 수 없어요. 두 기기 모두 Intragram을 업데이트하세요.',
   'sys.peerMismatch': '이 주소에서 다른 기기가 응답해서 대화를 다시 잇지 않았어요. 홈에서 상대를 다시 찾아 연결하세요.',
   'sys.handshakeFailed':
       '상대 기기가 신원을 증명하지 못해 연결을 끊었어요. 다시 시도하거나 상대 기기 코드를 스캔해 연결하세요.',
   'sys.handshakeTimedOut':
-      '상대 기기가 보안 연결을 제때 마치지 못했어요. 상대 쪽 IntraGram이 열려 있는지 확인하고 다시 시도하세요.',
+      '상대 기기가 보안 연결을 제때 마치지 못했어요. 상대 쪽 Intragram이 열려 있는지 확인하고 다시 시도하세요.',
   'sys.reconnect': '재연결',
   'sys.reconnecting': '재연결 중…',
   'sys.encrypted': '암호화됨. 방패를 눌러 6자리 코드를 확인하세요.',
@@ -59,10 +59,10 @@ const Map<String, String> kStringsKoCore = {
   'home.noChatOpenTitle': '열린 대화가 없어요',
   'home.noChatOpenBody': '목록에서 대화나 이 네트워크의 기기를 골라 주세요.',
   'home.lookingForDevices':
-      '이 Wi-Fi에서 IntraGram을 찾는 중…\n'
+      '이 Wi-Fi에서 Intragram을 찾는 중…\n'
       '같은 네트워크의 다른 기기에서 앱을 여세요.',
   'home.noDevicesFound':
-      '이 Wi-Fi에서 다른 IntraGram을 아직 못 찾았어요.\n'
+      '이 Wi-Fi에서 다른 Intragram을 아직 못 찾았어요.\n'
       '상대 기기 IP를 알면 직접 연결하세요.',
   'home.noWifi': 'Wi-Fi에 연결돼 있지 않아요. 네트워크에 연결하면 근처 기기를 찾을 수 있어요.',
   'home.discoveryError': '기기 검색이 예기치 않게 멈췄어요. 새로고침해 보세요.',
@@ -186,7 +186,7 @@ const Map<String, String> kStringsKoCore = {
   'wifiInfo.security': '보안',
   'wifiInfo.unavailable': '이 기기에서 네트워크 상세 정보를 못 읽음.',
   'wifiInfo.unavailableMobile':
-      'iOS와 Android는 Wi-Fi 상세 정보를 읽으려면 위치 권한이 필요한데, IntraGram은 '
+      'iOS와 Android는 Wi-Fi 상세 정보를 읽으려면 위치 권한이 필요한데, Intragram은 '
       '어떤 용도로도 위치를 쓰지 않아서 일부러 요청하지 않아요. 대신 위에 내 IP가 '
       '보이니 근처 기기의 IP 앞자리와 맞춰 보면 같은 네트워크인지 알 수 있어요.',
 

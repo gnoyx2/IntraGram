@@ -39,7 +39,7 @@ class IncomingPathResolver {
     _sessionSaveDir = null;
   }
 
-  // 데스크톱은 폴더 선택 창을 띄우고, 모바일은 앱 문서 디렉터리 내 IntraGram/을 사용함. 음성 수동 저장 기능에서도 호출함
+  // 데스크톱은 폴더 선택 창을 띄우고, 모바일은 기존 앱 문서 디렉터리 내 IntraGram/을 사용함. 음성 수동 저장 기능에서도 호출함
   static Future<String?> defaultChooseDirectory(String suggestedName) async {
     final mobileDir = await mobileSaveDir();
     if (mobileDir != null) return mobileDir;
@@ -54,7 +54,7 @@ class IncomingPathResolver {
     return picked;
   }
 
-  // 모바일 고정 저장 폴더 (데스크톱은 null)
+  // 기존에 받은 파일의 위치를 유지함. 모바일 고정 저장 폴더 (데스크톱은 null)
   static Future<String?> mobileSaveDir() async {
     if (!(Platform.isIOS || Platform.isAndroid)) return null;
     final docs = await getApplicationDocumentsDirectory();

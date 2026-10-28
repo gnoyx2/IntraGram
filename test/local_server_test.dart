@@ -78,7 +78,7 @@ void main() {
     final resp = await (await client.getUrl(url('/health'))).close();
     expect(resp.statusCode, 200);
     final body = jsonDecode(await resp.transform(utf8.decoder).join());
-    expect(body['app'], 'IntraGram');
+    expect(body['app'], 'Intragram');
     expect(body['alias'], 'srv-host-42');
   });
 
@@ -93,7 +93,7 @@ void main() {
     expect(resp.statusCode, 200);
     expect(resp.headers.contentType?.mimeType, 'text/html');
     final body = await resp.transform(utf8.decoder).join();
-    expect(body, contains('IntraGram'));
+    expect(body, contains('Intragram'));
     expect(body, contains('/ws'));
   });
 

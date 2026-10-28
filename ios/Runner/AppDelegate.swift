@@ -59,7 +59,7 @@ import UniformTypeIdentifiers
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-    let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "IntraGramScreenshot")
+    let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "IntragramScreenshot")
     if let messenger = registrar?.messenger() {
       screenshotChannel = FlutterMethodChannel(
         name: "intragram/screenshot",

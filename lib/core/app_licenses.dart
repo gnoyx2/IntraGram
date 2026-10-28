@@ -6,10 +6,10 @@ import 'package:flutter/services.dart';
 void registerAppLicenses() {
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(const [
-      'IntraGram',
+      'Intragram',
     ], await rootBundle.loadString('LICENSE'));
     yield LicenseEntryWithLineBreaks(const [
-      'IntraGram',
+      'Intragram',
       'LocalSend',
     ], await rootBundle.loadString('THIRD_PARTY_NOTICES.md'));
   });

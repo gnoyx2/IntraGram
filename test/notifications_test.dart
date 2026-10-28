@@ -93,7 +93,7 @@ void main() {
     expect(fake.calls, hasLength(1));
     // 발신자 alias도 메시지 본문도 절대 안 실림: 항상 이 제네릭 문구뿐
     expect(fake.calls.single.body, 'New message');
-    expect(fake.calls.single.title, 'IntraGram');
+    expect(fake.calls.single.title, 'Intragram');
     // Android 알림 설정 화면의 채널 이름도 앱 언어 문구
     expect(fake.channels.single, 'Messages');
   });

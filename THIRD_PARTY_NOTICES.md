@@ -1,13 +1,13 @@
 # Third-party notices
 
-IntraGram's own source is released under the MIT License (see `LICENSE`).
+Intragram's own source is released under the MIT License (see `LICENSE`).
 This file lists what it owes to other projects.
 
 ## LocalSend (Apache License 2.0)
 
 Copyright 2022-2026 Tien Do Nam. https://github.com/localsend/localsend
 
-Two small parts of IntraGram are adapted from LocalSend and changed:
+Two small parts of Intragram are adapted from LocalSend and changed:
 
 - `lib/core/file_kind.dart`: the file-type bucket and icon mapping, adapted from
   `packages/localsend_isolates/lib/util/file_path_helper.dart` (`guessFileType`)
@@ -17,7 +17,7 @@ Two small parts of IntraGram are adapted from LocalSend and changed:
   time-left calculation, adapted from
   `packages/localsend_isolates/lib/util/file_speed_helper.dart`
   (`getRemainingTime`). Changes: it takes a fractional byte rate, returns
-  strings localized through IntraGram's own `S`, and has seconds, minutes and
+  strings localized through Intragram's own `S`, and has seconds, minutes and
   hours tiers.
 
 `lib/core/native_open.dart` (open a received file, show it in the file
@@ -32,7 +32,7 @@ file, unmodified.
 
 The app links these packages (see `pubspec.lock` for exact versions). Their
 license texts are bundled in the app and shown under *Settings › App ›
-Open-source licenses*, next to IntraGram's own license and this file. Counts from the resolved package set
+Open-source licenses*, next to Intragram's own license and this file. Counts from the resolved package set
 (119 hosted packages): BSD-3-Clause 89, MIT 22, Apache-2.0 6, BSD-2-Clause 1
 (`timezone`), MPL-2.0 1 (`dbus`, used by the Linux build only). `flutter`,
 `flutter_localizations`, `flutter_test`, `flutter_web_plugins` and `sky_engine`
@@ -43,7 +43,7 @@ a list of packages shipped on every platform.
 from [the pub.dev source archive](https://pub.dev/api/archives/dbus-0.7.15.tar.gz)
 (SHA-256 `a48d5da28e89bd02196e80d81ed8d7954923d00a0f4a68cc20b575038f023383`).
 The [MPL-2.0 license](https://www.mozilla.org/en-US/MPL/2.0/) applies to those
-files; IntraGram's MIT license does not replace it. Keep this source-availability
+files; Intragram's MIT license does not replace it. Keep this source-availability
 notice when redistributing the Linux executable.
 
 ## Voice playback

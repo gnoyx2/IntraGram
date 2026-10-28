@@ -26,7 +26,7 @@
 iOS/macOS 디버그와 Windows·Linux 디버그), 태그 없는 `release`(`workflow_dispatch`,
 `release` 발행 job은 `skipped`)가 모두 성공했고 `SIGNING-*.txt`로
 정식 배포 서명이 아직 없음을 확인함. 분리 번들(`com.yonghun0310.intragram.qa`,
-`"IntraGram QA"`)로 수행한 macOS 27.0.1·iPhone SE(iOS 27.0.1) 부분 스모크 중 iOS
+`"Intragram QA"`)로 수행한 macOS 27.0.1·iPhone SE(iOS 27.0.1) 부분 스모크 중 iOS
 호스트의 브라우저 게스트 포털 접속 시 중복 mDNS 등록(`DNSServiceProcessResult`)으로 메인
 스레드가 멈추던 현상(`0x8BADF00D`)을 발견해 `7dc9a53`에서 수정·회귀 테스트를 추가하고
 분리 번들(`1.0.0+8`)을 재설치함. 헤드리스 Firefox 158 자동 점검과 분리 QA 번들 부분
@@ -43,7 +43,7 @@ iOS/macOS 디버그와 Windows·Linux 디버그), 태그 없는 `release`(`workf
   59초 안에 다른 앱에서 같은 글을 복사하면 61초 뒤에도 남는지, 연달아 두 번 복사하면
   두 번째 기준 60초인지 x64·ARM64에서 확인. 비활성/최소화 창 수신(새 메시지·파일 제안)은
   Toast 없이 작업 표시줄만 점멸, 포커스 복귀 시 중단. `flutter run` 콘솔에
-  `IntraGram: capture exclusion failed (error N)`이 나와도 앱은 계속 동작해야 함. 상·하·좌·우 배치, 125~200% DPI·모니터 이동·Snap 후
+  `Intragram: capture exclusion failed (error N)`이 나와도 앱은 계속 동작해야 함. 상·하·좌·우 배치, 125~200% DPI·모니터 이동·Snap 후
   캡처 제외를 실제 Recall/캡처 도구로 확인. OS 캡처 제외는 절대적 보안 경계가 아님.
 - GNOME 50 Wayland·Ubuntu·Pantheon·Budgie는 CSD, KDE Plasma 6·Sway·Hyprland·
   COSMIC·i3는 SSD/타일링 장식 확인. 포털 미설치·중단에도 시작과 접근성 변경이
@@ -209,7 +209,7 @@ iOS/macOS 디버그와 Windows·Linux 디버그), 태그 없는 `release`(`workf
   동작(포털 없으면 보내기·수락·음성 저장에서 "파일 대화상자를 열지 못함" 안내, parecord 없으면
   녹음 실패에 패키지 안내, avahi 없으면 탐색 오류에 데몬 안내), 파일 관리자 연동, mDNS와 방화벽,
   tar 해제 뒤 실행 권한. `./install.sh` 뒤 앱 메뉴에 아이콘과 함께 뜨고 실행되는지, 창·작업
-  표시줄 아이콘이 IntraGram 마크인지(GNOME·KDE, Wayland·X11), `--uninstall`로 빠지는지.
+  표시줄 아이콘이 Intragram 마크인지(GNOME·KDE, Wayland·X11), `--uninstall`로 빠지는지.
   한국어 데스크톱(`ko_KR.UTF-8`)에서도 Wi-Fi 정보 창에 연결된 네트워크가 뜨는지.
 - **QR 스캔(Android·iOS)**: 기기 코드·포털·보안 코드 QR을 밝은 곳·어두운 곳·화면 밝기 최저에서 30cm 안팎으로
   찍기, 화면 회전, 스캔 중 홈으로 나갔다 오기, 카메라 권한 거부 뒤 설정에서 켜고 돌아오기, 카메라 없는
@@ -220,7 +220,7 @@ iOS/macOS 디버그와 Windows·Linux 디버그), 태그 없는 `release`(`workf
   `adb logcat`), 포그라운드 서비스 알림, `adb shell dumpsys package <id>`에서
   백업 불가(`allowBackup=false`) 확인, 최근 앱 화면과 스크린샷이 가려지는지(FLAG_SECURE),
   16KB 페이지 기기(또는 에뮬레이터)에서 실행. Android 13~16 및 target SDK 36에서는 NEARBY_WIFI_DEVICES 권한 없이
-  mDNS 탐색이 되는지, 상태 표시줄·알림의 작은 아이콘이 흰 네모가 아니라 IntraGram 마크인지.
+  mDNS 탐색이 되는지, 상태 표시줄·알림의 작은 아이콘이 흰 네모가 아니라 Intragram 마크인지.
 - **iOS/iPadOS**: 로컬 네트워크 권한 거부 시 안내(연결 실패 안내와 점검표의 "설정
   열기"), 카메라 QR 스캔과 카메라 거부 화면, Files 앱에서 받은 파일 확인. iPad는 Split
   View·Stage Manager, 외장 키보드 단축키와 포인터, 가로(목록·대화 2단)와 세로·Split View
@@ -234,7 +234,7 @@ iOS/macOS 디버그와 Windows·Linux 디버그), 태그 없는 `release`(`workf
 - **Windows**: 배율 125%·150%·200% 화면에서 첫 실행 창이 작업 영역 안 가운데에 뜨는지(1080p@150%는
   창이 화면에 맞게 줄어듦), 새 Wi-Fi(공용)에서 점검표의 *설정 열기*가 네트워크 프로필 화면을 여는지,
   보관소·신원 파일이 `%LOCALAPPDATA%\IntraGram\IntraGram\IntraGram` 아래 생기고 예전
-  `%APPDATA%` 쪽 파일은 옮겨지는지, 방화벽 창의 프로그램 설명이 "IntraGram - local network messenger"인지.
+  `%APPDATA%` 쪽 파일은 옮겨지는지, 방화벽 창의 프로그램 설명이 "Intragram - local network messenger"인지.
   영어·한국어 Windows 각각에서 Wi-Fi 정보 창에 채널·모드·속도·신호·보안이 다 뜨는지(빈 칸이 있으면
   `netsh wlan show interfaces` 출력을 기록에 붙임), Windows 11 24H2 이상에서 위치 서비스를 끄면 위치
   권한 창 없이 "네트워크 상세 정보를 못 읽음"만 뜨는지.

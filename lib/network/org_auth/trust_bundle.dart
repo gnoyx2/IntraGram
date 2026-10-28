@@ -57,7 +57,7 @@ bool _sameBytes(List<int> a, List<int> b) {
 }
 
 const String kDemoIssuerId = 'intragram-demo-issuer';
-const String kDemoIssuerName = 'IntraGram Demo Issuer';
+const String kDemoIssuerName = 'Intragram Demo Issuer';
 const String kDemoPolicy = 'org-policy/2026-10';
 const String kDemoSnapshot = '2026-10-24';
 

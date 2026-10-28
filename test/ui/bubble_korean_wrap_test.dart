@@ -30,14 +30,14 @@ void main() {
       .firstWhere((t) => t.contains('\u2060'));
 
   testWidgets('Korean words are kept whole for line breaks', (tester) async {
-    await pump(tester, '7쪽 보낼게요 지난주에 IntraGram으로');
+    await pump(tester, '7쪽 보낼게요 지난주에 Intragram으로');
     expect(
       shown(tester),
       '7\u2060쪽 보\u2060낼\u2060게\u2060요 지\u2060난\u2060주\u2060에 '
-      'IntraGram\u2060으\u2060로',
+      'Intragram\u2060으\u2060로',
     );
     expect(
-      find.bySemanticsLabel(RegExp('7쪽 보낼게요 지난주에 IntraGram으로')),
+      find.bySemanticsLabel(RegExp('7쪽 보낼게요 지난주에 Intragram으로')),
       findsOneWidget,
     );
   });

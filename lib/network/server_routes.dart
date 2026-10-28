@@ -73,7 +73,7 @@ extension LocalServerRoutes on LocalServer {
             request.headers,
           );
         }
-        return Response.notFound('IntraGram: nothing here.');
+        return Response.notFound('Intragram: nothing here.');
     }
   }
 

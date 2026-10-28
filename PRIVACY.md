@@ -6,7 +6,7 @@ The same text is in the app under *Settings › App › Privacy policy*. 앱의 
 
 ### No server, no account
 
-IntraGram automatically sends no data to the developer or to a cloud service, and needs no sign-up, phone number or email address.
+Intragram automatically sends no data to the developer or to a cloud service, and needs no sign-up, phone number or email address.
 
 ### What stays on this device
 
@@ -30,17 +30,17 @@ Local network: to find and talk to nearby devices. Microphone: only while you re
 
 ### Third parties
 
-IntraGram sends no telemetry or automatic reports to third parties. Your connected peers and the recipients you choose for exported audit bundles receive the data described above. QR codes are read on the device by open-source code that has no network component.
+Intragram sends no telemetry or automatic reports to third parties. Your connected peers and the recipients you choose for exported audit bundles receive the data described above. QR codes are read on the device by open-source code that has no network component.
 
 ### Questions
 
-Open an issue on the project's GitHub page for general questions. See https://github.com/gnoyx2/IntraGram/security/policy for private security reporting instructions and current availability. GitHub's private reporting form must be enabled on a public repository before it can be used. Backup email jung@yonghun.pro is not yet available and cannot receive reports. Do not post vulnerability details in public issues.
+Open an issue on the project's GitHub page for general questions. See https://github.com/gnoyx2/Intragram/security/policy for private security reporting instructions and current availability. GitHub's private reporting form must be enabled on a public repository before it can be used. Backup email jung@yonghun.pro is not yet available and cannot receive reports. Do not post vulnerability details in public issues.
 
 ## 한국어
 
 ### 서버도 계정도 없음
 
-IntraGram은 개발자나 클라우드 서비스에 데이터를 자동으로 보내지 않고, 가입·전화번호·이메일이 필요 없어요.
+Intragram은 개발자나 클라우드 서비스에 데이터를 자동으로 보내지 않고, 가입·전화번호·이메일이 필요 없어요.
 
 ### 이 기기에 남는 것
 
@@ -64,10 +64,10 @@ macOS는 대화나 별칭을 Siri·Spotlight·NSUserActivity에 기부하지 않
 
 ### 제3자
 
-IntraGram은 제3자에게 원격 분석이나 자동 보고를 보내지 않아요. 연결한 피어와 사용자가 고른 감사 번들 수신자는 위에서 설명한 데이터를 받아요. QR 코드는 네트워크를 쓰지 않는 오픈소스 코드가 기기 안에서 읽어요.
+Intragram은 제3자에게 원격 분석이나 자동 보고를 보내지 않아요. 연결한 피어와 사용자가 고른 감사 번들 수신자는 위에서 설명한 데이터를 받아요. QR 코드는 네트워크를 쓰지 않는 오픈소스 코드가 기기 안에서 읽어요.
 
 ### 문의
 
-일반 문의는 프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제의 비공개 신고 절차와 사용 가능 여부는 https://github.com/gnoyx2/IntraGram/security/policy 페이지에서 확인해 주세요. GitHub 비공개 신고 폼은 공개 저장소에서 활성화해야 사용할 수 있어요. 보조 이메일 jung@yonghun.pro는 아직 수신할 수 없어 신고에 사용할 수 없어요. 취약점 세부 내용은 공개 이슈에 남기지 마세요.
+일반 문의는 프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제의 비공개 신고 절차와 사용 가능 여부는 https://github.com/gnoyx2/Intragram/security/policy 페이지에서 확인해 주세요. GitHub 비공개 신고 폼은 공개 저장소에서 활성화해야 사용할 수 있어요. 보조 이메일 jung@yonghun.pro는 아직 수신할 수 없어 신고에 사용할 수 없어요. 취약점 세부 내용은 공개 이슈에 남기지 마세요.
 
 Capture API scope: [Apple NSWindow sharing type](https://developer.apple.com/documentation/appkit/nswindow/sharingtype-swift.enum), [Microsoft SetWindowDisplayAffinity](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity).

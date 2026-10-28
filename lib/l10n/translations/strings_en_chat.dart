@@ -71,7 +71,7 @@ const Map<String, String> kStringsEnChat = {
 
   // 음성 녹음
   'voice.micPermission':
-      'Microphone access is off for IntraGram. Turn it on in Settings to '
+      'Microphone access is off for Intragram. Turn it on in Settings to '
       'record voice messages.',
   'voice.couldNotStart': 'Could not start recording. Try again.',
   'voice.couldNotStartLinux':
@@ -213,7 +213,7 @@ const Map<String, String> kStringsEnChat = {
   'manualConnect.body': "Use this when a device doesn't show up automatically.",
   'manualConnect.notIpv4': 'Enter a literal IPv4 address (e.g. 192.168.0.12)',
   'manualConnect.notPrivate':
-      "{host} isn't on your local network — IntraGram only connects to "
+      "{host} isn't on your local network — Intragram only connects to "
       'devices on the same Wi-Fi.',
   'manualConnect.badPort': 'Enter a port between 1 and 65535',
   'manualConnect.peerIpLabel': 'Peer IP',

@@ -1,6 +1,6 @@
 /* Info.plist 권한 설명을 한국어로 옮김 */
-"NSLocalNetworkUsageDescription" = "IntraGram은 메시지와 파일을 주고받기 위해 같은 로컬 Wi-Fi의 다른 기기와만 통신합니다. 인터넷으로는 아무것도 보내지 않습니다.";
-"NSCameraUsageDescription" = "IntraGram은 다른 기기의 연결 코드나 보안 코드를 스캔할 때만 카메라를 사용합니다. 사진을 찍거나 저장하지 않습니다.";
-"NSMicrophoneUsageDescription" = "IntraGram은 마이크 버튼을 누르고 있는 동안, 또는 버튼을 탭해 핸즈프리로 녹음을 켠 뒤 보내거나 취소할 때까지만 음성 메시지를 녹음합니다. 오디오는 상대에게 전송되고 메모리에만 보관되며, 디스크에 저장되지 않습니다.";
-"NSPhotoLibraryUsageDescription" = "IntraGram은 시스템 사진 선택기를 사용해 보내려고 고른 사진만 받습니다. 나머지 사진 보관함은 읽지 않습니다.";
-"NSPhotoLibraryAddUsageDescription" = "IntraGram은 공유 화면에서 '이미지 저장'을 고를 때만 사진을 보관함에 저장합니다. 보관함의 다른 사진은 읽지 않습니다.";
+"NSLocalNetworkUsageDescription" = "Intragram은 메시지와 파일을 주고받기 위해 같은 로컬 Wi-Fi의 다른 기기와만 통신합니다. 인터넷으로는 아무것도 보내지 않습니다.";
+"NSCameraUsageDescription" = "Intragram은 다른 기기의 연결 코드나 보안 코드를 스캔할 때만 카메라를 사용합니다. 사진을 찍거나 저장하지 않습니다.";
+"NSMicrophoneUsageDescription" = "Intragram은 마이크 버튼을 누르고 있는 동안, 또는 버튼을 탭해 핸즈프리로 녹음을 켠 뒤 보내거나 취소할 때까지만 음성 메시지를 녹음합니다. 오디오는 상대에게 전송되고 메모리에만 보관되며, 디스크에 저장되지 않습니다.";
+"NSPhotoLibraryUsageDescription" = "Intragram은 시스템 사진 선택기를 사용해 보내려고 고른 사진만 받습니다. 나머지 사진 보관함은 읽지 않습니다.";
+"NSPhotoLibraryAddUsageDescription" = "Intragram은 공유 화면에서 '이미지 저장'을 고를 때만 사진을 보관함에 저장합니다. 보관함의 다른 사진은 읽지 않습니다.";

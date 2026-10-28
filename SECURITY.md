@@ -4,7 +4,7 @@
 
 Use this repository's **Security › Report a vulnerability** form when it is
 available. The publication repository is
-[gnoyx2/IntraGram](https://github.com/gnoyx2/IntraGram/security/policy).
+[gnoyx2/Intragram](https://github.com/gnoyx2/Intragram/security/policy).
 GitHub private vulnerability reporting must be enabled on the public
 repository; this policy alone does not enable it.
 
@@ -29,7 +29,7 @@ for available security fixes.
 
 ## Independent review
 
-IntraGram has not had an independent security audit or a third-party
+Intragram has not had an independent security audit or a third-party
 penetration test. Every fix has a regression test, but tests are not an audit.
 Do not rely on it where a failure would put someone in danger.
 

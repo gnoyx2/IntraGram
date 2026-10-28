@@ -67,7 +67,7 @@ const Map<String, String> kStringsKoChat = {
   'transfer.voiceCancelled': '음성 메시지 취소됨',
   'transfer.voiceReceiving': '음성 메시지 받는 중…',
 
-  'voice.micPermission': 'IntraGram의 마이크 접근이 꺼져 있어요. 음성 메시지를 녹음하려면 설정에서 켜 주세요.',
+  'voice.micPermission': 'Intragram의 마이크 접근이 꺼져 있어요. 음성 메시지를 녹음하려면 설정에서 켜 주세요.',
   'voice.couldNotStart': '녹음을 시작하지 못했어요. 다시 시도해 주세요.',
   'voice.stopFailed': '녹음을 저장하지 못했어요.',
   'voice.tooLong': '음성 메시지가 너무 길어요',

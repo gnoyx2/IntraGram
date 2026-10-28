@@ -19,7 +19,7 @@ SnackBar connectFailureSnackBar(S s, PeerUnreachableReason reason) {
     PeerUnreachableReason.noAnswer => 'connect.noAnswer',
     PeerUnreachableReason.refused => 'connect.refused',
     PeerUnreachableReason.noRoute => 'connect.noRoute',
-    PeerUnreachableReason.notIntraGram => 'connect.notIntraGram',
+    PeerUnreachableReason.notIntragram => 'connect.notIntragram',
   });
   return SnackBar(
     content: Text(

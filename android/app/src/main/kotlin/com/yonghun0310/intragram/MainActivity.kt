@@ -29,7 +29,7 @@ import io.flutter.plugin.common.MethodChannel
 // FLAG_SECURE는 늘 켬 (최근 앱 썸네일·스크린샷·화면 녹화에 대화가 안 남게, 끄는 설정 없음). 최근 앱 스냅샷 끄기(API 33+)도 따로 켬
 class MainActivity : FlutterActivity() {
     private companion object {
-        const val SENSITIVE_CLIP_LABEL = "IntraGram"
+        const val SENSITIVE_CLIP_LABEL = "Intragram"
         const val LOCAL_NETWORK_PERMISSION = "android.permission.ACCESS_LOCAL_NETWORK"
         const val LOCAL_NETWORK_REQUEST = 37017
     }

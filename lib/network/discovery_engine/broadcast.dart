@@ -49,7 +49,7 @@ extension _DiscoveryBroadcast on DiscoveryController {
   }
 
   BonsoirService _serviceFromSpec(_BroadcastSpec spec) => BonsoirService(
-    name: 'IntraGram ${spec.alias}',
+    name: 'Intragram ${spec.alias}',
     type: kServiceType,
     port: spec.port,
     attributes: <String, String>{

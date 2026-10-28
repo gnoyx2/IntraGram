@@ -1,7 +1,7 @@
 part of 'app.dart';
 
 // 앱 글자 배율과 네이티브 접근성 변경을 테마·MediaQuery에 함께 반영함.
-mixin _AppAccessibility on ConsumerState<IntraGramApp> {
+mixin _AppAccessibility on ConsumerState<IntragramApp> {
   bool get _reduceTransparency => OsPrivacy.reduceTransparency.value;
 
   void _watchAccessibility() {

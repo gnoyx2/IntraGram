@@ -53,7 +53,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
       static_cast<unsigned int>(
           std::max(0, static_cast<int>(work_area.top / scale) +
                           (area_height - height) / 2)));
-  if (!window.Create(L"IntraGram", origin, size)) {
+  if (!window.Create(L"Intragram", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

@@ -1,4 +1,6 @@
-# Contributing to IntraGram
+# Contributing to Intragram
+
+Use **Intragram** as the official project and app display name. Keep established lowercase `intragram` package and protocol identifiers unchanged.
 
 Thanks for helping. The short version of the rules is in the README's
 *Contributing* section; this file adds how to get set up and what a pull

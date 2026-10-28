@@ -3,7 +3,7 @@ const Map<String, String> kStringsEnPrivacy = {
   'privacy.title': "Privacy policy",
   'privacy.noServerTitle': "No server, no account",
   'privacy.noServerBody':
-      "IntraGram automatically sends no data to the developer or to a cloud "
+      "Intragram automatically sends no data to the developer or to a cloud "
       "service, and needs no sign-up, phone number or email address.",
   'privacy.onDeviceTitle': "What stays on this device",
   'privacy.onDeviceBody':
@@ -79,14 +79,14 @@ const Map<String, String> kStringsEnPrivacy = {
       "the app is in the background. Photos: only the ones you pick.",
   'privacy.thirdPartyTitle': "Third parties",
   'privacy.thirdPartyBody':
-      "IntraGram sends no telemetry or automatic reports to third parties. Your "
+      "Intragram sends no telemetry or automatic reports to third parties. Your "
       "connected peers and the recipients you choose for exported audit bundles "
       "receive the data described above. QR codes are read on the device by "
       "open-source code that has no network component.",
   'privacy.contactTitle': "Questions",
   'privacy.contactBody':
       "Open an issue on the project's GitHub page for general questions. "
-      "See https://github.com/gnoyx2/IntraGram/security/policy for private "
+      "See https://github.com/gnoyx2/Intragram/security/policy for private "
       "security reporting instructions and current availability. GitHub's "
       "private reporting form must be enabled on a public repository before "
       "it can be used. Backup email jung@yonghun.pro is not yet available "

@@ -14,7 +14,7 @@ BonsoirService _service({
   Map<String, String> attributes = const {},
   int port = 7890,
 }) => BonsoirService.ignoreNorms(
-  name: 'IntraGram test',
+  name: 'Intragram test',
   type: kServiceType,
   port: port,
   hostAddresses: hostAddresses,
@@ -194,7 +194,7 @@ void main() {
           async.elapse(const Duration(milliseconds: 200));
           expect(maxActive, 1);
           expect(started, hasLength(3));
-          expect(started.last.name, 'IntraGram bright-lynx-8');
+          expect(started.last.name, 'Intragram bright-lynx-8');
 
           unawaited(notifier.stop());
           async.elapse(const Duration(milliseconds: 200));

@@ -1,6 +1,8 @@
 <div align="center">
 
-# IntraGram
+# Intragram
+
+The official project and app name is **Intragram**: a capital **I**, followed by lowercase **ntragram**.
 
 Peer-to-peer messenger for devices on the same network.<br>
 No server, no account. Chats stay in memory unless you choose to keep them.
@@ -8,10 +10,10 @@ No server, no account. Chats stay in memory unless you choose to keep them.
 같은 네트워크 안의 기기끼리 쓰는 P2P 메신저.<br>
 서버도 계정도 없고, 대화는 따로 보관하지 않는 한 메모리에만 남습니다.
 
-[![ci](https://github.com/gnoyx2/IntraGram/actions/workflows/ci.yml/badge.svg)](https://github.com/gnoyx2/IntraGram/actions/workflows/ci.yml)
+[![ci](https://github.com/gnoyx2/Intragram/actions/workflows/ci.yml/badge.svg)](https://github.com/gnoyx2/Intragram/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**[Downloads / 다운로드](https://github.com/gnoyx2/IntraGram/releases)** · [Install](#install) · [설치 안내](#설치)
+**[Downloads / 다운로드](https://github.com/gnoyx2/Intragram/releases)** · [Install](#install) · [설치 안내](#설치)
 
 [English](#english) · [한국어](#한국어)
 
@@ -21,15 +23,15 @@ No server, no account. Chats stay in memory unless you choose to keep them.
 
 ## English
 
-IntraGram is a messenger for phones, tablets and computers on the same Wi-Fi or LAN. The apps find each other with mDNS and connect directly, so there is no server, no sign-up and no phone number. Every socket the app opens has to go to a private address, and anything else is refused. Chats are kept in memory and reach the disk only if you turn on the local vault. People who don't have the app can join from a browser by scanning a QR code.
+Intragram is a messenger for phones, tablets and computers on the same Wi-Fi or LAN. The apps find each other with mDNS and connect directly, so there is no server, no sign-up and no phone number. Every socket the app opens has to go to a private address, and anything else is refused. Chats are kept in memory and reach the disk only if you turn on the local vault. People who don't have the app can join from a browser by scanning a QR code.
 
-The name is *intranet* plus *-gram*. IntraGram is not affiliated with Instagram, Telegram or Meta.
+The name is *intranet* plus *-gram*. Intragram is not affiliated with Instagram, Telegram or Meta.
 
-[Status](#status) · [Features](#features) · [Why IntraGram](#why-intragram) · [Install](#install) · [Troubleshooting](#troubleshooting) · [Build from source](#build-from-source) · [How it works](#how-it-works) · [Project structure](#project-structure) · [Development and CI](#development-and-ci) · [Security model](#security-model) · [Contributing](#contributing) · [Credits](#credits) · [License](#license)
+[Status](#status) · [Features](#features) · [Why Intragram](#why-intragram) · [Install](#install) · [Troubleshooting](#troubleshooting) · [Build from source](#build-from-source) · [How it works](#how-it-works) · [Project structure](#project-structure) · [Development and CI](#development-and-ci) · [Security model](#security-model) · [Contributing](#contributing) · [Credits](#credits) · [License](#license)
 
 ### Status
 
-IntraGram is a release candidate (app 1.0.0, wire protocol 7). It builds for six platforms and includes a browser client, but no platform has passed the real-device checks in [DEVICE_QA.md](DEVICE_QA.md) yet, and the code has not had an independent security audit. Don't rely on it where a failure could put someone at risk.
+Intragram is a release candidate (app 1.0.0, wire protocol 7). It builds for six platforms and includes a browser client, but no platform has passed the real-device checks in [DEVICE_QA.md](DEVICE_QA.md) yet, and the code has not had an independent security audit. Don't rely on it where a failure could put someone at risk.
 
 | Platform | Minimum version | Release build | Signing | Device QA |
 | :--- | :--- | :--- | :--- | :--- |
@@ -63,19 +65,19 @@ Bug reports and questions go to Issues. Include your OS and device, the app vers
 
 #### Known limits
 
-- iOS suspends an app a few seconds after you leave it, so an iPhone or iPad stays connected only while IntraGram is open. Open it again and the other side can reconnect.
+- iOS suspends an app a few seconds after you leave it, so an iPhone or iPad stays connected only while Intragram is open. Open it again and the other side can reconnect.
 - Device IDs change at every launch, so a block lasts until one of you restarts the app. *Settings › Only chats I start* refuses chats and room invites from devices you haven't talked to since launch.
 - Guest networks and many office, school and café networks stop devices from seeing each other. A phone hotspot works.
 - All devices have to reach each other on one network. There is no mesh and no relay over the internet.
 - A browser guest can send text and files, add a thumbs-up, use the burn timer and play voice messages, but it can't quote-reply. Its files go only to the host, and a file it downloads is held in browser memory until it is saved, so a very large file can fail on a phone.
-- Received files go to the folder you pick on the first accept (desktop), to *Files › On My iPhone › IntraGram* (iPhone, iPad), or to the app's private folder (Android, where *Share or save* on the file moves it elsewhere).
+- Received files go to the folder you pick on the first accept (desktop), to *Files › On My iPhone › Intragram* (iPhone, iPad), or to the app's private folder (Android, where *Share or save* on the file moves it elsewhere).
 - The iOS photo picker sends photos only, up to 10 at a time and 50 MiB in total. Send videos from the Files app.
 
-### Why IntraGram
+### Why Intragram
 
-A message to a colleague two meters away usually goes through a data center somewhere else and stays there. [LocalSend](https://github.com/localsend/localsend) solved this for files: same Wi-Fi, no cloud, no account. It sends files and one-off texts, though, not conversations. IntraGram takes the same idea to chat. It does not talk to LocalSend apps, since discovery and protocol are different.
+A message to a colleague two meters away usually goes through a data center somewhere else and stays there. [LocalSend](https://github.com/localsend/localsend) solved this for files: same Wi-Fi, no cloud, no account. It sends files and one-off texts, though, not conversations. Intragram takes the same idea to chat. It does not talk to LocalSend apps, since discovery and protocol are different.
 
-| | AirDrop | Telegram | LocalSend | IntraGram |
+| | AirDrop | Telegram | LocalSend | Intragram |
 | :--- | :--- | :--- | :--- | :--- |
 | Works without internet | yes | no | yes | yes |
 | Needs an account or phone number | no | yes | no | no |
@@ -84,42 +86,42 @@ A message to a colleague two meters away usually goes through a data center some
 | What stays behind | received files | cloud chats on its servers (secret chats aside) | received files | files you accept; chats only with the vault on |
 | Platforms | Apple devices (Pixel 10 through Quick Share) | all | all | iOS, iPadOS, Android, macOS, Windows, Linux, browser |
 
-[Briar](https://briarproject.org/) and Bitchat also chat without servers or accounts, over Bluetooth, Wi-Fi or Tor, and Quick Share moves files between nearby Android and Windows devices. IntraGram needs a shared LAN or hotspot and has no mesh relay. In exchange it runs on every major OS, and anyone with a browser can join the host's portal room from a QR code.
+[Briar](https://briarproject.org/) and Bitchat also chat without servers or accounts, over Bluetooth, Wi-Fi or Tor, and Quick Share moves files between nearby Android and Windows devices. Intragram needs a shared LAN or hotspot and has no mesh relay. In exchange it runs on every major OS, and anyone with a browser can join the host's portal room from a QR code.
 
 It fits places where the internet is blocked, slow or unwanted: an internal network with no outside access, a factory floor, a ship or test site, a classroom or lab full of mixed laptops and phones, or a meeting where a few people need a room for an hour without trading phone numbers.
 
 ### Install
 
-**[Open Downloads (GitHub Releases)](https://github.com/gnoyx2/IntraGram/releases)**, select a version and expand **Assets**. [v1.0.0-rc.1](https://github.com/gnoyx2/IntraGram/releases/tag/v1.0.0-rc.1) is available as a **testing pre-release**. Automated tests and artifact verification passed, but **real-device QA has not been completed on any platform**. Store and TestFlight links will be added when available.
+**[Open Downloads (GitHub Releases)](https://github.com/gnoyx2/Intragram/releases)**, select a version and expand **Assets**. [v1.0.0-rc.1](https://github.com/gnoyx2/Intragram/releases/tag/v1.0.0-rc.1) is available as a **testing pre-release**. Automated tests and artifact verification passed, but **real-device QA has not been completed on any platform**. Store and TestFlight links will be added when available.
 
 | Device | File to download from Assets | Installation |
 | :--- | :--- | :--- |
-| Android | [intragram-android.apk](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-android.apk) | One APK for supported ARM and x64 devices. Open it on the phone and allow installation from that browser or file manager if prompted. |
-| iPhone, iPad | [intragram-ios-unsigned.ipa](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-ios-unsigned.ipa) | Advanced users only: requires re-signing with an Apple provisioning profile. It cannot be installed by tapping the download. Use TestFlight or the App Store when available. |
-| macOS | [intragram-macos.dmg](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-macos.dmg) (or [intragram-macos.zip](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-macos.zip)) | Open the disk image or extract the ZIP, then copy `IntraGram.app` to Applications. |
-| Windows x64 | [intragram-windows-x64.zip](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-windows-x64.zip) | Extract the entire folder, then run `intragram.exe`. Keep its DLLs and `data` folder together. |
-| Linux x64 | [intragram-linux-x64.tar.gz](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-linux-x64.tar.gz) | Extract it, then run `./intragram`; `./install.sh` adds a launcher. |
+| Android | [intragram-android.apk](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-android.apk) | One APK for supported ARM and x64 devices. Open it on the phone and allow installation from that browser or file manager if prompted. |
+| iPhone, iPad | [intragram-ios-unsigned.ipa](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-ios-unsigned.ipa) | Advanced users only: requires re-signing with an Apple provisioning profile. It cannot be installed by tapping the download. Use TestFlight or the App Store when available. |
+| macOS | [intragram-macos.dmg](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-macos.dmg) (or [intragram-macos.zip](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-macos.zip)) | Open the disk image or extract the ZIP, then copy the `.app` bundle to Applications. |
+| Windows x64 | [intragram-windows-x64.zip](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-windows-x64.zip) | Extract the entire folder, then run `intragram.exe`. Keep its DLLs and `data` folder together. |
+| Linux x64 | [intragram-linux-x64.tar.gz](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-linux-x64.tar.gz) | Extract it, then run `./intragram`; `./install.sh` adds a launcher. |
 
 GitHub's **Source code (zip/tar.gz)** files are source code, not installed apps. `intragram.aab` is for Google Play submission, not direct installation. Android APK/AAB files are included only when CI has the project's release signing key; debug-signed test APKs are never published.
 
-Version tags create a **draft** release. Downloads become public only after the maintainer publishes it; early releases remain marked **Pre-release** until device QA passes. Each release includes `SHA256SUMS.txt` and a `SIGNING-<platform>.txt` per platform that records how each file was signed. Check a download with `shasum -a 256 -c --ignore-missing SHA256SUMS.txt` on macOS, `sha256sum -c --ignore-missing SHA256SUMS.txt` on Linux, or `Get-FileHash <file> -Algorithm SHA256` in PowerShell. The checksums only catch a broken download. `gh attestation verify <file> --repo gnoyx2/IntraGram` checks that the release workflow built the file.
+Version tags create a **draft** release. Downloads become public only after the maintainer publishes it; early releases remain marked **Pre-release** until device QA passes. Each release includes `SHA256SUMS.txt` and a `SIGNING-<platform>.txt` per platform that records how each file was signed. Check a download with `shasum -a 256 -c --ignore-missing SHA256SUMS.txt` on macOS, `sha256sum -c --ignore-missing SHA256SUMS.txt` on Linux, or `Get-FileHash <file> -Algorithm SHA256` in PowerShell. The checksums only catch a broken download. `gh attestation verify <file> --repo gnoyx2/Intragram` checks that the release workflow built the file.
 
-IntraGram only listens on and connects to private addresses, so allow firewall prompts for private networks only.
+Intragram only listens on and connects to private addresses, so allow firewall prompts for private networks only.
 
 - **macOS**: ad-hoc signed and not notarized, so Gatekeeper blocks the first launch. On macOS 15 and later, open the app once, then click *Open Anyway* in *System Settings › Privacy & Security*. On macOS 12 to 14, right-click the app and choose *Open*. Allow the Local Network prompt.
-- **Windows**: unzip the whole folder and run `intragram.exe`. SmartScreen warns about an unsigned app (*More info*, then *Run anyway*). With Smart App Control turned on, Windows blocks unsigned apps without an exception, so IntraGram won't run on that PC until it is signed.
+- **Windows**: unzip the whole folder and run `intragram.exe`. SmartScreen warns about an unsigned app (*More info*, then *Run anyway*). With Smart App Control turned on, Windows blocks unsigned apps without an exception, so Intragram won't run on that PC until it is signed.
 - **Linux**: extract the archive and run `./intragram`. `./install.sh` adds it to the app menu with its icon (`./install.sh --uninstall` removes it; run it again if you move the folder). It needs `libgtk-3`, `avahi-daemon` for discovery, `xdg-desktop-portal` with a GTK, GNOME or KDE backend for file dialogs, PulseAudio tools (`parecord`, `pacat`) or PipeWire tools (`pw-record`, `pw-play`) for voice, and `xdg-utils` to open received files. Package names differ between distributions.
 - **iOS, iPadOS**: the downloadable unsigned `.ipa` is not an App Store submission build. Building and distributing a signed IPA requires the appropriate Apple team and provisioning; see [RELEASING.md](RELEASING.md#4-ios-and-macos).
 - **Android**: install updates over the existing app using an APK signed by the same release key. Keep a copy of any data you need before removing an existing test installation.
 
-The vault (`vault.json`) and a remembered display name (`identity.json`) live in the app's Application Support/IntraGram folder, apart from received files. On iOS the app asks for backup exclusion and complete file protection for that folder. macOS backups can include the vault. Android's OS backup and device transfer of app data are turned off. [PRIVACY.md](PRIVACY.md) lists everything the app keeps and sends.
+The vault (`vault.json`) and a remembered display name (`identity.json`) live in the app's Application Support/IntraGram folder, apart from received files. The legacy folder spelling is retained so existing data remains accessible after the display-name change. On iOS the app asks for backup exclusion and complete file protection for that folder. macOS backups can include the vault. Android's OS backup and device transfer of app data are turned off. [PRIVACY.md](PRIVACY.md) lists everything the app keeps and sends.
 
 ### Troubleshooting
 
 - **The other device doesn't show up.** Both devices have to be on the same Wi-Fi. Guest networks and most office, school and café Wi-Fi keep devices apart (AP isolation), so turn on a phone hotspot and join it with both. You can also use *Connect by IP* with the address on the other device's home screen, or scan its device code.
-- **"This Wi-Fi can't be used for IntraGram".** The network gave the device a public or carrier (`100.64.x.x`) address, and IntraGram only talks over private addresses. Use a phone hotspot.
-- **An iPhone, iPad or Mac finds nothing.** Turn on Local Network access for IntraGram: *Settings › IntraGram* on iOS and iPadOS, *System Settings › Privacy & Security › Local Network* on macOS.
-- **Windows or Linux finds nothing, or nobody can connect to it.** Allow IntraGram through Windows Firewall on private networks and check that the Wi-Fi is set to a private network. On Linux, open the port shown on the home screen in `ufw` or `firewalld`.
+- **"This Wi-Fi can't be used for Intragram".** The network gave the device a public or carrier (`100.64.x.x`) address, and Intragram only talks over private addresses. Use a phone hotspot.
+- **An iPhone, iPad or Mac finds nothing.** Turn on Local Network access for Intragram: *Settings › Intragram* on iOS and iPadOS, *System Settings › Privacy & Security › Local Network* on macOS.
+- **Windows or Linux finds nothing, or nobody can connect to it.** Allow Intragram through Windows Firewall on private networks and check that the Wi-Fi is set to a private network. On Linux, open the port shown on the home screen in `ufw` or `firewalld`.
 - **A VPN is on.** Many VPN apps send local traffic into the tunnel or block it. Turn on the VPN's local network option, or turn the VPN off while chatting.
 - **The browser page says the entry code is missing or the portal is off.** Open the full address from *Guest portal* (it ends in `#t=...`) or scan the QR code again. Reloading in the same tab keeps you in, but turning the portal off, or on again, makes a new code and sends every guest back to the QR code.
 - **Microphone or camera access was denied.** Tap *Open Settings* in the app's notice, or allow it in the system settings.
@@ -136,7 +138,7 @@ You need:
 
 ```bash
 flutter pub get --enforce-lockfile
-flutter run     # pick a device, then start IntraGram on a second device on the same Wi-Fi
+flutter run     # pick a device, then start Intragram on a second device on the same Wi-Fi
 ```
 
 | OS | Release build | Output |
@@ -309,7 +311,7 @@ Signing material never goes in the repository. [CONTRIBUTING.md](CONTRIBUTING.md
 
 ### Credits
 
-Thanks to [LocalSend](https://github.com/localsend/localsend). The "same Wi-Fi, no cloud, no account" idea behind IntraGram came from using it. Two small parts are modified from its Apache-2.0 source: the file-type and icon mapping (`lib/core/file_kind.dart`) and the time-left calculation (`_formatEta` in `lib/features/chat/transfer_tile/received_actions.dart`). The open-file and show-in-folder flow (`lib/core/native_open.dart`) only borrows the idea and is written independently. If all you need is a good cross-platform file sender, use LocalSend.
+Thanks to [LocalSend](https://github.com/localsend/localsend). The "same Wi-Fi, no cloud, no account" idea behind Intragram came from using it. Two small parts are modified from its Apache-2.0 source: the file-type and icon mapping (`lib/core/file_kind.dart`) and the time-left calculation (`_formatEta` in `lib/features/chat/transfer_tile/received_actions.dart`). The open-file and show-in-folder flow (`lib/core/native_open.dart`) only borrows the idea and is written independently. If all you need is a good cross-platform file sender, use LocalSend.
 
 ### License
 
@@ -319,9 +321,11 @@ MIT, see [LICENSE](LICENSE). The two files modified from LocalSend also carry th
 
 ## 한국어
 
-IntraGram은 같은 Wi-Fi나 LAN에 있는 폰, 태블릿, 컴퓨터끼리 쓰는 메신저입니다. 앱끼리 mDNS로 서로를 찾아 직접 연결하므로 서버도, 가입도, 전화번호도 필요 없습니다. 앱이 여는 소켓은 모두 사설 주소로만 가야 하고, 그 밖의 주소는 거부합니다. 대화는 메모리에 두며, 로컬 보관소를 켰을 때만 디스크에 저장합니다. 앱이 없는 사람도 QR 코드를 찍어 브라우저로 들어올 수 있습니다.
+프로젝트와 앱의 공식 이름은 **Intragram**입니다. 첫 글자 **I**만 대문자로 표기합니다.
 
-이름은 *intranet*과 *-gram*을 합친 것입니다. IntraGram은 Instagram, Telegram, Meta와 관계가 없습니다.
+Intragram은 같은 Wi-Fi나 LAN에 있는 폰, 태블릿, 컴퓨터끼리 쓰는 메신저입니다. 앱끼리 mDNS로 서로를 찾아 직접 연결하므로 서버도, 가입도, 전화번호도 필요 없습니다. 앱이 여는 소켓은 모두 사설 주소로만 가야 하고, 그 밖의 주소는 거부합니다. 대화는 메모리에 두며, 로컬 보관소를 켰을 때만 디스크에 저장합니다. 앱이 없는 사람도 QR 코드를 찍어 브라우저로 들어올 수 있습니다.
+
+이름은 *intranet*과 *-gram*을 합친 것입니다. Intragram은 Instagram, Telegram, Meta와 관계가 없습니다.
 
 [현재 상태](#현재-상태) · [기능](#기능) · [왜 만들었나](#왜-만들었나) · [설치](#설치) · [문제 해결](#문제-해결) · [소스에서 빌드](#소스에서-빌드) · [동작 방식](#동작-방식) · [프로젝트 구조](#프로젝트-구조) · [개발과 CI](#개발과-ci) · [보안 모델](#보안-모델) · [기여](#기여) · [감사의 말](#감사의-말) · [라이선스](#라이선스)
 
@@ -361,19 +365,19 @@ CI는 push마다 테스트와 Android 디버그 빌드를 돌리고, 네이티�
 
 #### 알려진 한계
 
-- iOS는 앱에서 나가면 몇 초 뒤 앱을 멈춥니다. 그래서 iPhone과 iPad는 IntraGram을 열어 둔 동안만 연결되고, 다시 열면 상대가 다시 연결할 수 있습니다.
+- iOS는 앱에서 나가면 몇 초 뒤 앱을 멈춥니다. 그래서 iPhone과 iPad는 Intragram을 열어 둔 동안만 연결되고, 다시 열면 상대가 다시 연결할 수 있습니다.
 - 기기 ID는 실행할 때마다 바뀌어서, 차단은 둘 중 한쪽이 앱을 다시 켤 때까지만 유지됩니다. *설정 › 내가 연 대화만 받기*를 켜면 이번 실행에서 대화한 적 없는 기기의 대화 요청과 방 초대를 거절합니다.
 - 게스트 Wi-Fi와 많은 회사·학교·카페 Wi-Fi는 기기끼리 서로 보지 못하게 막습니다. 폰 핫스팟을 쓰면 됩니다.
 - 모든 기기가 한 네트워크 안에서 서로 닿아야 합니다. 메시 중계도, 인터넷을 거치는 중계도 없습니다.
 - 브라우저 게스트는 텍스트와 파일을 보내고, 좋아요 반응을 달고, 소각 타이머를 쓰고, 음성 메시지를 들을 수 있지만 인용 답장은 못 합니다. 게스트가 보낸 파일은 호스트에게만 갑니다. 게스트가 받는 파일은 저장하기 전까지 브라우저 메모리에 통째로 올라가므로 아주 큰 파일은 폰에서 실패할 수 있습니다.
-- 받은 파일은 데스크톱에서는 처음 수락할 때 고른 폴더, iPhone과 iPad에서는 *파일 › 나의 iPhone › IntraGram*, Android에서는 앱 전용 폴더에 저장됩니다. Android에서는 파일의 *공유·저장*으로 다른 곳에 옮기세요.
+- 받은 파일은 데스크톱에서는 처음 수락할 때 고른 폴더, iPhone과 iPad에서는 *파일 › 나의 iPhone › Intragram*, Android에서는 앱 전용 폴더에 저장됩니다. Android에서는 파일의 *공유·저장*으로 다른 곳에 옮기세요.
 - iOS 사진 선택기는 사진만 보냅니다. 한 번에 10장, 합계 50 MiB까지이고, 동영상은 파일 앱에서 보내면 됩니다.
 
 ### 왜 만들었나
 
-2미터 옆에 앉은 동료에게 보낸 메시지도 보통은 먼 데이터센터를 거쳐 가고, 거기 남습니다. [LocalSend](https://github.com/localsend/localsend)는 같은 Wi-Fi 안에서 클라우드와 계정 없이 파일을 주고받게 해서 파일 전송에서는 이 문제를 풀었습니다. 다만 LocalSend가 다루는 건 파일과 한 번짜리 텍스트이고 대화는 아닙니다. IntraGram은 같은 생각을 대화로 옮긴 것입니다. 기기 탐색과 프로토콜이 달라서 LocalSend 앱과는 통신하지 않습니다.
+2미터 옆에 앉은 동료에게 보낸 메시지도 보통은 먼 데이터센터를 거쳐 가고, 거기 남습니다. [LocalSend](https://github.com/localsend/localsend)는 같은 Wi-Fi 안에서 클라우드와 계정 없이 파일을 주고받게 해서 파일 전송에서는 이 문제를 풀었습니다. 다만 LocalSend가 다루는 건 파일과 한 번짜리 텍스트이고 대화는 아닙니다. Intragram은 같은 생각을 대화로 옮긴 것입니다. 기기 탐색과 프로토콜이 달라서 LocalSend 앱과는 통신하지 않습니다.
 
-| | AirDrop | Telegram | LocalSend | IntraGram |
+| | AirDrop | Telegram | LocalSend | Intragram |
 | :--- | :--- | :--- | :--- | :--- |
 | 인터넷 없이 동작 | 예 | 아니오 | 예 | 예 |
 | 계정·전화번호 필요 | 아니오 | 예 | 아니오 | 아니오 |
@@ -382,27 +386,27 @@ CI는 push마다 테스트와 Android 디버그 빌드를 돌리고, 네이티�
 | 남는 기록 | 받은 파일 | 클라우드 대화는 서버에 남음(비밀 대화 제외) | 받은 파일 | 수락한 파일. 대화는 보관소를 켰을 때만 |
 | 플랫폼 | Apple 기기(Pixel 10은 Quick Share로) | 전체 | 전체 | iOS, iPadOS, Android, macOS, Windows, Linux, 브라우저 |
 
-[Briar](https://briarproject.org/)와 Bitchat도 서버나 계정 없이 블루투스, Wi-Fi, Tor로 대화하고, Quick Share는 가까운 Android·Windows 기기끼리 파일을 옮깁니다. IntraGram은 같은 LAN이나 핫스팟이 있어야 하고 메시 중계도 없습니다. 대신 주요 OS를 모두 대상으로 하고, 브라우저만 있으면 누구나 QR 코드로 호스트의 포털 방에 들어올 수 있습니다.
+[Briar](https://briarproject.org/)와 Bitchat도 서버나 계정 없이 블루투스, Wi-Fi, Tor로 대화하고, Quick Share는 가까운 Android·Windows 기기끼리 파일을 옮깁니다. Intragram은 같은 LAN이나 핫스팟이 있어야 하고 메시 중계도 없습니다. 대신 주요 OS를 모두 대상으로 하고, 브라우저만 있으면 누구나 QR 코드로 호스트의 포털 방에 들어올 수 있습니다.
 
 인터넷이 막혔거나 느리거나 쓰고 싶지 않은 곳에 맞습니다. 외부 접속이 없는 사내망, 공장, 선박이나 시험장, 노트북과 폰이 섞인 강의실과 실습실, 전화번호를 주고받지 않고 한 시간쯤 대화방이 필요한 모임 같은 곳입니다.
 
 ### 설치
 
-**[다운로드 페이지(GitHub Releases)](https://github.com/gnoyx2/IntraGram/releases)**에서 버전을 고른 뒤 **Assets**를 펼치세요. [v1.0.0-rc.1](https://github.com/gnoyx2/IntraGram/releases/tag/v1.0.0-rc.1)을 **테스트용 프리릴리스**로 제공합니다. 자동 테스트와 빌드 파일 검증은 통과했지만, **모든 플랫폼의 실기기 QA는 아직 미완료**입니다. 스토어와 TestFlight 링크는 배포가 준비되면 추가합니다.
+**[다운로드 페이지(GitHub Releases)](https://github.com/gnoyx2/Intragram/releases)**에서 버전을 고른 뒤 **Assets**를 펼치세요. [v1.0.0-rc.1](https://github.com/gnoyx2/Intragram/releases/tag/v1.0.0-rc.1)을 **테스트용 프리릴리스**로 제공합니다. 자동 테스트와 빌드 파일 검증은 통과했지만, **모든 플랫폼의 실기기 QA는 아직 미완료**입니다. 스토어와 TestFlight 링크는 배포가 준비되면 추가합니다.
 
 | 기기 | Assets에서 받을 파일 | 설치 방법 |
 | :--- | :--- | :--- |
-| Android | [intragram-android.apk](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-android.apk) | 지원하는 ARM·x64 기기용 통합 APK입니다. 폰에서 파일을 열고, 요청이 뜨면 해당 브라우저나 파일 관리자의 앱 설치를 허용하세요. |
-| iPhone, iPad | [intragram-ios-unsigned.ipa](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-ios-unsigned.ipa) | 고급 사용자용입니다. Apple 프로비저닝 프로파일로 다시 서명해야 하며, 파일을 누르는 것만으로 설치되지 않습니다. TestFlight나 App Store 배포가 준비되면 그 경로를 이용하세요. |
-| macOS | [intragram-macos.dmg](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-macos.dmg) (또는 [intragram-macos.zip](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-macos.zip)) | 디스크 이미지를 열거나 ZIP을 풀고 `IntraGram.app`을 응용 프로그램 폴더로 복사하세요. |
-| Windows x64 | [intragram-windows-x64.zip](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-windows-x64.zip) | 폴더 전체의 압축을 풀고 `intragram.exe`를 실행하세요. DLL과 `data` 폴더를 함께 유지해야 합니다. |
-| Linux x64 | [intragram-linux-x64.tar.gz](https://github.com/gnoyx2/IntraGram/releases/download/v1.0.0-rc.1/intragram-linux-x64.tar.gz) | 압축을 풀고 `./intragram`을 실행하세요. `./install.sh`로 앱 메뉴에 등록합니다. |
+| Android | [intragram-android.apk](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-android.apk) | 지원하는 ARM·x64 기기용 통합 APK입니다. 폰에서 파일을 열고, 요청이 뜨면 해당 브라우저나 파일 관리자의 앱 설치를 허용하세요. |
+| iPhone, iPad | [intragram-ios-unsigned.ipa](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-ios-unsigned.ipa) | 고급 사용자용입니다. Apple 프로비저닝 프로파일로 다시 서명해야 하며, 파일을 누르는 것만으로 설치되지 않습니다. TestFlight나 App Store 배포가 준비되면 그 경로를 이용하세요. |
+| macOS | [intragram-macos.dmg](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-macos.dmg) (또는 [intragram-macos.zip](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-macos.zip)) | 디스크 이미지를 열거나 ZIP을 풀고 `.app` 파일을 응용 프로그램 폴더로 복사하세요. |
+| Windows x64 | [intragram-windows-x64.zip](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-windows-x64.zip) | 폴더 전체의 압축을 풀고 `intragram.exe`를 실행하세요. DLL과 `data` 폴더를 함께 유지해야 합니다. |
+| Linux x64 | [intragram-linux-x64.tar.gz](https://github.com/gnoyx2/Intragram/releases/download/v1.0.0-rc.1/intragram-linux-x64.tar.gz) | 압축을 풀고 `./intragram`을 실행하세요. `./install.sh`로 앱 메뉴에 등록합니다. |
 
 GitHub의 **Source code (zip/tar.gz)**는 설치 파일이 아닌 소스 코드입니다. `intragram.aab`는 Google Play 제출용으로, 직접 설치하는 파일이 아닙니다. Android APK와 AAB는 CI에 프로젝트 릴리스 서명 키가 설정된 경우에만 첨부하며, 디버그 키로 서명한 시험용 APK는 공개하지 않습니다.
 
-버전 태그를 올리면 먼저 **초안(Draft)** 릴리스가 만들어집니다. 관리자가 게시해야 사용자가 다운로드할 수 있고, 실기기 QA를 통과하기 전까지는 **Pre-release**로 표시합니다. 릴리스에는 `SHA256SUMS.txt`와 플랫폼별 실제 서명 상태를 기록한 `SIGNING-<platform>.txt`가 붙습니다. 내려받은 파일은 macOS에서 `shasum -a 256 -c --ignore-missing SHA256SUMS.txt`, Linux에서 `sha256sum -c --ignore-missing SHA256SUMS.txt`, Windows PowerShell에서 `Get-FileHash <파일> -Algorithm SHA256`으로 확인합니다. 체크섬은 깨진 다운로드만 잡아냅니다. 릴리스 워크플로가 직접 만든 파일인지는 `gh attestation verify <파일> --repo gnoyx2/IntraGram`으로 확인합니다.
+버전 태그를 올리면 먼저 **초안(Draft)** 릴리스가 만들어집니다. 관리자가 게시해야 사용자가 다운로드할 수 있고, 실기기 QA를 통과하기 전까지는 **Pre-release**로 표시합니다. 릴리스에는 `SHA256SUMS.txt`와 플랫폼별 실제 서명 상태를 기록한 `SIGNING-<platform>.txt`가 붙습니다. 내려받은 파일은 macOS에서 `shasum -a 256 -c --ignore-missing SHA256SUMS.txt`, Linux에서 `sha256sum -c --ignore-missing SHA256SUMS.txt`, Windows PowerShell에서 `Get-FileHash <파일> -Algorithm SHA256`으로 확인합니다. 체크섬은 깨진 다운로드만 잡아냅니다. 릴리스 워크플로가 직접 만든 파일인지는 `gh attestation verify <파일> --repo gnoyx2/Intragram`으로 확인합니다.
 
-IntraGram은 사설 주소에서만 연결을 받고 겁니다. 방화벽 팝업은 개인 네트워크에서만 허용하세요.
+Intragram은 사설 주소에서만 연결을 받고 겁니다. 방화벽 팝업은 개인 네트워크에서만 허용하세요.
 
 - **macOS**: ad-hoc 서명에 공증이 없어서 처음 실행할 때 Gatekeeper가 막습니다. macOS 15 이상은 앱을 한 번 연 뒤 *시스템 설정 › 개인정보 보호 및 보안*에서 *그래도 열기*를 누르고, macOS 12~14는 앱을 우클릭해서 *열기*를 고릅니다. 로컬 네트워크 접근 팝업은 허용합니다.
 - **Windows**: 폴더째 압축을 풀고 `intragram.exe`를 실행합니다. 서명이 없어 SmartScreen이 경고하면 *추가 정보*를 누른 뒤 *실행*을 누르세요. 스마트 앱 컨트롤이 켜진 PC는 서명 없는 앱을 예외 없이 막으므로, 서명하기 전까지는 그 PC에서 실행할 수 없습니다.
@@ -410,14 +414,14 @@ IntraGram은 사설 주소에서만 연결을 받고 겁니다. 방화벽 팝업
 - **iOS, iPadOS**: 다운로드용 미서명 `.ipa`는 App Store 제출용 빌드가 아닙니다. 서명된 IPA를 빌드하고 배포하려면 해당 Apple 팀과 프로비저닝 설정이 필요합니다. [RELEASING.md](RELEASING.md#4-ios-and-macos)를 참고하세요.
 - **Android**: 업데이트할 때는 같은 릴리스 키로 서명된 APK를 기존 앱 위에 설치하세요. 기존 시험용 앱을 삭제해야 한다면 필요한 데이터를 먼저 따로 보관하세요.
 
-보관소(`vault.json`)와 기억해 둔 기기 이름(`identity.json`)은 받은 파일과 떨어진 앱의 Application Support/IntraGram 폴더에 있습니다. iOS에서는 이 폴더에 백업 제외와 완전 파일 보호를 요청합니다. macOS 백업에는 보관소가 들어갈 수 있습니다. Android는 앱 데이터의 OS 백업과 기기 간 전송을 꺼 두었습니다. 앱이 남기고 보내는 것은 [PRIVACY.md](PRIVACY.md)에 모두 적어 두었습니다.
+보관소(`vault.json`)와 기억해 둔 기기 이름(`identity.json`)은 받은 파일과 떨어진 앱의 Application Support/IntraGram 폴더에 있습니다. 표시 이름을 바꾼 뒤에도 기존 데이터를 계속 찾도록 저장 폴더의 이전 표기는 유지합니다. iOS에서는 이 폴더에 백업 제외와 완전 파일 보호를 요청합니다. macOS 백업에는 보관소가 들어갈 수 있습니다. Android는 앱 데이터의 OS 백업과 기기 간 전송을 꺼 두었습니다. 앱이 남기고 보내는 것은 [PRIVACY.md](PRIVACY.md)에 모두 적어 두었습니다.
 
 ### 문제 해결
 
 - **상대 기기가 안 보입니다.** 두 기기가 같은 Wi-Fi에 있어야 합니다. 게스트 네트워크와 대부분의 회사·학교·카페 Wi-Fi는 기기끼리 연결을 막으므로(AP isolation), 폰 핫스팟을 켜고 두 기기를 거기에 연결하세요. 상대 기기 홈 화면에 보이는 주소로 *IP로 연결*을 쓰거나 기기 코드를 스캔해도 됩니다.
-- **"이 Wi-Fi에서는 IntraGram을 쓸 수 없어요"가 뜹니다.** 네트워크가 기기에 공인 주소나 통신사 주소(`100.64.x.x`)를 줬고, IntraGram은 사설 주소로만 통신합니다. 폰 핫스팟을 쓰세요.
-- **iPhone, iPad, Mac에서 아무도 안 보입니다.** IntraGram의 로컬 네트워크 접근을 켜세요. iOS와 iPadOS는 *설정 › IntraGram*, macOS는 *시스템 설정 › 개인정보 보호 및 보안 › 로컬 네트워크*에 있습니다.
-- **Windows나 Linux에서 아무도 안 보이거나, 다른 기기가 접속하지 못합니다.** Windows 방화벽에서 개인 네트워크의 IntraGram을 허용하고, Wi-Fi가 개인 네트워크로 설정되어 있는지 확인하세요. Linux는 홈 화면에 보이는 포트를 `ufw`나 `firewalld`에서 여세요.
+- **"이 Wi-Fi에서는 Intragram을 쓸 수 없어요"가 뜹니다.** 네트워크가 기기에 공인 주소나 통신사 주소(`100.64.x.x`)를 줬고, Intragram은 사설 주소로만 통신합니다. 폰 핫스팟을 쓰세요.
+- **iPhone, iPad, Mac에서 아무도 안 보입니다.** Intragram의 로컬 네트워크 접근을 켜세요. iOS와 iPadOS는 *설정 › Intragram*, macOS는 *시스템 설정 › 개인정보 보호 및 보안 › 로컬 네트워크*에 있습니다.
+- **Windows나 Linux에서 아무도 안 보이거나, 다른 기기가 접속하지 못합니다.** Windows 방화벽에서 개인 네트워크의 Intragram을 허용하고, Wi-Fi가 개인 네트워크로 설정되어 있는지 확인하세요. Linux는 홈 화면에 보이는 포트를 `ufw`나 `firewalld`에서 여세요.
 - **VPN이 켜져 있습니다.** 많은 VPN 앱이 로컬 트래픽까지 터널로 보내거나 막습니다. VPN의 로컬 네트워크 허용 옵션을 켜거나, 대화하는 동안 VPN을 끄세요.
 - **브라우저 페이지에 입장 코드가 없다거나 포털이 꺼졌다고 나옵니다.** *게스트 포털*에 보이는 전체 주소(`#t=...`로 끝남)를 그대로 열거나 QR 코드를 다시 찍으세요. 같은 탭에서 새로고침하면 그대로 들어가지만, 포털을 끄거나 다시 켜면 새 코드가 만들어져 모든 게스트가 QR 코드부터 다시 들어와야 합니다.
 - **마이크나 카메라 권한을 거부했습니다.** 앱 안내의 *설정 열기*를 누르거나 시스템 설정에서 켜세요.
@@ -434,7 +438,7 @@ IntraGram은 사설 주소에서만 연결을 받고 겁니다. 방화벽 팝업
 
 ```bash
 flutter pub get --enforce-lockfile
-flutter run     # 기기를 고른 뒤, 같은 Wi-Fi의 다른 기기에서도 IntraGram 실행
+flutter run     # 기기를 고른 뒤, 같은 Wi-Fi의 다른 기기에서도 Intragram 실행
 ```
 
 | OS | 릴리스 빌드 | 결과물 |
@@ -607,7 +611,7 @@ PR은 언제든 환영합니다. 코드는 일부러 작게 유지합니다. 코
 
 ### 감사의 말
 
-[LocalSend](https://github.com/localsend/localsend)에 감사드립니다. "같은 Wi-Fi, 클라우드 없음, 계정 없음"이라는 IntraGram의 출발점은 LocalSend를 쓰면서 나왔습니다. 작은 조각 두 개는 LocalSend의 Apache-2.0 소스를 가져와 고친 것입니다. 파일 종류·아이콘 매핑(`lib/core/file_kind.dart`)과 남은 시간 계산(`lib/features/chat/transfer_tile/received_actions.dart`의 `_formatEta`)입니다. 받은 파일 열기와 폴더에서 보기(`lib/core/native_open.dart`)는 아이디어만 빌려 와 따로 작성했습니다. 크로스플랫폼 파일 전송 도구만 필요하다면 LocalSend를 쓰세요.
+[LocalSend](https://github.com/localsend/localsend)에 감사드립니다. "같은 Wi-Fi, 클라우드 없음, 계정 없음"이라는 Intragram의 출발점은 LocalSend를 쓰면서 나왔습니다. 작은 조각 두 개는 LocalSend의 Apache-2.0 소스를 가져와 고친 것입니다. 파일 종류·아이콘 매핑(`lib/core/file_kind.dart`)과 남은 시간 계산(`lib/features/chat/transfer_tile/received_actions.dart`의 `_formatEta`)입니다. 받은 파일 열기와 폴더에서 보기(`lib/core/native_open.dart`)는 아이디어만 빌려 와 따로 작성했습니다. 크로스플랫폼 파일 전송 도구만 필요하다면 LocalSend를 쓰세요.
 
 ### 라이선스
 

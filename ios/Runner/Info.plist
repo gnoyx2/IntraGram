@@ -5,15 +5,15 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>IntraGram talks only to other devices on your local Wi-Fi to exchange messages and files. Nothing is sent to the internet.</string>
+	<string>Intragram talks only to other devices on your local Wi-Fi to exchange messages and files. Nothing is sent to the internet.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>IntraGram uses the camera only to scan another device's connection or security code. No photos are taken or stored.</string>
+	<string>Intragram uses the camera only to scan another device's connection or security code. No photos are taken or stored.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>IntraGram uses the system photo picker, so it only receives the photos you choose to send. It never reads the rest of your library.</string>
+	<string>Intragram uses the system photo picker, so it only receives the photos you choose to send. It never reads the rest of your library.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>IntraGram saves an image to your photo library only when you choose Save Image in the share sheet. It never reads your library.</string>
+	<string>Intragram saves an image to your photo library only when you choose Save Image in the share sheet. It never reads your library.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>IntraGram records a voice message only while you hold the mic button, or after you tap it for hands-free recording until you send or cancel. Audio is sent to the peer and kept in memory, never saved to disk.</string>
+	<string>Intragram records a voice message only while you hold the mic button, or after you tap it for hands-free recording until you send or cancel. Audio is sent to the peer and kept in memory, never saved to disk.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_intragram._tcp</string>
@@ -31,7 +31,7 @@
 		<string>ko</string>
 	</array>
 	<key>CFBundleDisplayName</key>
-	<string>IntraGram</string>
+	<string>Intragram</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -39,7 +39,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>IntraGram</string>
+	<string>Intragram</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

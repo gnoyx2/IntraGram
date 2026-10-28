@@ -51,7 +51,7 @@ const Map<String, String> kStringsEnSettings = {
       'A message over 64 KB is sent as a "Long message.txt" file you save '
       'and open. Keeps memory small.',
   'settings.iosForegroundOnly':
-      'On iPhone and iPad, chats stay connected only while IntraGram is open. '
+      'On iPhone and iPad, chats stay connected only while Intragram is open. '
       'iOS pauses the app a few seconds after you leave it; open it again and '
       'the other side can reconnect.',
   'settings.stayConnected': 'Stay connected in the background',
@@ -102,7 +102,7 @@ const Map<String, String> kStringsEnSettings = {
       'was turned off. Turn it on again to retry.',
   'settings.onlyChatsIStart': 'Only chats I start',
   'settings.onlyChatsIStartSub':
-      "Devices you haven't chatted with since IntraGram started can't open "
+      "Devices you haven't chatted with since Intragram started can't open "
       'a chat with you or invite you to a room. You can still connect to '
       'them, and browser guests still join your portal.',
 };

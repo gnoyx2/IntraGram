@@ -3,7 +3,7 @@ const Map<String, String> kStringsKoPrivacy = {
   'privacy.title': "개인정보 처리 방침",
   'privacy.noServerTitle': "서버도 계정도 없음",
   'privacy.noServerBody':
-      "IntraGram은 개발자나 클라우드 서비스에 데이터를 자동으로 보내지 않고, 가입·전화번호·이메일이 필요 없어요.",
+      "Intragram은 개발자나 클라우드 서비스에 데이터를 자동으로 보내지 않고, 가입·전화번호·이메일이 필요 없어요.",
   'privacy.onDeviceTitle': "이 기기에 남는 것",
   'privacy.onDeviceBody':
       "메시지·전송 기록·세션 키는 메모리에 두며, 보관소를 켜면 선택한 메시지와 전송 기록도 저장할 수 있어요. 메시지를 "
@@ -48,12 +48,12 @@ const Map<String, String> kStringsKoPrivacy = {
       "때만, 사진은 남기지 않아요. 알림: 앱이 백그라운드일 때 새 메시지. 사진: 고른 것만.",
   'privacy.thirdPartyTitle': "제3자",
   'privacy.thirdPartyBody':
-      "IntraGram은 제3자에게 원격 분석이나 자동 보고를 보내지 않아요. 연결한 피어와 사용자가 고른 감사 번들 수신자는 위에서 "
+      "Intragram은 제3자에게 원격 분석이나 자동 보고를 보내지 않아요. 연결한 피어와 사용자가 고른 감사 번들 수신자는 위에서 "
       "설명한 데이터를 받아요. QR 코드는 네트워크를 쓰지 않는 오픈소스 코드가 기기 안에서 읽어요.",
   'privacy.contactTitle': "문의",
   'privacy.contactBody':
       "일반 문의는 프로젝트 GitHub 페이지에 이슈를 남겨 주세요. 보안 문제의 비공개 신고 절차와 사용 가능 여부는 "
-      "https://github.com/gnoyx2/IntraGram/security/policy 페이지에서 확인해 주세요. "
+      "https://github.com/gnoyx2/Intragram/security/policy 페이지에서 확인해 주세요. "
       "GitHub 비공개 신고 폼은 공개 저장소에서 활성화해야 사용할 수 있어요. 보조 이메일 jung@yonghun.pro는 "
       "아직 수신할 수 없어 신고에 사용할 수 없어요. 취약점 세부 내용은 공개 이슈에 남기지 마세요.",
 };

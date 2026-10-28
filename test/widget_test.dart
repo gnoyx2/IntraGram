@@ -11,7 +11,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('IntraGram'), findsOneWidget);
+    expect(find.text('Intragram'), findsOneWidget);
     expect(find.textContaining('No cloud'), findsOneWidget);
     expect(find.text('Active chats'), findsOneWidget);
   });

@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Report a security vulnerability privately
-    url: https://github.com/gnoyx2/IntraGram/security/policy
+    url: https://github.com/gnoyx2/Intragram/security/policy
     about: Read the policy for private reporting. The backup email is not yet available. Do not open a public issue.

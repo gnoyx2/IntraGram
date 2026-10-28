@@ -231,9 +231,9 @@ jobs:
       - name: Package macOS (zip + dmg)
         run: |
           mkdir -p dist
-          APP="build/macos/Build/Products/Release/IntraGram.app"
+          APP="build/macos/Build/Products/Release/Intragram.app"
           ditto -c -k --keepParent "$APP" dist/intragram-macos.zip
-          hdiutil create -volname IntraGram -srcfolder "$APP" -ov -format UDZO dist/intragram-macos.dmg
+          hdiutil create -volname Intragram -srcfolder "$APP" -ov -format UDZO dist/intragram-macos.dmg
           {
             echo "commit: $GITHUB_SHA"
             echo "flutter: $FLUTTER_VERSION, runner: xcode-27, Xcode 27.1"
@@ -293,7 +293,7 @@ jobs:
         working-directory: release
         run: sha256sum * > SHA256SUMS.txt
       # 체크섬은 같은 페이지에 있어서 바꿔치기를 못 잡음: 이 워크플로가 만들었다는 증명을 따로 남김
-      # (gh attestation verify <file> --repo <owner>/IntraGram). 공개 저장소에서만 됨
+      # (gh attestation verify <file> --repo <owner>/Intragram). 공개 저장소에서만 됨
       - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         if: ${{ !github.event.repository.private }}
         with:
@@ -307,7 +307,7 @@ jobs:
           # DEVICE_QA.md를 통과하고 관리자가 저장소 변수 DEVICE_QA_PASSED=true를 두기 전까진 늘 pre-release로 표시함
           prerelease: ${{ contains(github.ref_name, '-') || vars.DEVICE_QA_PASSED != 'true' }}
           body: |
-            IntraGram ${{ github.ref_name }}, a LAN-only P2P messenger.
+            Intragram ${{ github.ref_name }}, a LAN-only P2P messenger.
             Source commit `${{ github.sha }}`, built with Flutter ${{ env.FLUTTER_VERSION }}.
 
             Verify a download: `shasum -a 256 -c --ignore-missing SHA256SUMS.txt` (macOS) or

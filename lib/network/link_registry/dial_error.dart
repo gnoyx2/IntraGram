@@ -4,12 +4,12 @@ part of '../link_registry.dart';
 enum PeerUnreachableReason {
   // 아무 응답 없음: 주소가 틀렸거나, 상대 앱이 꺼졌거나, 망이 기기간 통신을 차단함(AP isolation)
   noAnswer,
-  // 그 주소의 기기가 거절함: 그 포트에 IntraGram이 떠 있지 않거나 방화벽에 막힘
+  // 그 주소의 기기가 거절함: 그 포트에 Intragram이 떠 있지 않거나 방화벽에 막힘
   refused,
   // 이 망에서 그 주소로 갈 길이 없음: 다른 네트워크, 또는 iOS·macOS 로컬 네트워크 권한이 꺼짐
   noRoute,
-  // 뭔가 답했지만 IntraGram이 아님 (포트가 다른 서비스)
-  notIntraGram,
+  // 뭔가 답했지만 Intragram이 아님 (포트가 다른 서비스)
+  notIntragram,
 }
 
 class PeerUnreachableException implements Exception {
@@ -26,7 +26,7 @@ const Set<int> _noRouteCodes = {51, 65, 64, 101, 112, 113, 10051, 10064, 10065};
 
 PeerUnreachableReason classifyDialError(Object error) {
   if (error is WebSocketException || error is HttpException) {
-    return PeerUnreachableReason.notIntraGram;
+    return PeerUnreachableReason.notIntragram;
   }
   final code = error is SocketException ? error.osError?.errorCode : null;
   if (_refusedCodes.contains(code)) return PeerUnreachableReason.refused;

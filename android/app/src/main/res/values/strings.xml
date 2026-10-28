@@ -2,7 +2,7 @@
 <!-- 네이티브 쪽 문구(백그라운드 연결 알림). 앱 안 문구는 lib/l10n -->
 <resources>
     <string name="connection_channel_name">Staying connected</string>
-    <string name="connection_channel_description">Shown while IntraGram keeps your peer links open in the background.</string>
-    <string name="connection_title">IntraGram is connected</string>
+    <string name="connection_channel_description">Shown while Intragram keeps your peer links open in the background.</string>
+    <string name="connection_title">Intragram is connected</string>
     <string name="connection_text">Keeping your peer links open in the background.</string>
 </resources>

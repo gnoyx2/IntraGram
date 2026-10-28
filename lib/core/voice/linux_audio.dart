@@ -27,7 +27,7 @@ Future<LinuxAudio> startLinuxAudio({
         '--rate=$sampleRate',
         '--channels=$channels',
         '--latency-msec=100',
-        '--client-name=IntraGram',
+        '--client-name=Intragram',
       ]);
       return (process: process, executable: executable, pulse: true);
     } on ProcessException catch (error) {

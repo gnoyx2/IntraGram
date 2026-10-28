@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest something IntraGram should do
+about: Suggest something Intragram should do
 ---
 
 **What do you want to do, and where (OS, network, who is in the chat)?**

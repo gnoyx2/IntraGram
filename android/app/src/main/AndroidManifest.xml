@@ -40,7 +40,7 @@
     <!-- allowBackup=false: 옵트인 보관소와 신원 파일이 앱 데이터 폴더에 있어서 안 끄면 Auto Backup이
          사용자 클라우드로 올림 (제로 디스크 약속 위반) -->
     <application
-        android:label="IntraGram"
+        android:label="Intragram"
         android:name="${applicationName}"
         android:allowBackup="false"
         android:fullBackupContent="false"

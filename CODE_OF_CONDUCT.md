@@ -1,6 +1,6 @@
 # Code of Conduct
 
-IntraGram's issues, pull requests and discussions are for building the app.
+Intragram's issues, pull requests and discussions are for building the app.
 Be kind and specific, assume good intent, and keep criticism about the work,
 not the person.
 

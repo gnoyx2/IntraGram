@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-// 비공개 파일 자리. Documents는 iOS 파일 앱·iCloud 백업에 잡혀서 Application Support 밑에 둠 (받은 파일은 Documents/IntraGram)
+// 비공개 파일 자리. Documents는 iOS 파일 앱·iCloud 백업에 잡혀서 Application Support 밑에 둠 (받은 파일은 기존 Documents/IntraGram)
 const List<String> _privateFiles = [
   'vault.json',
   'identity.json',
@@ -30,6 +30,7 @@ Future<String> _resolve() async {
   final support = Platform.isWindows
       ? await getApplicationCacheDirectory()
       : await getApplicationSupportDirectory();
+  // 기존 설치의 보관소·신원 파일을 계속 읽도록 데이터 폴더 이름은 유지함.
   final dir = Directory(p.join(support.path, 'IntraGram'));
   await dir.create(recursive: true);
   await _migrateFromDocuments(dir.path);

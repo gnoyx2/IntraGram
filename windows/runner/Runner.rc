@@ -89,11 +89,12 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
+            // path_provider uses CompanyName/ProductName as persistent directory identifiers.
             VALUE "CompanyName", "IntraGram" "\0"
-            VALUE "FileDescription", "IntraGram - local network messenger" "\0"
+            VALUE "FileDescription", "Intragram - local network messenger" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "intragram" "\0"
-            VALUE "LegalCopyright", "Copyright © 2026 IntraGram contributors. MIT License." "\0"
+            VALUE "LegalCopyright", "Copyright © 2026 Intragram contributors. MIT License." "\0"
             VALUE "OriginalFilename", "intragram.exe" "\0"
             VALUE "ProductName", "IntraGram" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

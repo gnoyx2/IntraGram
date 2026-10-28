@@ -38,9 +38,9 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>IntraGram talks only to other devices on your local Wi-Fi to exchange messages and files. Nothing is sent to the internet.</string>
+	<string>Intragram talks only to other devices on your local Wi-Fi to exchange messages and files. Nothing is sent to the internet.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>IntraGram records a voice message only while you hold the mic button, or after you tap it for hands-free recording until you send or cancel. Audio is sent to the peer and kept in memory, never saved to disk.</string>
+	<string>Intragram records a voice message only while you hold the mic button, or after you tap it for hands-free recording until you send or cancel. Audio is sent to the peer and kept in memory, never saved to disk.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_intragram._tcp</string>

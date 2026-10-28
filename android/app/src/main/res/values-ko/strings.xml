@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="connection_channel_name">연결 유지</string>
-    <string name="connection_channel_description">IntraGram이 백그라운드에서 기기 연결을 유지하는 동안 표시돼요.</string>
-    <string name="connection_title">IntraGram 연결됨</string>
+    <string name="connection_channel_description">Intragram이 백그라운드에서 기기 연결을 유지하는 동안 표시돼요.</string>
+    <string name="connection_title">Intragram 연결됨</string>
     <string name="connection_text">백그라운드에서 기기 연결을 유지하고 있어요.</string>
 </resources>

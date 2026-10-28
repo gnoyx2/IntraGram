@@ -81,7 +81,7 @@ const Map<String, String> kStringsEnRoom = {
   'chat.blockTitle': 'Block {alias}?',
   'chat.blockBody':
       "This chat closes, and the device can't open a chat with you or "
-      'invite you to a room until one of you restarts IntraGram, because '
+      'invite you to a room until one of you restarts Intragram, because '
       'device IDs change at each launch. You can still read this chat.',
   'chat.blockedBanner': 'You blocked this device',
 };

@@ -136,7 +136,7 @@ void main() {
       mockPrivacyChannel([]);
       await tester.pumpWidget(
         h.wrap(
-          const IntraGramApp(),
+          const IntragramApp(),
           overrides: [
             vaultAccessProvider.overrideWith(_LockedAccess.new),
             notificationBridgeProvider.overrideWith((ref) {}),

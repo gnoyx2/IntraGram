@@ -3,7 +3,7 @@ const Map<String, String> kStringsEnConnect = {
   'deviceCode.tooltip': 'Show my device code',
   'deviceCode.title': 'My device code',
   'deviceCode.body':
-      'On another device on the same Wi-Fi, open IntraGram and tap Scan. '
+      'On another device on the same Wi-Fi, open Intragram and tap Scan. '
       'The code also carries this device\'s identity, so the connection '
       'only completes with this device.',
   'deviceCode.unavailable':
@@ -11,48 +11,48 @@ const Map<String, String> kStringsEnConnect = {
       '172.16–31.x.x). Join a Wi-Fi network or turn on a hotspot.',
   'connect.noAnswer':
       'No answer from that address. Check the address and port, that '
-      'IntraGram is open on the other device, and that this Wi-Fi lets '
+      'Intragram is open on the other device, and that this Wi-Fi lets '
       "devices reach each other (guest, office and school networks often "
       "don't — a phone hotspot works).",
   'connect.refused':
-      'The device at that address refused the connection. Open IntraGram '
-      'there, check the port on its identity card, and let IntraGram '
+      'The device at that address refused the connection. Open Intragram '
+      'there, check the port on its identity card, and let Intragram '
       'through its firewall on private networks.',
   'connect.noRoute':
       "This device can't reach that address. Both devices need to be on "
       'the same Wi-Fi.',
-  'connect.notIntraGram':
-      "Something answered at that address, but it isn't IntraGram. Check "
+  'connect.notIntragram':
+      "Something answered at that address, but it isn't Intragram. Check "
       "the port on the other device's identity card.",
   'connect.notPrivate':
       'Only private Wi-Fi addresses can be dialled (192.168.x.x, 10.x.x.x '
       'or 172.16–31.x.x).',
   'connect.localNetworkCheck':
-      'Also check that Local Network access is on for IntraGram.',
+      'Also check that Local Network access is on for Intragram.',
   'settings.open': 'Open Settings',
   'home.notPrivate': "Nearby devices can't be found on this network.",
   'server.noNetwork': 'No local network. Join a Wi-Fi or hotspot, then retry.',
-  'server.notPrivateTitle': "This Wi-Fi can't be used for IntraGram",
+  'server.notPrivateTitle': "This Wi-Fi can't be used for Intragram",
   'server.notPrivate':
       'The network gave this device a public address ({address}), and '
-      'IntraGram only talks over private Wi-Fi addresses. Turn on a phone '
+      'Intragram only talks over private Wi-Fi addresses. Turn on a phone '
       'hotspot and join it with both devices.',
   'server.failedTitle': 'The local server could not start',
   'server.localNetworkDeniedTitle': 'Local Network access is off',
   'server.localNetworkDenied':
-      'IntraGram needs Local Network access to find and connect to devices '
+      'Intragram needs Local Network access to find and connect to devices '
       'on this Wi-Fi. Allow it in app settings, then return to retry.',
   'server.failed': 'Retry, and restart the app if it keeps failing.',
   'discoveryHelp.title': "Can't find the other device?",
   'discoveryHelp.sameWifi':
       "Both devices are on the same Wi-Fi, and it isn't a guest network.",
-  'discoveryHelp.appOpen': 'IntraGram is open on the other device.',
+  'discoveryHelp.appOpen': 'Intragram is open on the other device.',
   'discoveryHelp.localNetwork':
-      'Local Network access is on for IntraGram (iPhone, iPad and Mac ask '
+      'Local Network access is on for Intragram (iPhone, iPad and Mac ask '
       'for it once; it is in Settings).',
   'discoveryHelp.firewall':
       'This Wi-Fi is a Private network in Windows settings (a new network '
-      'starts as Public), and Windows Firewall lets IntraGram in on private '
+      'starts as Public), and Windows Firewall lets Intragram in on private '
       'networks.',
   'discoveryHelp.hotspot':
       'Office, school and café Wi-Fi often keep devices apart. Turn on a '
@@ -60,7 +60,7 @@ const Map<String, String> kStringsEnConnect = {
   'discoveryHelp.byIp':
       'Still nothing? Use Connect by IP with the address shown on the other '
       "device's home screen, or scan its device code.",
-  'scan.cameraDenied': 'Camera access is off for IntraGram.',
+  'scan.cameraDenied': 'Camera access is off for Intragram.',
   'sas.mismatch': 'Codes differ',
   'sas.dontSendHere':
       "Don't send the code through this chat — say it out loud or show "

@@ -30,14 +30,14 @@ import 'widgets/privacy_shield.dart';
 part 'app_accessibility.dart';
 part 'app_lock.dart';
 
-class IntraGramApp extends ConsumerStatefulWidget {
-  const IntraGramApp({super.key});
+class IntragramApp extends ConsumerStatefulWidget {
+  const IntragramApp({super.key});
 
   @override
-  ConsumerState<IntraGramApp> createState() => _IntraGramAppState();
+  ConsumerState<IntragramApp> createState() => _IntragramAppState();
 }
 
-class _IntraGramAppState extends ConsumerState<IntraGramApp>
+class _IntragramAppState extends ConsumerState<IntragramApp>
     with WidgetsBindingObserver, _AppAccessibility {
   late final ConversationOpener _opener;
   late final ProviderContainer _providers;

@@ -29,7 +29,7 @@ void main() {
     await tester.pumpWidget(h.wrap(const HomeScreen()));
     await tester.pump();
 
-    expect(find.text('IntraGram'), findsOneWidget);
+    expect(find.text('Intragram'), findsOneWidget);
     expect(find.text('me-host-10'), findsOneWidget);
     expect(find.text('bob-owl-22'), findsWidgets);
     expect(find.byIcon(Icons.gpp_good), findsOneWidget); // c1은 검증됨

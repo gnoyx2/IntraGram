@@ -1,6 +1,6 @@
 // 앱 이름 (기본 창 제목으로도 쓰임)
-PRODUCT_NAME = IntraGram
+PRODUCT_NAME = Intragram
 
 PRODUCT_BUNDLE_IDENTIFIER = com.yonghun0310.intragram
 
-PRODUCT_COPYRIGHT = Copyright © 2026 IntraGram contributors. MIT License.
+PRODUCT_COPYRIGHT = Copyright © 2026 Intragram contributors. MIT License.

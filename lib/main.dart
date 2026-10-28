@@ -54,7 +54,7 @@ Future<void> main() async {
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: const IntraGramApp(),
+      child: const IntragramApp(),
     ),
   );
 }

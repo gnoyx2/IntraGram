@@ -46,7 +46,7 @@ const Map<String, String> kStringsKoSettings = {
       '64 KB가 넘는 메시지는 저장·열람하는 "Long message.txt" 파일로 전송돼요. '
       '메모리를 작게 유지해요.',
   'settings.iosForegroundOnly':
-      'iPhone·iPad에서는 IntraGram을 열어 둔 동안만 연결돼요. 앱을 나가면 iOS가 '
+      'iPhone·iPad에서는 Intragram을 열어 둔 동안만 연결돼요. 앱을 나가면 iOS가 '
       '몇 초 뒤 앱을 멈추고, 다시 열면 상대가 다시 연결할 수 있어요.',
   'settings.stayConnected': '백그라운드에서 연결 유지',
   'settings.stayConnectedSub':

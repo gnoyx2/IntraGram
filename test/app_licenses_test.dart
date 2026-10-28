@@ -8,14 +8,14 @@ import 'package:intragram/features/settings/settings_screen.dart';
 import 'ui/_harness.dart';
 
 void main() {
-  testWidgets('the license page lists IntraGram and the LocalSend notice', (
+  testWidgets('the license page lists Intragram and the LocalSend notice', (
     tester,
   ) async {
     registerAppLicenses();
     final entries = await tester.runAsync(
       () => LicenseRegistry.licenses.toList(),
     );
-    final ours = entries!.where((e) => e.packages.contains('IntraGram'));
+    final ours = entries!.where((e) => e.packages.contains('Intragram'));
     final text = ours.expand((e) => e.paragraphs).map((p) => p.text).join('\n');
     expect(text, contains('MIT License'));
     expect(text, contains('Apache License'));
